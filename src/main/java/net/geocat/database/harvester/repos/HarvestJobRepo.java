@@ -46,6 +46,6 @@ import java.util.Optional;
 @Scope("prototype")
 public interface HarvestJobRepo extends CrudRepository<HarvestJob, String> {
 
-    @Query("SELECT h FROM HarvestJob h WHERE h.longTermTag = :longTermTag AND h.createTimeUTC = (SELECT max(hs.createTimeUTC) FROM HarvestJob hs WHERE hs.longTermTag = :longTermTag AND hs.state = 'RECORDS_RECEIVED')")
+    @Query("SELECT h FROM HarvestJob h WHERE h.longTermTag = :longTermTag AND h.createTimeUTC = (SELECT max(hs.createTimeUTC) FROM HarvestJob hs WHERE hs.longTermTag = :longTermTag AND hs.state = 'COMPLETE')")
     Optional<HarvestJob> findMostRecentHarvestJobByLongTermTag(@Param("longTermTag") String longTermTag);
 }
