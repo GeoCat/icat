@@ -67,7 +67,7 @@ public class LinkCheckRunConfig {
                 throw new Exception("LinkCheckRunConfig - cannot find previous harvest run harvestJobId: " + harvestJobId);
             }
 
-            if (harvestJob.get().getState() != HarvestJobState.RECORDS_RECEIVED) {
+            if (harvestJob.get().getState() != HarvestJobState.COMPLETE) {
                 throw new Exception("Harvest run harvestJobId: " + harvestJobId + ", state '" + harvestJob.get().getState() + "' is not valid.");
             }
         }
