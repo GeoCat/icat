@@ -196,8 +196,8 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
             errorResult.setErrorOccurred(true);
             errorResult.setHttpCode(http.getResponseCode());
             errorResult.setContentType(http.getHeaderField("Content-Type"));
-            if ((cookies == null) || (cookies.isEmpty()))
-                errorResult.setSpecialToSendCookie(cookie);
+            if ((cookies != null) && (!cookies.isEmpty()))
+                 errorResult.setSpecialToSendCookie(cookies.get(0));
             return errorResult;
 
 //            if ((cookies == null) || (cookies.isEmpty()))

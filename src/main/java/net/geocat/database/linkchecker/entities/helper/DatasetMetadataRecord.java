@@ -74,11 +74,39 @@ public class DatasetMetadataRecord extends MetadataRecord {
     @Column(columnDefinition = "varchar(5)")
     IndicatorStatus INDICATOR_LAYER_MATCHES;
 
+    //PASS if ANY of the WMS/WMTS capabilities documents has a layer link (dataset) that matches this document (file id and dataset id).
+    // null = not evaluated
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "varchar(5)")
+    IndicatorStatus INDICATOR_LAYER_MATCHES_VIEW;
+
+    //PASS if ANY of the WFS/ATOM capabilities documents has a layer link (dataset) that matches this document (file id and dataset id).
+    // null = not evaluated
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "varchar(5)")
+    IndicatorStatus INDICATOR_LAYER_MATCHES_DOWNLOAD;
+
     //---------------------------------------------------------------------------
 
     public DatasetMetadataRecord() {
         super();
         documentLinks = new ArrayList<>();
+    }
+
+    public IndicatorStatus getINDICATOR_LAYER_MATCHES_VIEW() {
+        return INDICATOR_LAYER_MATCHES_VIEW;
+    }
+
+    public void setINDICATOR_LAYER_MATCHES_VIEW(IndicatorStatus INDICATOR_LAYER_MATCHES_VIEW) {
+        this.INDICATOR_LAYER_MATCHES_VIEW = INDICATOR_LAYER_MATCHES_VIEW;
+    }
+
+    public IndicatorStatus getINDICATOR_LAYER_MATCHES_DOWNLOAD() {
+        return INDICATOR_LAYER_MATCHES_DOWNLOAD;
+    }
+
+    public void setINDICATOR_LAYER_MATCHES_DOWNLOAD(IndicatorStatus INDICATOR_LAYER_MATCHES_DOWNLOAD) {
+        this.INDICATOR_LAYER_MATCHES_DOWNLOAD = INDICATOR_LAYER_MATCHES_DOWNLOAD;
     }
 
     public IndicatorStatus getINDICATOR_LAYER_MATCHES() {
