@@ -58,8 +58,20 @@ public class OperatesOnRemoteDatasetMetadataRecord extends DatasetMetadataRecord
     @Column(columnDefinition = "varchar(5)")
     IndicatorStatus INDICATOR_MATCHES_A_CAP_DATASET_LAYER;
 
+    //which link check job is this document apart of
+    @Column(columnDefinition = "varchar(40)")
+    private String linkCheckJobId;
+
     //---------------------------------------------------------------------------
 
+
+    public String getLinkCheckJobId() {
+        return linkCheckJobId;
+    }
+
+    public void setLinkCheckJobId(String linkCheckJobId) {
+        this.linkCheckJobId = linkCheckJobId;
+    }
 
     public IndicatorStatus getINDICATOR_MATCHES_A_CAP_DATASET_LAYER() {
         return INDICATOR_MATCHES_A_CAP_DATASET_LAYER;

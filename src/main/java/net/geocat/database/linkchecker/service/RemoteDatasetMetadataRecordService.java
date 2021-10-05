@@ -68,8 +68,10 @@ public class RemoteDatasetMetadataRecordService {
     }
 
 
-    public CapabilitiesRemoteDatasetMetadataDocument createCapabilitiesRemoteDatasetMetadataDocument(CapabilitiesDatasetMetadataLink link) {
+    public CapabilitiesRemoteDatasetMetadataDocument createCapabilitiesRemoteDatasetMetadataDocument(CapabilitiesDatasetMetadataLink link,String jobid) {
+
         CapabilitiesRemoteDatasetMetadataDocument result = new CapabilitiesRemoteDatasetMetadataDocument();
+        result.setLinkCheckJobId(jobid);
         return result;
     }
 

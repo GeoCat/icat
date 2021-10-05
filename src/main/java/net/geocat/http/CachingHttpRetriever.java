@@ -56,6 +56,8 @@ import java.io.IOException;
     @Qualifier("cookieAttachingRetriever")
     public CookieAttachingRetriever retriever; // public for testing
 
+    boolean limitByJobId = true; // false = testing (do not use in production)
+
     String linkCheckJobId;
 
     public CachingHttpRetriever() {
@@ -82,15 +84,27 @@ import java.io.IOException;
 
     //chance that this throws...
     private synchronized  HttpResult saveResult(HttpResult result) {
-        //could be parallel processes that did this...
-        if (httpResultRepo.existsByLinkCheckJobIdAndURL(linkCheckJobId,result.getURL()) )
-            return result;
+
+        if (limitByJobId) {
+            //could be parallel processes that did this...
+            if (httpResultRepo.existsByLinkCheckJobIdAndURL(linkCheckJobId, result.getURL()))
+                return result;
+        }
+        else {
+            if (httpResultRepo.existsByURL(  result.getURL()))
+                return result;
+        }
 
         return httpResultRepo.save(result);
     }
 
     private HttpResult getCached(String location) {
-        HttpResult result = httpResultRepo.findByLinkCheckJobIdAndURL(linkCheckJobId,location);
+        if (limitByJobId) {
+            HttpResult result = httpResultRepo.findByLinkCheckJobIdAndURL(linkCheckJobId, location);
+            return result;
+        }
+
+        HttpResult result = httpResultRepo.findFirstByURL(location);
         return result;
     }
 }

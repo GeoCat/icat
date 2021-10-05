@@ -53,6 +53,19 @@ public interface LocalServiceMetadataRecordRepo extends CrudRepository<LocalServ
     List<LocalServiceMetadataRecord> findByLinkCheckJobId(String linkCheckJobId);
 
 
+    //given a link check job and a Dataset file id, this will find the service records that link to that dataset
+    // method - find the service records that have an operatesOnLink that resolves to a Dataset record with the same fileid
+    @Query(value = "SELECT s.* FROM servicemetadatarecord s WHERE s.serviceMetadataDocumentId IN (" +
+            " select servicemetadatarecord_servicemetadatadocumentid \n" +
+            " from datasetmetadatarecord \n" +
+            "  LEFT JOIN operatesonlink ON (operatesonlink.datasetmetadatarecordid = datasetmetadatarecord.datasetmetadatadocumentid)\n" +
+            " where fileidentifier = :operatesOnFileID   \n" +
+            "     and dataset_record_type='RemoteDatasetMetadataRecord'\n" +
+            "     and linkcheckjobid=:linkCheckJobId"
+           + ")   ",nativeQuery = true)
+    List<LocalServiceMetadataRecord> searchByLinkCheckJobIdAndOperatesOnFileID(String linkCheckJobId, String operatesOnFileID);
+
+
     long countByLinkCheckJobId(String LinkCheckJobId);
 
     @Query(value = "Select count(*) from servicemetadatarecord   where linkcheckjobid = ?1 and service_record_type = 'LocalServiceMetadataRecord' and state != 'CREATED'",
@@ -77,4 +90,11 @@ public interface LocalServiceMetadataRecordRepo extends CrudRepository<LocalServ
             "LEFT JOIN FETCH c.datasetMetadataRecord "+
             "where a.serviceMetadataDocumentId= ?1")
     LocalServiceMetadataRecord  fullId(long id);
+
+    @Query(value="select a from LocalServiceMetadataRecord a " +
+            "LEFT JOIN FETCH a.serviceDocumentLinks b " +
+            "LEFT JOIN FETCH a.operatesOnLinks c " +
+            "LEFT JOIN FETCH c.datasetMetadataRecord "+
+            "where a.serviceMetadataDocumentId= ?1")
+    LocalServiceMetadataRecord  fullId_operatesOn(long id);
 }

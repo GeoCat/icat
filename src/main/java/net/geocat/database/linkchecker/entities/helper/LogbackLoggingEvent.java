@@ -47,6 +47,11 @@ import javax.persistence.*;
                         name = "logging_correlationid_idx",
                         columnList = "jms_correlation_id",
                         unique = false
+                ),
+                @Index(
+                        name = "logging_event_timestmp_idx",
+                        columnList = "timestmp",
+                        unique = false
                 )
         }
 )

@@ -31,15 +31,19 @@
  *  ==============================================================================
  */
 
-package net.geocat.eventprocessor.processors.main;
+package net.geocat.eventprocessor.processors.postprocess;
 
-
-import net.geocat.database.linkchecker.entities.LinkCheckJobState;
-import net.geocat.database.linkchecker.service.LinkCheckJobService;
+import net.geocat.database.linkchecker.entities.LocalDatasetMetadataRecord;
+import net.geocat.database.linkchecker.entities.LocalServiceMetadataRecord;
+import net.geocat.database.linkchecker.repos.LocalDatasetMetadataRecordRepo;
+import net.geocat.database.linkchecker.repos.LocalServiceMetadataRecordRepo;
 import net.geocat.eventprocessor.BaseEventProcessor;
+import net.geocat.eventprocessor.processors.processlinks.EventProcessor_ProcessServiceDocLinksEvent;
+import net.geocat.eventprocessor.processors.processlinks.EventProcessor_StartLinkProcessingEvent;
 import net.geocat.events.Event;
 import net.geocat.events.EventFactory;
-import net.geocat.events.processlinks.AllLinksCheckedEvent;
+import net.geocat.events.postprocess.StartPostProcessEvent;
+import net.geocat.events.processlinks.StartLinkProcessingEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,36 +55,52 @@ import java.util.List;
 
 @Component
 @Scope("prototype")
-public class EventProcessor_AllLinksCheckedEvent extends BaseEventProcessor<AllLinksCheckedEvent> {
+public class EventProcessor_StartPostProcessEvent extends BaseEventProcessor<StartPostProcessEvent> {
 
-    Logger logger = LoggerFactory.getLogger(net.geocat.eventprocessor.processors.processlinks.EventProcessor_ProcessServiceDocLinksEvent.class);
-
-    @Autowired
-    LinkCheckJobService linkCheckJobService;
+    Logger logger = LoggerFactory.getLogger(EventProcessor_ProcessServiceDocLinksEvent.class);
 
     @Autowired
     EventFactory eventFactory;
 
+    @Autowired
+    LocalServiceMetadataRecordRepo localServiceMetadataRecordRepo;
+
+    @Autowired
+    LocalDatasetMetadataRecordRepo localDatasetMetadataRecordRepo;
+
+
 
     @Override
-    public EventProcessor_AllLinksCheckedEvent externalProcessing() {
+    public EventProcessor_StartPostProcessEvent externalProcessing() throws Exception {
         return this;
     }
 
 
     @Override
-    public EventProcessor_AllLinksCheckedEvent internalProcessing() {
-        linkCheckJobService.updateLinkCheckJobStateInDB(getInitiatingEvent().getLinkCheckJobId(), LinkCheckJobState.POST_PROCESSING);
+    public EventProcessor_StartPostProcessEvent internalProcessing() throws Exception {
         return this;
     }
 
 
     @Override
     public List<Event> newEventProcessing() {
+        String linkCheckJobId = getInitiatingEvent().getLinkCheckJobId();
+
         List<Event> result = new ArrayList<>();
-        Event e = eventFactory.createStartPostProcessEvent(this.getInitiatingEvent().getLinkCheckJobId());
-        result.add(e);
+
+        for(LocalServiceMetadataRecord record : localServiceMetadataRecordRepo.findByLinkCheckJobId(linkCheckJobId)) {
+            long id = record.getServiceMetadataDocumentId();
+            Event e = eventFactory.createPostProcessServiceDocumentEvent(id,linkCheckJobId);
+            result.add(e);
+        }
+
+        for(LocalDatasetMetadataRecord record : localDatasetMetadataRecordRepo.findByLinkCheckJobId(linkCheckJobId)) {
+            long id = record.getDatasetMetadataDocumentId();
+            Event e = eventFactory.createPostProcessDatasetDocumentEvent(id,linkCheckJobId);
+            result.add(e);
+        }
+
         return result;
     }
-
 }
+

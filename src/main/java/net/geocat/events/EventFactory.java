@@ -38,6 +38,10 @@ import net.geocat.database.linkchecker.repos.LinkCheckJobRepo;
 import net.geocat.events.findlinks.LinksFoundInAllDocuments;
 import net.geocat.events.findlinks.ProcessLocalMetadataDocumentEvent;
 import net.geocat.events.findlinks.StartProcessDocumentsEvent;
+import net.geocat.events.postprocess.AllPostProcessingCompleteEvent;
+import net.geocat.events.postprocess.PostProcessDatasetDocumentEvent;
+import net.geocat.events.postprocess.PostProcessServiceDocumentEvent;
+import net.geocat.events.postprocess.StartPostProcessEvent;
 import net.geocat.events.processlinks.AllLinksCheckedEvent;
 import net.geocat.events.processlinks.ProcessDatasetDocLinksEvent;
 import net.geocat.events.processlinks.ProcessServiceDocLinksEvent;
@@ -54,6 +58,18 @@ public class EventFactory {
 
     @Autowired
     LinkCheckJobRepo linkCheckJobRepo;
+
+
+    public AllPostProcessingCompleteEvent createAllPostProcessingCompleteEvent(String linkCheckJobId) {
+        AllPostProcessingCompleteEvent result = new AllPostProcessingCompleteEvent(linkCheckJobId);
+        return result;
+
+    }
+
+    public StartPostProcessEvent createStartPostProcessEvent(String linkCheckJobId) {
+        StartPostProcessEvent result = new StartPostProcessEvent(linkCheckJobId);
+        return result;
+    }
 
     public StartProcessDocumentsEvent createStartProcessDocumentsEvent(LinkCheckRequestedEvent linkCheckRequestedEvent) {
         StartProcessDocumentsEvent result = new StartProcessDocumentsEvent(
@@ -101,10 +117,17 @@ public class EventFactory {
         return result;
     }
 
-//    public ProcessDatasetDocLinksEvent createProcessOperatesOnLinkEvent(long linkId, String linkCheckJobId){
-//        ProcessDatasetDocLinksEvent result = new ProcessDatasetDocLinksEvent(linkId,linkCheckJobId);
-//        return result;
-//    }
+
+
+    public PostProcessServiceDocumentEvent createPostProcessServiceDocumentEvent(long serviceMetadataId, String linkCheckJobId){
+        PostProcessServiceDocumentEvent result = new PostProcessServiceDocumentEvent(serviceMetadataId,linkCheckJobId);
+        return result;
+    }
+
+    public PostProcessDatasetDocumentEvent createPostProcessDatasetDocumentEvent(long serviceMetadataId, String linkCheckJobId){
+        PostProcessDatasetDocumentEvent result = new PostProcessDatasetDocumentEvent(serviceMetadataId,linkCheckJobId);
+        return result;
+    }
 
     public ProcessServiceDocLinksEvent createProcessServiceDocLinksEvent(long serviceMetadataId, String linkCheckJobId){
         ProcessServiceDocLinksEvent result = new ProcessServiceDocLinksEvent(serviceMetadataId,linkCheckJobId);

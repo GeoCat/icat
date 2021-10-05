@@ -71,6 +71,7 @@ public class RedirectAwareHTTPRetriever implements IHTTPRetriever {
         try {
             return retriever.retrieveXML(verb, location, body, cookie, predicate);
         } catch (RedirectException re) {
+            nRedirectsRemaining--;
             if (nRedirectsRemaining <= 0)
                 throw new IOException("too many redirects!");
             logger.debug("     REDIRECTED TO location=" + re.getNewLocation());

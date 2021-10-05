@@ -45,6 +45,15 @@ import java.util.List;
 
 // Represents a Dataset Metadata Record
 @Entity
+@Table(
+        indexes = {
+                @Index(
+                        name = "datasetmetadatarecord_linkcheckjobid_idx",
+                        columnList = "linkCheckJobId",
+                        unique = false
+                )
+        }
+)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "dataset_record_type",
         discriminatorType = DiscriminatorType.STRING)
@@ -60,6 +69,10 @@ public class DatasetMetadataRecord extends MetadataRecord {
     // number of links found in the document
     //  i.e. documentLinks.size()
     private Integer numberOfLinksFound;
+
+    //which link check job is this document apart of
+    @Column(columnDefinition = "varchar(40)")
+    private String linkCheckJobId;
 
 
     // all the outgoing links (i.e. capabilities documents) from the document
@@ -91,6 +104,14 @@ public class DatasetMetadataRecord extends MetadataRecord {
     public DatasetMetadataRecord() {
         super();
         documentLinks = new ArrayList<>();
+    }
+
+    public String getLinkCheckJobId() {
+        return linkCheckJobId;
+    }
+
+    public void setLinkCheckJobId(String linkCheckJobId) {
+        this.linkCheckJobId = linkCheckJobId;
     }
 
     public IndicatorStatus getINDICATOR_LAYER_MATCHES_VIEW() {

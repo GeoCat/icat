@@ -154,16 +154,17 @@ public class MetadataDocumentFactory {
         return result;
     }
 
-    public OperatesOnRemoteDatasetMetadataRecord createRemoteDatasetMetadataRecord(OperatesOnLink link, XmlDatasetMetadataDocument doc) throws Exception {
+    public OperatesOnRemoteDatasetMetadataRecord createRemoteDatasetMetadataRecord(OperatesOnLink link, XmlDatasetMetadataDocument doc,String jobid) throws Exception {
         OperatesOnRemoteDatasetMetadataRecord result = remoteDatasetMetadataRecordService.createRemoteDatasetMetadataRecord(link);
+        result.setLinkCheckJobId(jobid);
         augment(result, doc);
         result.setOperatesOnLink(link);
         return result;
     }
 
     public CapabilitiesRemoteDatasetMetadataDocument createCapabilitiesRemoteDatasetMetadataDocument(
-            CapabilitiesDatasetMetadataLink link, XmlDatasetMetadataDocument doc) throws Exception {
-        CapabilitiesRemoteDatasetMetadataDocument result = remoteDatasetMetadataRecordService.createCapabilitiesRemoteDatasetMetadataDocument(link);
+            CapabilitiesDatasetMetadataLink link, XmlDatasetMetadataDocument doc,String jobid) throws Exception {
+        CapabilitiesRemoteDatasetMetadataDocument result = remoteDatasetMetadataRecordService.createCapabilitiesRemoteDatasetMetadataDocument(link,jobid);
         augment(result, doc);
         result.setCapabilitiesDatasetMetadataLink(link);
         return result;

@@ -31,40 +31,41 @@
  *  ==============================================================================
  */
 
-package net.geocat.eventprocessor;
+package net.geocat.events.postprocess;
 
 import net.geocat.events.Event;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
-@Component
-@Scope("prototype")
-public class EventProcessorFactory {
+public class PostProcessDatasetDocumentEvent extends Event {
 
-    static String[] subpackages = new String[]{"main", "findlinks", "processlinks","postprocess"};
+    private long datasetDocumentId;
+    private String linkCheckJobId;
 
-    @Autowired
-    BeanFactory beanFactory;
-
-    public static Class processorClass(Class eventType) throws Exception {
-        for (String packageName : subpackages) {
-            try {
-                return Class.forName("net.geocat.eventprocessor.processors." + packageName + ".EventProcessor_" + eventType.getSimpleName());
-            } catch (ClassNotFoundException e) {
-                //do nothing
-            }
-        }
-        throw new Exception("couldnt find claass - net.geocat.eventprocessor.processors.EventProcessor_" + eventType.getSimpleName());
+    public PostProcessDatasetDocumentEvent() {
     }
 
-    public Object create(Event event) throws Exception {
-        Class eventType = event.getClass();
-
-        BaseEventProcessor ep = (BaseEventProcessor) beanFactory.getBean(processorClass(eventType));
-        ep.setInitiatingEvent(event);
-        return ep;
+    public PostProcessDatasetDocumentEvent(long datasetDocumentId, String linkCheckJobId) {
+        this.datasetDocumentId = datasetDocumentId;
+        this.linkCheckJobId = linkCheckJobId;
     }
 
+    public long getDatasetDocumentId() {
+        return datasetDocumentId;
+    }
+
+    public void setDatasetDocumentId(long datasetDocumentId) {
+        this.datasetDocumentId = datasetDocumentId;
+    }
+
+    public String getLinkCheckJobId() {
+        return linkCheckJobId;
+    }
+
+    public void setLinkCheckJobId(String linkCheckJobId) {
+        this.linkCheckJobId = linkCheckJobId;
+    }
+
+    @Override
+    public String toString() {
+        return "PostProcessDatasetDocumentEvent  - datasetDocumentId:" + datasetDocumentId + ", linkcheckJobId:" + linkCheckJobId;
+    }
 }

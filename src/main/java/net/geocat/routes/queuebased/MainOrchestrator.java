@@ -41,6 +41,8 @@ import net.geocat.events.LinkCheckAbortEvent;
 import net.geocat.events.LinkCheckRequestedEvent;
 import net.geocat.events.findlinks.LinksFoundInAllDocuments;
 import net.geocat.events.findlinks.StartProcessDocumentsEvent;
+import net.geocat.events.postprocess.AllPostProcessingCompleteEvent;
+import net.geocat.events.postprocess.StartPostProcessEvent;
 import net.geocat.events.processlinks.AllLinksCheckedEvent;
 import net.geocat.events.processlinks.ProcessServiceDocLinksEvent;
 import net.geocat.events.processlinks.StartLinkProcessingEvent;
@@ -66,10 +68,11 @@ public class MainOrchestrator extends SpringRouteBuilder {
 
         mainLoopRouteCreator.createEventProcessingLoop(this,
                 "activemq:" + myJMSQueueName,
-                new Class[]{LinkCheckAbortEvent.class, LinkCheckRequestedEvent.class, LinksFoundInAllDocuments.class, AllLinksCheckedEvent.class},
+                new Class[]{LinkCheckAbortEvent.class, LinkCheckRequestedEvent.class, LinksFoundInAllDocuments.class, AllLinksCheckedEvent.class, AllPostProcessingCompleteEvent.class},
                 Arrays.asList(
                         new RedirectEvent(StartProcessDocumentsEvent.class, "activemq:" + FindLinksOrchestrator.myJMSQueueName)
                         , new RedirectEvent(StartLinkProcessingEvent.class, "activemq:" + ProcessLinksOrchestrator.myJMSQueueName)
+                        , new RedirectEvent(StartPostProcessEvent.class, "activemq:" + PostProcessingOrchestrator.myJMSQueueName)
                 ),
                 Arrays.asList(new Class[0]),
                 2

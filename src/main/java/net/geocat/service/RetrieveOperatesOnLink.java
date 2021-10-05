@@ -60,7 +60,7 @@ public class RetrieveOperatesOnLink {
     @Autowired
     LinkCheckBlobStorageService linkCheckBlobStorageService;
 
-    public OperatesOnLink process(OperatesOnLink link) throws Exception {
+    public OperatesOnLink process(OperatesOnLink link,String jobid) throws Exception {
         link = (OperatesOnLink) retrievableSimpleLinkDownloader.process(link);
 
         if (!link.getUrlFullyRead())
@@ -81,7 +81,7 @@ public class RetrieveOperatesOnLink {
 
         link.setSha2(sha2);
         linkCheckBlobStorageService.ensureBlobExists(xmlStr, sha2);
-        OperatesOnRemoteDatasetMetadataRecord operatesOnRemoteDatasetMetadataRecord = metadataDocumentFactory.createRemoteDatasetMetadataRecord(link, xmlDatasetMetadataDocument);
+        OperatesOnRemoteDatasetMetadataRecord operatesOnRemoteDatasetMetadataRecord = metadataDocumentFactory.createRemoteDatasetMetadataRecord(link, xmlDatasetMetadataDocument, jobid);
         operatesOnRemoteDatasetMetadataRecord.setSha2(sha2);
 
         link.setDatasetMetadataRecord(operatesOnRemoteDatasetMetadataRecord);

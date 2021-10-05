@@ -31,40 +31,44 @@
  *  ==============================================================================
  */
 
-package net.geocat.eventprocessor;
+package net.geocat.routes.queuebased;
 
-import net.geocat.events.Event;
-import org.springframework.beans.factory.BeanFactory;
+import net.geocat.eventprocessor.MainLoopRouteCreator;
+import net.geocat.eventprocessor.RedirectEvent;
+import net.geocat.events.findlinks.LinksFoundInAllDocuments;
+import net.geocat.events.findlinks.ProcessLocalMetadataDocumentEvent;
+import net.geocat.events.findlinks.StartProcessDocumentsEvent;
+import net.geocat.events.postprocess.AllPostProcessingCompleteEvent;
+import net.geocat.events.postprocess.PostProcessDatasetDocumentEvent;
+import net.geocat.events.postprocess.PostProcessServiceDocumentEvent;
+import net.geocat.events.postprocess.StartPostProcessEvent;
+import org.apache.camel.spring.SpringRouteBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-@Component
-@Scope("prototype")
-public class EventProcessorFactory {
+import java.util.Arrays;
 
-    static String[] subpackages = new String[]{"main", "findlinks", "processlinks","postprocess"};
+
+
+@Component
+public class PostProcessingOrchestrator extends SpringRouteBuilder {
+
+    public static String myJMSQueueName = "linkCheck.PostProcessingOrchestrator";
 
     @Autowired
-    BeanFactory beanFactory;
+    MainLoopRouteCreator mainLoopRouteCreator;
 
-    public static Class processorClass(Class eventType) throws Exception {
-        for (String packageName : subpackages) {
-            try {
-                return Class.forName("net.geocat.eventprocessor.processors." + packageName + ".EventProcessor_" + eventType.getSimpleName());
-            } catch (ClassNotFoundException e) {
-                //do nothing
-            }
-        }
-        throw new Exception("couldnt find claass - net.geocat.eventprocessor.processors.EventProcessor_" + eventType.getSimpleName());
+    @Override
+    public void configure() throws Exception {
+
+        mainLoopRouteCreator.createEventProcessingLoop(this,
+                "activemq:" + myJMSQueueName,
+                new Class[]{StartPostProcessEvent.class, PostProcessServiceDocumentEvent.class, PostProcessDatasetDocumentEvent.class},
+                Arrays.asList(
+                        new RedirectEvent(AllPostProcessingCompleteEvent.class, "activemq:" + MainOrchestrator.myJMSQueueName)
+                ),
+                Arrays.asList(new Class[0]),
+                5
+        );
     }
-
-    public Object create(Event event) throws Exception {
-        Class eventType = event.getClass();
-
-        BaseEventProcessor ep = (BaseEventProcessor) beanFactory.getBean(processorClass(eventType));
-        ep.setInitiatingEvent(event);
-        return ep;
-    }
-
 }

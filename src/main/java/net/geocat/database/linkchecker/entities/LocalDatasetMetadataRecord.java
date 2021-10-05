@@ -49,9 +49,7 @@ public class LocalDatasetMetadataRecord extends DatasetMetadataRecord {
     @Column(columnDefinition = "varchar(20)")
     ServiceMetadataDocumentState state;
 
-    //which link check job is this document apart of
-    @Column(columnDefinition = "varchar(40)")
-    private String linkCheckJobId;
+
 
     // from the harvester - what is the harvester's record ID for this document?
     private long harvesterMetadataRecordId;
@@ -67,15 +65,6 @@ public class LocalDatasetMetadataRecord extends DatasetMetadataRecord {
 
     public LocalDatasetMetadataRecord() {
         super();
-    }
-
-
-    public String getLinkCheckJobId() {
-        return linkCheckJobId;
-    }
-
-    public void setLinkCheckJobId(String linkCheckJobId) {
-        this.linkCheckJobId = linkCheckJobId;
     }
 
 
@@ -117,7 +106,7 @@ public class LocalDatasetMetadataRecord extends DatasetMetadataRecord {
     public String toString() {
         String result = "LocalDatasetMetadataRecord {\n";
         result += "      Dataset Metadata Document Id: " + getDatasetMetadataDocumentId() + "\n";
-        result += "     linkCheckJobId: " + linkCheckJobId + "\n";
+        result += "     linkCheckJobId: " + getLinkCheckJobId() + "\n";
         result += "     harvesterMetadataRecordId: " + harvesterMetadataRecordId + "\n";
         result += "     state: " + state + "\n";
 

@@ -31,40 +31,53 @@
  *  ==============================================================================
  */
 
-package net.geocat.eventprocessor;
+package net.geocat.eventprocessor.processors.main;
 
+import net.geocat.database.linkchecker.entities.LinkCheckJobState;
+import net.geocat.database.linkchecker.service.LinkCheckJobService;
+import net.geocat.eventprocessor.BaseEventProcessor;
 import net.geocat.events.Event;
-import org.springframework.beans.factory.BeanFactory;
+import net.geocat.events.postprocess.AllPostProcessingCompleteEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+
+
 @Component
 @Scope("prototype")
-public class EventProcessorFactory {
+public class EventProcessor_AllPostProcessingCompleteEvent extends BaseEventProcessor<AllPostProcessingCompleteEvent> {
 
-    static String[] subpackages = new String[]{"main", "findlinks", "processlinks","postprocess"};
+    Logger logger = LoggerFactory.getLogger(net.geocat.eventprocessor.processors.processlinks.EventProcessor_ProcessServiceDocLinksEvent.class);
 
     @Autowired
-    BeanFactory beanFactory;
+    LinkCheckJobService linkCheckJobService;
 
-    public static Class processorClass(Class eventType) throws Exception {
-        for (String packageName : subpackages) {
-            try {
-                return Class.forName("net.geocat.eventprocessor.processors." + packageName + ".EventProcessor_" + eventType.getSimpleName());
-            } catch (ClassNotFoundException e) {
-                //do nothing
-            }
-        }
-        throw new Exception("couldnt find claass - net.geocat.eventprocessor.processors.EventProcessor_" + eventType.getSimpleName());
+
+
+    @Override
+    public EventProcessor_AllPostProcessingCompleteEvent externalProcessing() {
+        return this;
     }
 
-    public Object create(Event event) throws Exception {
-        Class eventType = event.getClass();
 
-        BaseEventProcessor ep = (BaseEventProcessor) beanFactory.getBean(processorClass(eventType));
-        ep.setInitiatingEvent(event);
-        return ep;
+    @Override
+    public EventProcessor_AllPostProcessingCompleteEvent internalProcessing() {
+        linkCheckJobService.updateLinkCheckJobStateInDB(getInitiatingEvent().getLinkCheckJobId(), LinkCheckJobState.COMPLETE);
+        return this;
+    }
+
+
+    @Override
+    public List<Event> newEventProcessing() {
+        List<Event> result = new ArrayList<>();
+
+        return result;
     }
 
 }
+

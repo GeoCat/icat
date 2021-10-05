@@ -124,6 +124,9 @@ public class EventProcessor_StartProcessDocumentsEvent extends BaseEventProcesso
 
         //metadataRecords = metadataRecords.stream().filter(x-> items.contains(x.getMetadataRecordId() )).collect(Collectors.toList());
 
+//        List<String> items = Arrays.asList(new String[] {"46035049-89f3-4723-93e9-c1af0a1274ae","306136ac-421f-4be1-9a6b-14ef36831141","37569840-7c18-49da-bac5-f730491591e4"});
+//        metadataRecords = metadataRecords.stream().filter(x-> items.contains(x.getRecordIdentifier() )).collect(Collectors.toList());
+
 
         LinkCheckJob job = linkCheckJobService.updateNumberofDocumentsInBatch(linkCheckJobId, (long) metadataRecords.size());
 

@@ -43,6 +43,8 @@ public enum LinkCheckJobState {
     //  go through each of the documents (in the link checker database) and process all the links (i.e. resolve them, parse the capabilities document, fetch the DS link from the layers).
     CHECKING_LINKS, LINKS_CHECKED,
 
+    POST_PROCESSING,
+
     COMPLETE,
 
     ERROR, USERABORT  // abnormal ending

@@ -44,6 +44,15 @@ import javax.persistence.*;
 
 //links from a dataset metadata document
 @Entity
+@Table(
+        indexes = {
+                @Index(
+                        name = "datasetmetadatarecord_datasetmetadatadocumentid_index",
+                        columnList = "datasetMetadataRecord_datasetMetadataDocumentId",
+                        unique = false
+                )
+        }
+)
 public class DatasetDocumentLink extends DocumentLink {
 
     //which dataset metadata document did this link come from?

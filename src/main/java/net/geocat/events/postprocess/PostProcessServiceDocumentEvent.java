@@ -31,40 +31,41 @@
  *  ==============================================================================
  */
 
-package net.geocat.eventprocessor;
+package net.geocat.events.postprocess;
 
 import net.geocat.events.Event;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
-@Component
-@Scope("prototype")
-public class EventProcessorFactory {
+public class PostProcessServiceDocumentEvent extends Event {
 
-    static String[] subpackages = new String[]{"main", "findlinks", "processlinks","postprocess"};
+    private long serviceMetadataId;
+    private String linkCheckJobId;
 
-    @Autowired
-    BeanFactory beanFactory;
-
-    public static Class processorClass(Class eventType) throws Exception {
-        for (String packageName : subpackages) {
-            try {
-                return Class.forName("net.geocat.eventprocessor.processors." + packageName + ".EventProcessor_" + eventType.getSimpleName());
-            } catch (ClassNotFoundException e) {
-                //do nothing
-            }
-        }
-        throw new Exception("couldnt find claass - net.geocat.eventprocessor.processors.EventProcessor_" + eventType.getSimpleName());
+    public PostProcessServiceDocumentEvent() {
     }
 
-    public Object create(Event event) throws Exception {
-        Class eventType = event.getClass();
-
-        BaseEventProcessor ep = (BaseEventProcessor) beanFactory.getBean(processorClass(eventType));
-        ep.setInitiatingEvent(event);
-        return ep;
+    public PostProcessServiceDocumentEvent(long serviceMetadataId, String linkCheckJobId) {
+        this.serviceMetadataId = serviceMetadataId;
+        this.linkCheckJobId = linkCheckJobId;
     }
 
+    public long getServiceMetadataId() {
+        return serviceMetadataId;
+    }
+
+    public void setServiceMetadataId(long serviceMetadataId) {
+        this.serviceMetadataId = serviceMetadataId;
+    }
+
+    public String getLinkCheckJobId() {
+        return linkCheckJobId;
+    }
+
+    public void setLinkCheckJobId(String linkCheckJobId) {
+        this.linkCheckJobId = linkCheckJobId;
+    }
+
+    @Override
+    public String toString() {
+        return "PostProcessServiceDocumentEvent  - serviceMetadataId:" + serviceMetadataId + ", linkcheckJobId:" + linkCheckJobId;
+    }
 }

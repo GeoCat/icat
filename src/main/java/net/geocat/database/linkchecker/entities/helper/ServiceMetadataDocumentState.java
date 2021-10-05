@@ -41,5 +41,7 @@ public enum ServiceMetadataDocumentState {
     LINKS_EXTRACTED, // document was parsed and the object model saved
     LINKS_PROCESSED, // links were actually evaluated (rest of object model populated, indicators set)
 
+    LINKS_POSTPROCESSED,
+
     ERROR // a problem occurred - could not process this document
 }

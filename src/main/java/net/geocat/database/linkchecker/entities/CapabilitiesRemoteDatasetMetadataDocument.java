@@ -50,6 +50,11 @@ public class CapabilitiesRemoteDatasetMetadataDocument extends DatasetMetadataRe
     @Column(columnDefinition = "text")
     private String summary;
 
+    //which link check job is this document apart of
+    @Column(columnDefinition = "varchar(40)")
+    private String linkCheckJobId;
+
+
     //---------------------------------------------------------------------------
 
     public CapabilitiesDatasetMetadataLink getCapabilitiesDatasetMetadataLink() {
@@ -76,6 +81,22 @@ public class CapabilitiesRemoteDatasetMetadataDocument extends DatasetMetadataRe
     }
 
     //---------------------------------------------------------------------------
+
+    public String getLinkCheckJobId() {
+        return linkCheckJobId;
+    }
+
+    public void setLinkCheckJobId(String linkCheckJobId) {
+        this.linkCheckJobId = linkCheckJobId;
+    }
+
+    public CapabilitiesDatasetMetadataLink getCapabilitiesRemoteDatasetMetadataDocumentLink() {
+        return capabilitiesRemoteDatasetMetadataDocumentLink;
+    }
+
+    public void setCapabilitiesRemoteDatasetMetadataDocumentLink(CapabilitiesDatasetMetadataLink capabilitiesRemoteDatasetMetadataDocumentLink) {
+        this.capabilitiesRemoteDatasetMetadataDocumentLink = capabilitiesRemoteDatasetMetadataDocumentLink;
+    }
 
     @Override
     public String toString() {

@@ -39,8 +39,12 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 
 @Component
 @Scope("prototype")
 public interface CapabilitiesRemoteDatasetMetadataDocumentRepo extends CrudRepository<CapabilitiesRemoteDatasetMetadataDocument, Long> {
+
+    List<CapabilitiesRemoteDatasetMetadataDocument> findBylinkCheckJobIdAndFileIdentifier(String linkCheckJobId,String fileIdentifier);
 }

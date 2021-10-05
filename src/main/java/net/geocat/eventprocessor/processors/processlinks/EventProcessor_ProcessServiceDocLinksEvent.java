@@ -143,9 +143,9 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
             logger.debug("processing SERVICE documentid="+getInitiatingEvent().getServiceMetadataId()+" that has "+nlinksCap+" document links, and "+nlinksOperates+" operates on links");
 
             processDocumentLinks();
-          //  save();
+
             processOperatesOnLinks();
-             save();
+             save(false);
 
              logger.debug("finished initial processing  documentid="+getInitiatingEvent().getServiceMetadataId()  );
 
@@ -154,7 +154,7 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
             logger.error("exception for serviceMetadataRecordId="+getInitiatingEvent().getServiceMetadataId(),e);
             localServiceMetadataRecord.setState(ServiceMetadataDocumentState.ERROR);
             localServiceMetadataRecord.setErrorMessage(  convertToString(e) );
-            save();
+            save(false);
         }
 
 
@@ -189,7 +189,7 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
         if (capDocuments.isEmpty() && opsOnDocuments.isEmpty())
             return; //nothing to do
 
-        save(); //save with objects detached
+        save(true); //save with objects detached
 
         for (CapabilitiesDocument capDoc: capDocuments){
             capabilitiesDocumentRepo.delete(capDoc);
@@ -199,12 +199,14 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
             operatesOnRemoteDatasetMetadataRecordRepo.delete(record);
         }
 
-        save();
+        save(true);
     }
 
-    public void save(){
+    public void save(boolean reload){
         localServiceMetadataRecord = localServiceMetadataRecordRepo.save(localServiceMetadataRecord);
-        localServiceMetadataRecord = localServiceMetadataRecordRepo.fullId(localServiceMetadataRecord.getServiceMetadataDocumentId());
+        localServiceMetadataRecord=null;
+        if (reload)
+            localServiceMetadataRecord = localServiceMetadataRecordRepo.fullId(localServiceMetadataRecord.getServiceMetadataDocumentId());
     }
 
 
@@ -229,7 +231,8 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
 
     private void handleOperatesOnLink(OperatesOnLink link) {
         try {
-            link = retrieveOperatesOnLink.process(link);
+            String jobid = getInitiatingEvent().getLinkCheckJobId();
+            link = retrieveOperatesOnLink.process(link,jobid);
 
             link.setLinkState(LinkState.Complete);
         }
@@ -299,7 +302,9 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
 
     private void handleLayerDatasetLink(CapabilitiesDatasetMetadataLink capabilitiesDatasetMetadataLink) {
         try {
-            capabilitiesDatasetMetadataLink = retrieveCapabilitiesDatasetMetadataLink.process(capabilitiesDatasetMetadataLink);
+            String jobid = getInitiatingEvent().getLinkCheckJobId();
+
+            capabilitiesDatasetMetadataLink = retrieveCapabilitiesDatasetMetadataLink.process(capabilitiesDatasetMetadataLink,jobid);
 
             capabilitiesDatasetMetadataLink.setLinkState(LinkState.Complete);
         }
@@ -359,14 +364,14 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
 
             localServiceMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_PROCESSED);
             localServiceMetadataRecord.setHumanReadable(humanReadableServiceMetadata.getHumanReadable(localServiceMetadataRecord));
-            save();
+            save(false);
             logger.debug("finished post processing  documentid="+getInitiatingEvent().getServiceMetadataId()  );
         }
         catch(Exception e){
             logger.error("post processing exception for serviceMetadataRecordId="+getInitiatingEvent().getServiceMetadataId(),e);
             localServiceMetadataRecord.setState(ServiceMetadataDocumentState.ERROR);
             localServiceMetadataRecord.setErrorMessage(  convertToString(e) );
-            save();
+            save(false);
         }
 
         return this;

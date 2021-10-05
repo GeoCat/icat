@@ -41,6 +41,15 @@ import javax.persistence.*;
 
 //represents a link from a service metadata xml document
 @Entity
+@Table(
+        indexes = {
+                @Index(
+                        name = "servicemetadatarecord_servicemetadatadocumentid_index",
+                        columnList = "serviceMetadataRecord_serviceMetadataDocumentId",
+                        unique = false
+                )
+        }
+)
 public class ServiceDocumentLink extends DocumentLink {
 
     //which service document did this link come from?

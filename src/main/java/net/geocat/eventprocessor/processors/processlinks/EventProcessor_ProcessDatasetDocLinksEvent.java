@@ -204,7 +204,8 @@ public class EventProcessor_ProcessDatasetDocLinksEvent extends BaseEventProcess
 
     private void handleLayerDatasetLink(CapabilitiesDatasetMetadataLink capabilitiesDatasetMetadataLink) {
         try {
-            capabilitiesDatasetMetadataLink = retrieveCapabilitiesDatasetMetadataLink.process(capabilitiesDatasetMetadataLink);
+            String jobid = getInitiatingEvent().getLinkCheckJobId();
+            capabilitiesDatasetMetadataLink = retrieveCapabilitiesDatasetMetadataLink.process(capabilitiesDatasetMetadataLink,jobid);
 
             capabilitiesDatasetMetadataLink.setLinkState(LinkState.Complete);
         }

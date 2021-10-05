@@ -60,7 +60,7 @@ public class RetrieveCapabilitiesDatasetMetadataLink {
     @Autowired
     LinkCheckBlobStorageService linkCheckBlobStorageService;
 
-    public CapabilitiesDatasetMetadataLink process(CapabilitiesDatasetMetadataLink link) throws Exception {
+    public CapabilitiesDatasetMetadataLink process(CapabilitiesDatasetMetadataLink link,String jobid) throws Exception {
         link = (CapabilitiesDatasetMetadataLink) retrievableSimpleLinkDownloader.process(link);
 
         if (!link.getUrlFullyRead())
@@ -82,7 +82,7 @@ public class RetrieveCapabilitiesDatasetMetadataLink {
         link.setSha2(sha2);
         linkCheckBlobStorageService.ensureBlobExists(xmlStr, sha2);
 
-        CapabilitiesRemoteDatasetMetadataDocument capabilitiesRemoteDatasetMetadataDocument = metadataDocumentFactory.createCapabilitiesRemoteDatasetMetadataDocument(link, xmlDatasetMetadataDocument);
+        CapabilitiesRemoteDatasetMetadataDocument capabilitiesRemoteDatasetMetadataDocument = metadataDocumentFactory.createCapabilitiesRemoteDatasetMetadataDocument(link, xmlDatasetMetadataDocument,jobid);
         capabilitiesRemoteDatasetMetadataDocument.setSha2(sha2);
 
         link.setCapabilitiesRemoteDatasetMetadataDocument(capabilitiesRemoteDatasetMetadataDocument);
