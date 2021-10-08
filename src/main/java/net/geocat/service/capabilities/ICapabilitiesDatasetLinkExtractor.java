@@ -34,10 +34,11 @@
 package net.geocat.service.capabilities;
 
 import net.geocat.xml.XmlCapabilitiesDocument;
+import net.geocat.xml.XmlDoc;
 
 import java.util.List;
 
 public interface ICapabilitiesDatasetLinkExtractor {
 
-    List<DatasetLink> findLinks(XmlCapabilitiesDocument doc) throws Exception;
+    List<DatasetLink> findLinks(XmlDoc doc) throws Exception;
 }

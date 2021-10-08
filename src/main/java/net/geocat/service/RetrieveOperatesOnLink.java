@@ -44,6 +44,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import static net.geocat.service.capabilities.CapabilitiesLinkFixer.canonicalize;
+
 @Component
 @Scope("prototype")
 public class RetrieveOperatesOnLink {
@@ -61,6 +63,13 @@ public class RetrieveOperatesOnLink {
     LinkCheckBlobStorageService linkCheckBlobStorageService;
 
     public OperatesOnLink process(OperatesOnLink link,String jobid) throws Exception {
+
+        if ( (link.getFixedURL() == null) || link.getFixedURL().isEmpty())
+            link.setFixedURL(link.getRawURL());
+
+        link.setFixedURL( canonicalize(link.getFixedURL()));
+
+
         link = (OperatesOnLink) retrievableSimpleLinkDownloader.process(link);
 
         if (!link.getUrlFullyRead())

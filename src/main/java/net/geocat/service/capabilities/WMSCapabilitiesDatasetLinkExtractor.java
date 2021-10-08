@@ -33,8 +33,9 @@
 
 package net.geocat.service.capabilities;
 
-import net.geocat.xml.XmlCapabilitiesDocument;
 import net.geocat.xml.XmlDoc;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Node;
@@ -48,10 +49,7 @@ import java.util.List;
 @Scope("prototype")
 public class WMSCapabilitiesDatasetLinkExtractor implements ICapabilitiesDatasetLinkExtractor {
 
-    public String namespace="wms";
-    public String namespaceIdentifier="wms";
-    public String namespaceMetadataURL="wms";
-
+    Logger logger = LoggerFactory.getLogger(WMSCapabilitiesDatasetLinkExtractor.class);
 
 
     public static List<DatasetLink> unique(List<DatasetLink> list) {
@@ -62,21 +60,50 @@ public class WMSCapabilitiesDatasetLinkExtractor implements ICapabilitiesDataset
         return list;
     }
 
+
+    public static List<Node> findNodes(Node n,String localName) {
+
+        NodeList nl = n.getChildNodes();
+        List<Node> result = new ArrayList<>();
+        for (int idx=0; idx <nl.getLength();idx++) {
+            Node nn = nl.item(idx);
+            String name = nn.getLocalName() == null ? nn.getNodeName() : nn.getLocalName();
+
+            if (name.equals(localName)) {
+                result.add(nn);
+                result.addAll(findNodes(nn,localName)); // recurse
+            }
+        }
+        return result;
+    }
+
+
     @Override
-    public List<DatasetLink> findLinks(XmlCapabilitiesDocument doc) throws Exception {
+    public List<DatasetLink> findLinks(XmlDoc doc) throws Exception {
         List<DatasetLink> result = new ArrayList<>();
-        NodeList layers = doc.xpath_nodeset("//"+namespace+":Layer");
-        for (int idx = 0; idx < layers.getLength(); idx++) {
-            Node layer = layers.item(idx);
-            DatasetLink link = processLayer(doc, layer);
+
+        Node main = doc.getFirstNode();
+
+        Node secondary = findNode(doc.getFirstNode(),"Capability");
+        if (secondary == null)
+            secondary = findNode(doc.getFirstNode(),"Contents");;
+
+        List<Node> ns = findNodes(secondary,"Layer");
+
+        int idx = 0;
+        for(Node n : ns) {
+          //  logger.debug("indx = "+idx);
+            DatasetLink link = processLayer(doc, n);
             if (link != null)
                 result.add(link);
+            idx++;
         }
+
 
         return unique(result);
     }
 
-    public DatasetLink processLayer(XmlCapabilitiesDocument doc, Node layer) throws Exception {
+    public DatasetLink processLayer(XmlDoc doc, Node layer) throws Exception {
         String identifier = searchIdentifier(doc, layer);
         String metadataUrl = searchMetadataUrl(doc, layer);
         String authority = searchAuthority(doc,layer);
@@ -90,8 +117,38 @@ public class WMSCapabilitiesDatasetLinkExtractor implements ICapabilitiesDataset
         return null;
     }
 
+    protected Node findBestMetadataURL(Node layer) {
+        List<Node> metadataURLs = findAllNodes(layer, "MetadataURL");
+        if (metadataURLs.isEmpty())
+            return null;
+        if (metadataURLs.size() == 1) //only one, no need to choose
+            return metadataURLs.get(0);
+
+        Node good = null;
+
+        for (Node metadataURL: metadataURLs){
+            Node format = findNode(metadataURL,"Format");
+            if ( (format !=null) && (format.getTextContent() != null) ){
+                String mime = format.getTextContent().trim();
+                if (mime.toLowerCase().contains("/xml")) //  text/xml  application/xml
+                    return metadataURL;
+                if (mime.toLowerCase().contains("xml"))  // might catch something...
+                    good= metadataURL;
+            }
+        }
+        if (good !=null)
+            return good;
+        return metadataURLs.get(0);
+
+    }
+
     protected String findMetadataURL(Node layer) throws Exception {
-        Node n = XmlDoc.xpath_node(layer, "wms:MetadataURL/wms:OnlineResource");
+      //  Node n = XmlDoc.xpath_node(layer, "wms:MetadataURL/wms:OnlineResource");
+       // Node nn = findNode(layer, "MetadataURL");
+        Node nn =findBestMetadataURL(layer);
+        if (nn == null)
+            return null;
+        Node n = findNode(nn, "OnlineResource");
         if (n == null)
             return null;
         Node att = n.getAttributes().getNamedItem("xlink:href");
@@ -101,7 +158,7 @@ public class WMSCapabilitiesDatasetLinkExtractor implements ICapabilitiesDataset
     }
 
 
-    private String searchMetadataUrl(XmlCapabilitiesDocument doc, Node layer) throws Exception {
+    private String searchMetadataUrl(XmlDoc doc, Node layer) throws Exception {
         String metadataURL = findMetadataURL(layer);
         if ((metadataURL != null) && (!metadataURL.isEmpty()))
             return metadataURL;
@@ -111,15 +168,44 @@ public class WMSCapabilitiesDatasetLinkExtractor implements ICapabilitiesDataset
         return null;
     }
 
+    public static Node findNode(Node n, String localName) {
+        NodeList nl = n.getChildNodes();
+        for (int idx=0; idx <nl.getLength();idx++) {
+            Node nn = nl.item(idx);
+            String name = nn.getLocalName() == null ? nn.getNodeName() : nn.getLocalName();
+            if (name.equals(localName)) {
+                return nn;
+            }
+        }
+        return null;
+    }
+
+
+    public static List<Node> findAllNodes(Node n, String localName) {
+        List<Node> result = new ArrayList<>();
+        NodeList nl = n.getChildNodes();
+        for (int idx=0; idx <nl.getLength();idx++) {
+            Node nn = nl.item(idx);
+            String name = nn.getLocalName() == null ? nn.getNodeName() : nn.getLocalName();
+            if (name.equals(localName)) {
+                result.add(nn);
+            }
+        }
+        return result;
+    }
+
+
     private String findIdentifier(Node layer) throws Exception {
-        Node n = XmlDoc.xpath_node(layer, namespaceIdentifier+":Identifier");
+//        Node n = XmlDoc.xpath_node(layer, namespaceIdentifier+":Identifier");
+        Node n= findNode(layer, "Identifier") ;
+
         if (n == null)
             return null;
         return n.getTextContent().trim();
     }
 
 
-    public String searchIdentifier(XmlCapabilitiesDocument doc, Node layer) throws Exception {
+    public String searchIdentifier(XmlDoc doc, Node layer) throws Exception {
         String localIdentifier = findIdentifier(layer);
         if ((localIdentifier != null) && (!localIdentifier.isEmpty()))
             return localIdentifier;
@@ -130,7 +216,8 @@ public class WMSCapabilitiesDatasetLinkExtractor implements ICapabilitiesDataset
     }
 
     private String findAuthority(Node layer) throws Exception {
-        Node n = XmlDoc.xpath_node(layer, namespace+":Identifier");
+      //  Node n = XmlDoc.xpath_node(layer, namespace+":Identifier");
+        Node n = findNode(layer,"Identifier");
         if (n == null)
             return null;
         Node authorityNode = n.getAttributes().getNamedItem("authority");
@@ -142,7 +229,7 @@ public class WMSCapabilitiesDatasetLinkExtractor implements ICapabilitiesDataset
         return null;
     }
 
-    public String searchAuthority(XmlCapabilitiesDocument doc, Node layer) throws Exception {
+    public String searchAuthority(XmlDoc doc, Node layer) throws Exception {
         String localAuthority = findAuthority(layer);
         if ((localAuthority != null) && (!localAuthority.isEmpty()))
             return localAuthority;

@@ -130,7 +130,7 @@ public class EventProcessor_ProcessDatasetDocLinksEvent extends BaseEventProcess
             int nlinksCap = localDatasetMetadataRecord.getDocumentLinks().size();
              logger.debug("processing DATASET documentid="+getInitiatingEvent().getDatasetDocumentId()+" that has "+nlinksCap+" document links");
 
-            processDocumentLinks();
+          //  processDocumentLinks();
             save();
 
             logger.debug("finished initial processing documentid="+getInitiatingEvent().getDatasetDocumentId()  );

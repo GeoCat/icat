@@ -45,18 +45,30 @@ public class OperatesOn {
     String uuidref;
     String rawUrl;
 
+    public String getAttribute(Node n, String attname) {
+        Node att = n.getAttributes().getNamedItem(attname);
+        if (att == null)
+            return null;
+        String value = att.getNodeValue();
+        return value;
+    }
+
     public OperatesOn(Node node) throws Exception {
         if (!node.getLocalName().equals("operatesOn"))
             throw new Exception("OperatesOn -- root node should be operatesOn");
 
-        uuidref = XmlDoc.xpath_attribute(node, ".", "uuidref");
-        rawUrl = XmlDoc.xpath_attribute(node, ".", "xlink:href");
+        uuidref = getAttribute(node, "uuidref");
+        rawUrl = getAttribute(node,   "xlink:href");
+
+
+//        uuidref = XmlDoc.xpath_attribute(node, ".", "uuidref");
+//        rawUrl = XmlDoc.xpath_attribute(node, ".", "xlink:href");
     }
 
-    public static List<OperatesOn> create(NodeList nl) throws Exception {
-        List<OperatesOn> result = new ArrayList<>(nl.getLength());
-        for (int idx = 0; idx < nl.getLength(); idx++) {
-            Node n = nl.item(idx);
+    public static List<OperatesOn> create(List<Node> nl) throws Exception {
+        List<OperatesOn> result = new ArrayList<>(nl.size());
+        for (Node n: nl) {
+           // Node n = nl.item(idx);
             OperatesOn opOn = new OperatesOn(n);
             result.add(opOn);
         }

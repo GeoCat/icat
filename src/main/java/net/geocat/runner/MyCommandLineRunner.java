@@ -46,11 +46,18 @@ import net.geocat.eventprocessor.processors.processlinks.postprocessing.*;
 import net.geocat.http.BasicHTTPRetriever;
 import net.geocat.http.IHTTPRetriever;
 import net.geocat.service.*;
+
+import net.geocat.service.capabilities.DatasetLink;
+import net.geocat.service.capabilities.WMSCapabilitiesDatasetLinkExtractor;
+import net.geocat.service.downloadhelpers.PartialDownloadPredicateFactory;
+import net.geocat.xml.*;
+
 import net.geocat.service.downloadhelpers.PartialDownloadPredicateFactory;
 import net.geocat.xml.XmlCapabilitiesDocument;
 import net.geocat.xml.XmlDoc;
 import net.geocat.xml.XmlDocumentFactory;
 import net.geocat.xml.XmlServiceRecordDoc;
+
 import net.geocat.xml.helpers.CapabilitiesType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +65,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import java.io.FileOutputStream;
 import java.io.PrintStream;
@@ -187,7 +196,12 @@ public class MyCommandLineRunner implements CommandLineRunner {
         // run3(args);
       //  LocalServiceMetadataRecord sm11 = localServiceMetadataRecordRepo.findById(12248L).get();
         try {
+
+        // run_2(args);
+         //   run12(args);
+
         //   run12(args);
+
         //    run11(args);
         }
         catch(Exception e){
@@ -196,6 +210,110 @@ public class MyCommandLineRunner implements CommandLineRunner {
         logger.debug("DONE!");
     }
 
+    public void run_2(String... args) throws Exception {
+
+        LocalServiceMetadataRecord serviceRecord = localServiceMetadataRecordRepo.findById(298852L).get();
+        LocalServiceMetadataRecord serviceRecord2 = localServiceMetadataRecordRepo.fullId(298852L);
+        int t=0;
+    }
+
+
+        private  Node  findNode (Node n,String localName) {
+
+        NodeList nl = n.getChildNodes();
+        List<Node> result = new ArrayList<>();
+        for (int idx=0; idx <nl.getLength();idx++) {
+            Node nn = nl.item(idx);
+            if (nn.getNodeName().equals(localName)) {
+               return nn;
+            }
+        }
+        return null;
+    }
+
+
+    private List<Node> findNodes(Node n,String localName) {
+
+        NodeList nl = n.getChildNodes();
+        List<Node> result = new ArrayList<>();
+        for (int idx=0; idx <nl.getLength();idx++) {
+            Node nn = nl.item(idx);
+            if (nn.getNodeName().equals(localName)) {
+                result.add(nn);
+                result.addAll(findNodes(nn,localName)); // recurse
+            }
+        }
+        return result;
+    }
+
+
+    public void run_1(String... args) throws Exception {
+        long startTime;
+        long endTime;
+
+        LocalServiceMetadataRecord serviceRecord = localServiceMetadataRecordRepo.findById(161990L).get();
+        String serviceXML = blobStorageService.findXML(serviceRecord.getSha2());
+        String capXML = linkCheckBlobStorageRepo.findById("D4A9F85CF61F688ABF6545C818B19A348ED382CDA9CBDDF6444B20A0965C7CCE").get().getTextValue();
+
+            startTime = System.currentTimeMillis();
+
+         //   XmlDoc xdoc = new XmlDoc(capXML);
+
+//                List<DatasetLink> result = new ArrayList<>();
+//                NodeList layers = xdoc.xpath_nodeset("//"+"wms"+":Layer");
+//                for (int idx = 0; idx < layers.getLength(); idx++) {
+//                    logger.debug("doing layer "+idx+" of "+layers.getLength());
+//                    Node layer = layers.item(idx);
+//                    NodeList children = layer.getChildNodes();
+//                    boolean removable = true;
+//                    for (int idx2 = 0; idx2<children.getLength(); idx2++) {
+//                        Node child = children.item(idx2);
+//                        if (child.getNodeName().equals("Layer"))
+//                            removable = false;
+//                    }
+//                    if (removable )
+//                        layer.getParentNode().removeChild(layer);
+//                    //DatasetLink link = processLayer(doc, layer);
+//
+//                }
+
+
+//        WMSCapabilitiesDatasetLinkExtractor extractor2 = new WMSCapabilitiesDatasetLinkExtractor();
+//        List<DatasetLink> ds = extractor2.findLinks(xdoc);
+
+       // List<Node> ns = findNodes(findNode(xdoc.getFirstNode(),"Capability"),"Layer");
+
+//
+//        CachedXPathAPI cachedXPathAPI = new CachedXPathAPI();
+//        NodeIterator xObject = cachedXPathAPI.selectNodeIterator(xdoc.getParsedXml(), "//*[local-name()='Layer']");
+//        boolean keep_going = true;
+//        int idx =0;
+//        while (keep_going) {
+//            Node n = xObject.nextNode();
+//            keep_going = n != null;
+//            if (n != null) {
+//                logger.debug("indx = "+idx);
+//                int t=0;
+//            }
+//            idx++;
+//        }
+
+
+             XmlCapabilitiesWMS wms = (XmlCapabilitiesWMS) xmlDocumentFactory.create(capXML);
+
+            endTime = System.currentTimeMillis();
+            System.out.println("WMS parse total execution time: " + (endTime - startTime));
+
+        startTime = System.currentTimeMillis();
+
+          XmlServiceRecordDoc service = (XmlServiceRecordDoc) xmlDocumentFactory.create(serviceXML);
+        endTime = System.currentTimeMillis();
+        System.out.println("service parse total execution time: " + (endTime - startTime));
+
+      //  serviceRecord = localServiceMetadataRecordRepo.fullId(161990L) ;
+
+        int t=0;
+    }
 
     public CapabilitiesDocument createCap(XmlCapabilitiesDocument xml) throws Exception {
         String sha2 ="test case";

@@ -40,14 +40,14 @@ public class WMTSCapabilitiesDatasetLinkExtractor extends WMSCapabilitiesDataset
 
 
     public WMTSCapabilitiesDatasetLinkExtractor() {
-        namespace="wmts";
-        namespaceIdentifier="ows";
-        namespaceMetadataURL="ows";
+
     }
 
     @Override
     protected String findMetadataURL(Node layer) throws Exception {
-        Node n = XmlDoc.xpath_node(layer, "ows:Metadata");
+        Node n = findNode(layer, "Metadata");
+
+      //  Node n = XmlDoc.xpath_node(layer, "ows:Metadata");
         if (n == null)
             return null;
         Node att = n.getAttributes().getNamedItem("xlink:href");

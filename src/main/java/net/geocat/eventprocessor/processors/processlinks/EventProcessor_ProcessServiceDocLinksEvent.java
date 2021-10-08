@@ -45,6 +45,7 @@ import net.geocat.events.Event;
 import net.geocat.events.EventFactory;
 import net.geocat.events.processlinks.ProcessServiceDocLinksEvent;
 import net.geocat.service.*;
+import net.geocat.service.capabilities.CapabilitiesLinkFixer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static net.geocat.database.linkchecker.service.DatabaseUpdateService.convertToString;
 
@@ -124,6 +129,10 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
 
    @Autowired
    ServiceOperatesOnIndicators serviceOperatesOnIndicators;
+
+
+    @Autowired
+    CapabilitiesLinkFixer capabilitiesLinkFixer;
 
     LocalServiceMetadataRecord localServiceMetadataRecord;
 
@@ -210,22 +219,50 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
     }
 
 
-    private void processOperatesOnLinks() {
+    private void processOperatesOnLinks() throws ExecutionException, InterruptedException {
         int nlinks = localServiceMetadataRecord.getOperatesOnLinks().size();
         int linkIdx = 0;
         logger.debug("processing  "+nlinks+ " operates on links for documentid="+getInitiatingEvent().getServiceMetadataId());
-        for (OperatesOnLink link : localServiceMetadataRecord.getOperatesOnLinks()) {
-            logger.debug("processing operates on link "+linkIdx+" of "+nlinks+" links");
-            linkIdx++;
-            handleOperatesOnLink(link);
-            if (link.getDatasetMetadataRecord() !=null) {
-                logger.debug("link returned a Dataset Metadata Record");
-            }
-            else {
-                logger.debug("link DID NOT return a Dataset Metadata Record");
 
-            }
+
+
+        ForkJoinPool pool = new ForkJoinPool(3);
+        int nTotal = localServiceMetadataRecord.getOperatesOnLinks().size();
+        AtomicInteger counter = new AtomicInteger(0);
+        try {
+            pool.submit(() ->
+                    localServiceMetadataRecord.getOperatesOnLinks().stream().parallel()
+                            .forEach(x -> {
+                                handleOperatesOnLink(x);
+                                int ndone = counter.incrementAndGet();
+                                String text = "processed operates on DS link " + ndone + " of " + nTotal;
+                                 if (x.getDatasetMetadataRecord() !=null) {
+                                   text += " - returned a Dataset Metadata Record" ;
+                                }
+                                else {
+                                     text += " -  DID NOT return a Dataset Metadata Record" ;
+                                }
+                                logger.debug(text);
+                            })
+            ).get();
         }
+        finally {
+            pool.shutdown();
+        }
+
+
+
+//        for (OperatesOnLink link : localServiceMetadataRecord.getOperatesOnLinks()) {
+//            logger.debug("processing operates on link "+linkIdx+" of "+nlinks+" links");
+//            linkIdx++;
+//            handleOperatesOnLink(link);
+//            if (link.getDatasetMetadataRecord() !=null) {
+//                logger.debug("link returned a Dataset Metadata Record");
+//            }
+//            else {
+//                logger.debug("link DID NOT return a Dataset Metadata Record");
+//            }
+//        }
         logger.debug("FINISHED processing  "+nlinks+ " operates on links for documentid="+getInitiatingEvent().getServiceMetadataId());
     }
 
@@ -245,14 +282,36 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
         }
     }
 
-    private void processDocumentLinks() {
+    private void processDocumentLinks() throws ExecutionException, InterruptedException {
         int nlinks = localServiceMetadataRecord.getServiceDocumentLinks().size();
+        // get a more cannonical list of URLs -- this way we can tell if they are the same easier...
+        List<String> t = localServiceMetadataRecord.getServiceDocumentLinks().stream()
+                .map(x-> {
+                    try {
+                          x.setFixedURL(capabilitiesLinkFixer.fix(x.getRawURL()));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        x.setFixedURL(x.getRawURL());
+                    }
+                    return x;
+                })
+                .map(x->x.getFixedURL())
+                .collect(Collectors.toList());
         int linkIdx = 0;
         logger.debug("processing "+nlinks+" service document links for documentid="+getInitiatingEvent().getServiceMetadataId());
+        List<String> processedURLs = new ArrayList<>();
         for (ServiceDocumentLink link : localServiceMetadataRecord.getServiceDocumentLinks()) {
             logger.debug("processing service document link "+linkIdx+" of "+nlinks+" links");
             linkIdx++;
-            handleSingleDocumentLink(link);
+            String thisURL = link.getFixedURL();
+            if (processedURLs.contains(thisURL))
+            {
+                logger.debug("this url has already been processed - no action!");
+            }
+            else {
+                processedURLs.add(link.getFixedURL());
+                handleSingleDocumentLink(link);
+            }
         }
         logger.debug("FINISHED processing "+nlinks+" service document links for documentid="+getInitiatingEvent().getServiceMetadataId());
     }
@@ -261,7 +320,7 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
     // if so;
     //   a) resolve the service metadata link (in cap doc)
     //   b) for each of the layers in the cap doc, retrieve the dataset metadata link
-    private ServiceDocumentLink handleSingleDocumentLink(ServiceDocumentLink link) {
+    private ServiceDocumentLink handleSingleDocumentLink(ServiceDocumentLink link) throws ExecutionException, InterruptedException {
         getCapabilitiesDoc(link);
         if (link.getCapabilitiesDocument() != null) {
             CapabilitiesDocument capabilitiesDocument = link.getCapabilitiesDocument();
@@ -280,23 +339,41 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
             int linkIdx = 0;
             logger.debug("processing "+nlinks+" dataset links from the capabilities document");
 
-            for (CapabilitiesDatasetMetadataLink capabilitiesDatasetMetadataLink : capabilitiesDocument.getCapabilitiesDatasetMetadataLinkList()) {
-                logger.debug("processing link "+linkIdx+" of "+nlinks+" dataset links from the capabilities document");
-                linkIdx++;
-                handleLayerDatasetLink(capabilitiesDatasetMetadataLink);
-                if (capabilitiesDatasetMetadataLink.getCapabilitiesRemoteDatasetMetadataDocument() !=null) {
-                    logger.debug("link produced a Dataset Metadata Document");
-                    CapabilitiesRemoteDatasetMetadataDocument capabilitiesRemoteDatasetMetadataDocument =capabilitiesDatasetMetadataLink.getCapabilitiesRemoteDatasetMetadataDocument();
-                }
-                else {
-                    logger.debug("link DID NOT produce a Dataset Metadata Document");
-                }
+            ForkJoinPool pool = new ForkJoinPool(3);
+            int nTotal = capabilitiesDocument.getCapabilitiesDatasetMetadataLinkList().size();
+            AtomicInteger counter = new AtomicInteger(0);
+            try {
+                pool.submit(() ->
+                        capabilitiesDocument.getCapabilitiesDatasetMetadataLinkList().stream().parallel()
+                                .forEach(x -> {
+                                    handleLayerDatasetLink(x);
+                                    int ndone = counter.incrementAndGet();
+                                    logger.debug("processed link cap's DS link " + ndone + " of " + nTotal); // a wee bit of a lie, but will be "accurate"
+                                })
+                ).get();
             }
+            finally {
+                pool.shutdown();
+            }
+
+//            for (CapabilitiesDatasetMetadataLink capabilitiesDatasetMetadataLink : capabilitiesDocument.getCapabilitiesDatasetMetadataLinkList()) {
+//                logger.debug("processing link "+linkIdx+" of "+nlinks+" dataset links from the capabilities document");
+//                linkIdx++;
+//                handleLayerDatasetLink(capabilitiesDatasetMetadataLink);
+//                if (capabilitiesDatasetMetadataLink.getCapabilitiesRemoteDatasetMetadataDocument() !=null) {
+//                    logger.debug("link produced a Dataset Metadata Document");
+//                    CapabilitiesRemoteDatasetMetadataDocument capabilitiesRemoteDatasetMetadataDocument =capabilitiesDatasetMetadataLink.getCapabilitiesRemoteDatasetMetadataDocument();
+//                }
+//                else {
+//                    logger.debug("link DID NOT produce a Dataset Metadata Document");
+//                }
+//            }
         }
         else {
             logger.debug("link DID NOT produced a capabilities document");
 
         }
+
         return link;
     }
 

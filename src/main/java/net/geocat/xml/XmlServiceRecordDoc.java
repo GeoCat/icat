@@ -33,6 +33,7 @@
 
 package net.geocat.xml;
 
+import net.geocat.service.capabilities.WMSCapabilitiesDatasetLinkExtractor;
 import net.geocat.xml.helpers.OperatesOn;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -64,7 +65,11 @@ public class XmlServiceRecordDoc extends XmlMetadataDocument {
     }
 
     private void populateOperatesOn() throws Exception {
-        NodeList nl = xpath_nodeset("//srv:operatesOn");
+      //  NodeList nl = xpath_nodeset("//srv:operatesOn");
+        Node main = getFirstNode();
+        Node secondary = WMSCapabilitiesDatasetLinkExtractor.findNode(main,"identificationInfo");
+        secondary = WMSCapabilitiesDatasetLinkExtractor.findNode(secondary,"SV_ServiceIdentification");
+        List<Node> nl = WMSCapabilitiesDatasetLinkExtractor.findNodes(secondary,"operatesOn");
         operatesOns = OperatesOn.create(nl);
     }
 

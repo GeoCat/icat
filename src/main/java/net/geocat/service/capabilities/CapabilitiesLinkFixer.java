@@ -38,8 +38,14 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
 import org.springframework.stereotype.Component;
 
+import java.net.URISyntaxException;
+import java.util.Comparator;
+import java.util.List;
+
 @Component
 public class CapabilitiesLinkFixer implements ILinkFixer {
+
+
     public static String findQueryParmName(String link, String name) throws Exception {
         name = name.toLowerCase();
         URIBuilder uriBuilder = new URIBuilder(link);
@@ -48,6 +54,17 @@ public class CapabilitiesLinkFixer implements ILinkFixer {
                 return param.getName();
         }
         return null;
+    }
+
+    public static String canonicalize(String link) throws  Exception {
+        if ( (link == null) || (link.isEmpty()) )
+            return null;
+
+        URIBuilder uriBuilder = new URIBuilder(link);
+        List<NameValuePair> params =  uriBuilder.getQueryParams();
+        params.sort( Comparator.comparing(x->x.getName()));
+        uriBuilder.setParameters(params);
+        return uriBuilder.build().toString();
     }
 
     @Override
@@ -64,11 +81,11 @@ public class CapabilitiesLinkFixer implements ILinkFixer {
 
             String requestParam = findQueryParmName(link, "request");
             if (requestParam == null)
-                return link;
+                return canonicalize(link);
 
             URIBuilder uriBuilder = new URIBuilder(link);
             uriBuilder.setParameter(requestParam, "GetCapabilities");
-            return uriBuilder.build().toString();
+            return canonicalize(uriBuilder.build().toString());
         }
         catch(Exception e){
             return link;

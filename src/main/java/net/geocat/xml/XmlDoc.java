@@ -33,6 +33,7 @@
 
 package net.geocat.xml;
 
+import com.sun.org.apache.xpath.internal.CachedXPathAPI;
 import net.geocat.service.downloadhelpers.PartialDownloadPredicateFactory;
 import org.springframework.util.xml.SimpleNamespaceContext;
 import org.w3c.dom.Document;
@@ -127,6 +128,7 @@ public class XmlDoc {
     public static XPath createXPath() {
         XPathFactory xPathfactory = XPathFactory.newInstance();
         XPath xpath = xPathfactory.newXPath();
+
 
         SimpleNamespaceContext nsCtx = new SimpleNamespaceContext();
         xpath.setNamespaceContext(nsCtx);
