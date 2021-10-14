@@ -62,9 +62,14 @@ public class WMSCapabilitiesDatasetLinkExtractor implements ICapabilitiesDataset
 
 
     public static List<Node> findNodes(Node n,String localName) {
+        List<Node> result = new ArrayList<>();
+
+        if (n == null) {
+            return result;
+        }
 
         NodeList nl = n.getChildNodes();
-        List<Node> result = new ArrayList<>();
+
         for (int idx=0; idx <nl.getLength();idx++) {
             Node nn = nl.item(idx);
             String name = nn.getLocalName() == null ? nn.getNodeName() : nn.getLocalName();
