@@ -166,15 +166,7 @@ public class WMSCapabilitiesDatasetLinkExtractor implements ICapabilitiesDataset
                 .filter(x->x !=null && (x.getTextContent() != null) && (!x.getTextContent().trim().isEmpty()))
                 .map(x->x.getTextContent().trim())
                 .collect(Collectors.toList());
-//        if (nn == null)
-//            return null;
-//        Node n = findNode(nn, "OnlineResource");
-//        if (n == null)
-//            return null;
-//        Node att = n.getAttributes().getNamedItem("xlink:href");
-//        if (att == null)
-//            return null;
-//        return att.getTextContent();
+
     }
 
 

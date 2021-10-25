@@ -34,11 +34,15 @@
 package net.geocat.xml;
 
 import net.geocat.service.capabilities.DatasetLink;
+import net.geocat.service.capabilities.InspireSpatialDatasetIdentifier;
 import net.geocat.xml.helpers.CapabilitiesType;
 import org.w3c.dom.Node;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static net.geocat.service.capabilities.WMSCapabilitiesDatasetLinkExtractor.findNode;
+import static net.geocat.service.capabilities.WMSCapabilitiesDatasetLinkExtractor.findNodes;
 
 public class XmlCapabilitiesDocument extends XmlDoc {
 
@@ -47,13 +51,45 @@ public class XmlCapabilitiesDocument extends XmlDoc {
     CapabilitiesType capabilitiesType;
 
     List<DatasetLink> datasetLinksList;
+    List<InspireSpatialDatasetIdentifier> inspireDatasetLinks;
 
 
     public XmlCapabilitiesDocument(XmlDoc doc, CapabilitiesType type) throws Exception {
         super(doc);
         datasetLinksList = new ArrayList<>();
+        inspireDatasetLinks = new ArrayList<>();
         this.capabilitiesType = type;
         setup_XmlCapabilitiesDocument();
+        if (hasExtendedCapabilities)
+            setup_spatialdatasetidentifiers();
+    }
+
+    private void setup_spatialdatasetidentifiers() throws Exception {
+        Node extendedCap = xpath_node("//*[local-name()='ExtendedCapabilities']");
+        extendedCap = findNode(extendedCap,"ExtendedCapabilities");
+        List<Node> sdis = findNodes(extendedCap,"SpatialDataSetIdentifier");
+        for (Node sdi : sdis) {
+            // metadataURL
+            String metadataURL = null;
+            Node metadataURLNode = sdi.getAttributes().getNamedItem("metadataURL");
+            if ((metadataURLNode !=null ) && (metadataURLNode.getTextContent() !=null) && (!metadataURLNode.getTextContent().trim().isEmpty()))
+                metadataURL = metadataURLNode.getTextContent().trim();
+
+            //Code
+            String code = null;
+            Node codeNode = findNode(sdi,"Code");
+            if ((codeNode !=null ) && (codeNode.getTextContent() !=null) && (!codeNode.getTextContent().trim().isEmpty()))
+                code = codeNode.getTextContent().trim();
+
+            //Namespace
+            String namespace = null;
+            Node namespaceNode = findNode(sdi,"Namespace");
+            if ((namespaceNode !=null ) && (namespaceNode.getTextContent() !=null) && (!namespaceNode.getTextContent().trim().isEmpty()))
+                namespace = namespaceNode.getTextContent().trim();
+
+            if ( (code !=null) && (namespace!=null) )
+                inspireDatasetLinks.add(new InspireSpatialDatasetIdentifier(metadataURL,code,namespace));
+        }
     }
 
     public static XmlCapabilitiesDocument create(XmlDoc doc, CapabilitiesType type) throws Exception {
@@ -153,6 +189,14 @@ public class XmlCapabilitiesDocument extends XmlDoc {
 
     public void setDatasetLinksList(List<DatasetLink> datasetLinksList) {
         this.datasetLinksList = datasetLinksList;
+    }
+
+    public List<InspireSpatialDatasetIdentifier> getInspireDatasetLinks() {
+        return inspireDatasetLinks;
+    }
+
+    public void setInspireDatasetLinks(List<InspireSpatialDatasetIdentifier> inspireDatasetLinks) {
+        this.inspireDatasetLinks = inspireDatasetLinks;
     }
 
     @Override
