@@ -85,9 +85,9 @@ public class EventProcessor_ProcessDatasetDocLinksEvent extends BaseEventProcess
 
     @Autowired
     RetrieveServiceDocumentLink retrieveServiceDocumentLink;
-
-    @Autowired
-    CapabilitiesResolvesIndicators capabilitiesResolvesIndicators;
+//
+//    @Autowired
+//    CapabilitiesResolvesIndicators capabilitiesResolvesIndicators;
 
     @Autowired
     DatasetToLayerIndicators datasetToLayerIndicators;
@@ -99,158 +99,19 @@ public class EventProcessor_ProcessDatasetDocLinksEvent extends BaseEventProcess
 
     @Override
     public EventProcessor_ProcessDatasetDocLinksEvent internalProcessing() throws Exception {
-        try{
-
-            capabilitiesResolvesIndicators.process(localDatasetMetadataRecord);
-            datasetToLayerIndicators.process(localDatasetMetadataRecord);
-
-            localDatasetMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_PROCESSED);
-            // localServiceMetadataRecord.setHumanReadable(humanReadableServiceMetadata.getHumanReadable(localServiceMetadataRecord));
-            save();
-            logger.debug("finished post processing documentid="+getInitiatingEvent().getDatasetDocumentId()  );
-
-        }
-            catch(Exception e){
-            logger.error("exception for datasetMetadataRecordId="+getInitiatingEvent().getDatasetDocumentId(),e);
-            localDatasetMetadataRecord.setState(ServiceMetadataDocumentState.ERROR);
-            localDatasetMetadataRecord.setErrorMessage(  convertToString(e) );
-            save();
-        }
+        localDatasetMetadataRecord = localDatasetMetadataRecordRepo.findById(getInitiatingEvent().getDatasetDocumentId()).get();// make sure we re-load
+        localDatasetMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_PROCESSED);
+        localDatasetMetadataRecordRepo.save(localDatasetMetadataRecord);
         return this;
     }
 
 
     @Override
     public EventProcessor_ProcessDatasetDocLinksEvent externalProcessing () throws Exception {
-        localDatasetMetadataRecord = localDatasetMetadataRecordRepo.findById(getInitiatingEvent().getDatasetDocumentId()).get();// make sure we re-load
-
-        prune();
-
-        try {
-            int nlinksCap = localDatasetMetadataRecord.getDocumentLinks().size();
-             logger.debug("processing DATASET documentid="+getInitiatingEvent().getDatasetDocumentId()+" that has "+nlinksCap+" document links");
-
-          //  processDocumentLinks();
-            save();
-
-            logger.debug("finished initial processing documentid="+getInitiatingEvent().getDatasetDocumentId()  );
-
-        }
-        catch(Exception e){
-            logger.error("exception for datasetMetadataRecordId="+getInitiatingEvent().getDatasetDocumentId(),e);
-            localDatasetMetadataRecord.setState(ServiceMetadataDocumentState.ERROR);
-            localDatasetMetadataRecord.setErrorMessage(  convertToString(e) );
-            save();
-        }
-
         return this;
     }
 
 
-    private void processDocumentLinks() {
-        int nlinks = localDatasetMetadataRecord.getDocumentLinks().size();
-        int linkIdx = 0;
-        logger.debug("processing "+nlinks+" dataset document links for documentid="+getInitiatingEvent().getDatasetDocumentId());
-        for (DatasetDocumentLink link : localDatasetMetadataRecord.getDocumentLinks()) {
-            logger.debug("processing dataset document link "+linkIdx+" of "+nlinks+" links");
-            linkIdx++;
-            handleSingleDocumentLink(link);
-        }
-        logger.debug("FINISHED processing "+nlinks+" dataset document links for documentid="+getInitiatingEvent().getDatasetDocumentId());
-    }
-
-    // should retrieve a capabilities document
-    // if so;
-    //   a) resolve the service metadata link (in cap doc)
-    //   b) for each of the layers in the cap doc, retrieve the dataset metadata link
-    private DatasetDocumentLink handleSingleDocumentLink(DatasetDocumentLink link) {
-        getCapabilitiesDoc(link);
-        if (link.getCapabilitiesDocument() != null) {
-            CapabilitiesDocument capabilitiesDocument = link.getCapabilitiesDocument();
-            int nlinks =  capabilitiesDocument.getCapabilitiesDatasetMetadataLinkList().size();
-            RemoteServiceMetadataRecordLink rsmrl = capabilitiesDocument.getRemoteServiceMetadataRecordLink();
-            logger.debug("link produced a capabilities document has Service Metadata Link="+(rsmrl!=null)+", and "+nlinks+" dataset links.");
-
-            if (rsmrl != null) {
-                logger.debug("getting Capabilities Document's remote service metadata record...");
-                getRemoteServiceMetadataRecordLink(rsmrl);
-                if (rsmrl.getRemoteServiceMetadataRecord() !=null) {
-                    RemoteServiceMetadataRecord remoteServiceMetadataRecord=  rsmrl.getRemoteServiceMetadataRecord();
-
-                }
-            }
-            int linkIdx = 0;
-            logger.debug("processing "+nlinks+" dataset links from the capabilities document");
-
-            for (CapabilitiesDatasetMetadataLink capabilitiesDatasetMetadataLink : capabilitiesDocument.getCapabilitiesDatasetMetadataLinkList()) {
-                logger.debug("processing link "+linkIdx+" of "+nlinks+" dataset links from the capabilities document");
-                linkIdx++;
-                handleLayerDatasetLink(capabilitiesDatasetMetadataLink);
-                if (capabilitiesDatasetMetadataLink.getCapabilitiesRemoteDatasetMetadataDocument() !=null) {
-                    logger.debug("link produced a Dataset Metadata Document");
-                    CapabilitiesRemoteDatasetMetadataDocument capabilitiesRemoteDatasetMetadataDocument =capabilitiesDatasetMetadataLink.getCapabilitiesRemoteDatasetMetadataDocument();
-                }
-                else {
-                    logger.debug("link DID NOT produce a Dataset Metadata Document");
-                }
-            }
-        }
-        else {
-            logger.debug("link DID NOT produced a capabilities document");
-
-        }
-        return link;
-    }
-
-    private void handleLayerDatasetLink(CapabilitiesDatasetMetadataLink capabilitiesDatasetMetadataLink) {
-        try {
-            String jobid = getInitiatingEvent().getLinkCheckJobId();
-            capabilitiesDatasetMetadataLink = retrieveCapabilitiesDatasetMetadataLink.process(capabilitiesDatasetMetadataLink,jobid);
-
-            capabilitiesDatasetMetadataLink.setLinkState(LinkState.Complete);
-        }
-        catch(Exception e){
-            logger.error("error occurred while processing Dataset MetadataDocumentId="+localDatasetMetadataRecord.getDatasetMetadataDocumentId()
-                    +", CapabilitiesDatasetMetadataLink="+capabilitiesDatasetMetadataLink+", error="+e.getMessage(),e);
-            capabilitiesDatasetMetadataLink.setLinkState(LinkState.ERROR);
-            capabilitiesDatasetMetadataLink.setErrorMessage(  convertToString(e) );
-        }
-    }
-    private void getRemoteServiceMetadataRecordLink(RemoteServiceMetadataRecordLink rsmrl) {
-        try {
-
-            rsmrl = remoteServiceMetadataRecordLinkRetriever.process(rsmrl);
-
-            rsmrl.setLinkState(LinkState.Complete);
-        }
-        catch(Exception e){
-            logger.error("error occurred while processing Dataset MetadataDocumentId="+localDatasetMetadataRecord.getDatasetMetadataDocumentId()
-                    +", RemoteServiceMetadataRecordLink="+rsmrl+", error="+e.getMessage(),e);
-            rsmrl.setLinkState(LinkState.ERROR);
-            rsmrl.setErrorMessage(  convertToString(e) );
-        }
-    }
-
-    private DatasetDocumentLink getCapabilitiesDoc(DatasetDocumentLink link) {
-        try {
-            link = (DatasetDocumentLink) retrieveServiceDocumentLink.process(link);
-
-            link.setLinkState(LinkState.Complete);
-        }
-        catch (Exception e){
-            logger.error("error occurred while processing dataset MetadataDocumentId="+localDatasetMetadataRecord.getDatasetMetadataDocumentId()
-                    +", ServiceDocumentLink="+link+", error="+e.getMessage(),e);
-            link.setLinkState(LinkState.ERROR);
-            link.setErrorMessage(  convertToString(e) );
-        }
-
-        return link;
-    }
-
-
-    public void save(){
-        localDatasetMetadataRecord = localDatasetMetadataRecordRepo.save(localDatasetMetadataRecord);
-    }
 
     @Override
     public List<Event> newEventProcessing() {
@@ -266,29 +127,5 @@ public class EventProcessor_ProcessDatasetDocLinksEvent extends BaseEventProcess
         return result;
     }
 
-    // for re-entry - need to clean up object (and database)
-    public void prune() {
-        List<CapabilitiesDocument> capDocuments = new ArrayList<>();
-
-        //find objects and de-attach them
-        for (DatasetDocumentLink link : localDatasetMetadataRecord.getDocumentLinks()) {
-            CapabilitiesDocument capDoc = link.getCapabilitiesDocument();
-            if (capDoc != null) {
-                if (capDoc.getServiceDocumentLink() != null)
-                    capDoc.getServiceDocumentLink().setCapabilitiesDocument(null);
-                capDoc.setServiceDocumentLink(null);
-                capDocuments.add(capDoc); // to be deleted
-            }
-        }
-
-        if (capDocuments.isEmpty())
-            return; //nothing to do
-
-        save(); //save with objects detached
-
-        for (CapabilitiesDocument capDoc : capDocuments) {
-            capabilitiesDocumentRepo.delete(capDoc);
-        }
-    }
 
 }

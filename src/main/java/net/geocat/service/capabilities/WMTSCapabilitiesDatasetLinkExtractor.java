@@ -36,6 +36,9 @@ package net.geocat.service.capabilities;
 import net.geocat.xml.XmlDoc;
 import org.w3c.dom.Node;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class WMTSCapabilitiesDatasetLinkExtractor extends WMSCapabilitiesDatasetLinkExtractor {
 
 
@@ -44,8 +47,10 @@ public class WMTSCapabilitiesDatasetLinkExtractor extends WMSCapabilitiesDataset
     }
 
     @Override
-    protected String findMetadataURL(Node layer) throws Exception {
+    protected List<String> findMetadataURLs(Node layer) throws Exception {
         Node n = findNode(layer, "Metadata");
+
+        List<String> result = new ArrayList<>();
 
       //  Node n = XmlDoc.xpath_node(layer, "ows:Metadata");
         if (n == null)
@@ -53,6 +58,7 @@ public class WMTSCapabilitiesDatasetLinkExtractor extends WMSCapabilitiesDataset
         Node att = n.getAttributes().getNamedItem("xlink:href");
         if (att == null)
             return null;
-        return att.getTextContent().trim();
+        result.add(att.getTextContent().trim());
+        return result;
     }
 }

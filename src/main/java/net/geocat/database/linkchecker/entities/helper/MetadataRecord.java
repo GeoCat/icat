@@ -46,6 +46,10 @@ public class MetadataRecord extends UpdateCreateDateTimeEntity {
     @Transient
     public String actualXML;
 
+
+    @Column(columnDefinition = "text")
+    private String title;
+
     //SHA2 of the XMNL Text
     @Column(columnDefinition = "varchar(64)")
     private String sha2;
@@ -81,6 +85,14 @@ public class MetadataRecord extends UpdateCreateDateTimeEntity {
 
     //---------------------------------------------------------------------------
 
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
     public Integer getINDICATOR_RESOLVES_TO_CAPABILITIES() {
         return INDICATOR_RESOLVES_TO_CAPABILITIES;

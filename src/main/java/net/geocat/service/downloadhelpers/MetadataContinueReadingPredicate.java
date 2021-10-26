@@ -34,6 +34,7 @@
 package net.geocat.service.downloadhelpers;
 
 import net.geocat.http.IContinueReadingPredicate;
+import net.geocat.xml.XmlStringTools;
 
 import static net.geocat.service.downloadhelpers.CapabilitiesContinueReadingPredicate.*;
 
@@ -41,8 +42,8 @@ public class MetadataContinueReadingPredicate implements IContinueReadingPredica
     @Override
     public boolean continueReading(byte[] head) {
         try {
-            String doc = new String(head).trim();
-            if (!isXML(doc))
+            String doc = XmlStringTools.bytea2String(head);
+            if (!XmlStringTools.isXML(doc))
                 return false; //not XML
 
             doc = replaceXMLDecl(doc).trim();

@@ -43,6 +43,7 @@ import net.geocat.service.LinkCheckBlobStorageService;
 import net.geocat.xml.XmlCapabilitiesDocument;
 import net.geocat.xml.XmlDoc;
 import net.geocat.xml.XmlDocumentFactory;
+import net.geocat.xml.XmlStringTools;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -69,7 +70,7 @@ public class CapabilitiesDocumentService {
     CapabilitiesDatasetMetadataLinkService capabilitiesDatasetMetadataLinkService;
 
     public CapabilitiesDocument create(DocumentLink link) throws Exception {
-        String xmlStr = new String(link.getFullData());
+        String xmlStr = XmlStringTools.bytea2String(link.getFullData());
 
         XmlDoc _doc = xmlDocumentFactory.create(xmlStr);
         if (_doc !=null)
@@ -84,9 +85,10 @@ public class CapabilitiesDocumentService {
         linkCheckBlobStorageService.ensureBlobExists(xmlStr, sha2); //write
 
         CapabilitiesDocument doc = new CapabilitiesDocument();
+        doc.setLinkCheckJobId(link.getLinkCheckJobId());
         doc.setSha2(sha2);
 
-        doc.setParent(link);
+
         doc.setCapabilitiesDocumentType(xml.getCapabilitiesType());
 
 

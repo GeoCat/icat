@@ -60,10 +60,11 @@ public class CapabilitiesDatasetMetadataLinkService {
             CapabilitiesDatasetMetadataLink item = new CapabilitiesDatasetMetadataLink();
             item.setLinkState(LinkState.Created);
             item.setRawURL(link.getRawUrl());
+            item.setLinkCheckJobId(cap.getLinkCheckJobId());
             item.setFixedURL(datasetLinkFixer.fix(link.getRawUrl()));
             item.setIdentity(link.getIdentifier());
 
-            item.setCapabilitiesDocument(cap);
+         //   item.setCapabilitiesDocument(cap);
             result.add(item);
         }
         return result;

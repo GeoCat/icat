@@ -34,6 +34,7 @@
 package net.geocat.database.linkchecker.service;
 
 import net.geocat.database.linkchecker.entities.DatasetDocumentLink;
+import net.geocat.database.linkchecker.entities.LocalServiceMetadataRecord;
 import net.geocat.database.linkchecker.entities.ServiceDocumentLink;
 import net.geocat.database.linkchecker.entities.helper.DatasetMetadataRecord;
 import net.geocat.database.linkchecker.entities.helper.LinkState;
@@ -47,8 +48,9 @@ import org.springframework.stereotype.Component;
 public class ServiceDocumentLinkService {
 
 
-    public ServiceDocumentLink create(ServiceMetadataRecord localServiceMetadataRecord, OnlineResource onlineResource) {
+    public ServiceDocumentLink create(LocalServiceMetadataRecord localServiceMetadataRecord, OnlineResource onlineResource) {
         ServiceDocumentLink result = new ServiceDocumentLink();
+
 
         result.setLinkState(LinkState.Created);
         result.setServiceMetadataRecord(localServiceMetadataRecord);
@@ -56,9 +58,11 @@ public class ServiceDocumentLinkService {
         result.setOperationName(onlineResource.getOperationName());
         result.setRawURL(onlineResource.getRawURL());
         result.setProtocol(onlineResource.getProtocol());
+        result.setLinkCheckJobId(localServiceMetadataRecord.getLinkCheckJobId());
 
         return result;
     }
+
 
     public DatasetDocumentLink create(DatasetMetadataRecord datasetMetadataRecord, OnlineResource onlineResource) {
         DatasetDocumentLink result = new DatasetDocumentLink();

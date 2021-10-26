@@ -38,6 +38,7 @@ import net.geocat.database.linkchecker.entities.helper.IndicatorStatus;
 import net.geocat.database.linkchecker.entities.HttpResult;
 import net.geocat.http.IContinueReadingPredicate;
 import net.geocat.http.IHTTPRetriever;
+import net.geocat.xml.XmlStringTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -123,7 +124,7 @@ public class RetrievableSimpleLinkDownloader {
 
     public boolean isXML(HttpResult result) {
         try {
-            return CapabilitiesContinueReadingPredicate.isXML(new String(result.getData()));
+            return XmlStringTools.isXML( result.getData() );
         } catch (Exception e) {
             return false;
         }

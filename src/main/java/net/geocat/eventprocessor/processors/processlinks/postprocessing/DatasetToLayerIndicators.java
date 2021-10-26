@@ -33,18 +33,13 @@
 
 package net.geocat.eventprocessor.processors.processlinks.postprocessing;
 
-import net.geocat.database.linkchecker.entities.CapabilitiesDocument;
-import net.geocat.database.linkchecker.entities.CapabilitiesRemoteDatasetMetadataDocument;
+
 import net.geocat.database.linkchecker.entities.LocalDatasetMetadataRecord;
-import net.geocat.database.linkchecker.entities.helper.DocumentLink;
-import net.geocat.database.linkchecker.entities.helper.IndicatorStatus;
-import net.geocat.xml.helpers.CapabilitiesType;
+
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+
 
 @Component
 @Scope("prototype")
@@ -52,67 +47,67 @@ public class DatasetToLayerIndicators {
 
 
     public LocalDatasetMetadataRecord process (LocalDatasetMetadataRecord record) {
-        if (record.getFileIdentifier() == null || record.getDatasetIdentifier() == null) {// nothing to do
-            record.setINDICATOR_LAYER_MATCHES(IndicatorStatus.FAIL);
-            return record;
-        }
-
-        List<DocumentLink> links = new ArrayList<DocumentLink>(record.getDocumentLinks());
-
-        List<CapabilitiesDocument> download_CapDocs = record.getDocumentLinks().stream()
-                .map(x->x.getCapabilitiesDocument())
-                .filter(x-> x != null)
-                .filter(x->x.getCapabilitiesDocumentType() == CapabilitiesType.WFS || x.getCapabilitiesDocumentType() == CapabilitiesType.Atom)
-                .collect(Collectors.toList());
-
-        List<CapabilitiesDocument> view_CapDocs = record.getDocumentLinks().stream()
-                .map(x->x.getCapabilitiesDocument())
-                .filter(x-> x != null)
-                .filter(x->x.getCapabilitiesDocumentType() == CapabilitiesType.WMS || x.getCapabilitiesDocumentType() == CapabilitiesType.WMTS)
-                .collect(Collectors.toList());
-
-        List<CapabilitiesRemoteDatasetMetadataDocument>  download_capDatasetDocs = download_CapDocs.stream()
-                .map(x->x.getCapabilitiesDatasetMetadataLinkList())
-                .flatMap(List::stream)
-                .filter(x-> x != null)
-                .map(x->x.getCapabilitiesRemoteDatasetMetadataDocument())
-                .filter(x-> x != null)
-                .filter(x->x.getDatasetIdentifier() !=null && x.getFileIdentifier() !=null)
-                .collect(Collectors.toList());
-
-        List<CapabilitiesRemoteDatasetMetadataDocument>  view_capDatasetDocs = view_CapDocs.stream()
-                .map(x->x.getCapabilitiesDatasetMetadataLinkList())
-                .flatMap(List::stream)
-                .filter(x-> x != null)
-                .map(x->x.getCapabilitiesRemoteDatasetMetadataDocument())
-                .filter(x-> x != null)
-                .filter(x->x.getDatasetIdentifier() !=null && x.getFileIdentifier() !=null)
-                .collect(Collectors.toList());
-
-
-
-        //check to see if there's a match
-       boolean download_match = download_capDatasetDocs.stream()
-                .anyMatch(x->x.getFileIdentifier().equals(record.getFileIdentifier()) && x.getDatasetIdentifier().equals(record.getDatasetIdentifier()));
-
-        boolean view_match = view_capDatasetDocs.stream()
-                .anyMatch(x->x.getFileIdentifier().equals(record.getFileIdentifier()) && x.getDatasetIdentifier().equals(record.getDatasetIdentifier()));
-
-
-            record.setINDICATOR_LAYER_MATCHES(IndicatorStatus.FAIL);
-            record.setINDICATOR_LAYER_MATCHES_DOWNLOAD(IndicatorStatus.FAIL);
-            record.setINDICATOR_LAYER_MATCHES_VIEW(IndicatorStatus.FAIL);
-
-
-        if (download_match) {
-            record.setINDICATOR_LAYER_MATCHES(IndicatorStatus.PASS);
-            record.setINDICATOR_LAYER_MATCHES_DOWNLOAD(IndicatorStatus.PASS);
-        }
-        if (view_match  ) {
-            record.setINDICATOR_LAYER_MATCHES(IndicatorStatus.PASS);
-            record.setINDICATOR_LAYER_MATCHES_VIEW(IndicatorStatus.PASS);
-
-        }
+//        if (record.getFileIdentifier() == null || record.getDatasetIdentifier() == null) {// nothing to do
+//            record.setINDICATOR_LAYER_MATCHES(IndicatorStatus.FAIL);
+//            return record;
+//        }
+//
+//        List<DocumentLink> links = new ArrayList<DocumentLink>(record.getDocumentLinks());
+//
+//        List<CapabilitiesDocument> download_CapDocs = record.getDocumentLinks().stream()
+//                .map(x->x.getCapabilitiesDocument())
+//                .filter(x-> x != null)
+//                .filter(x->x.getCapabilitiesDocumentType() == CapabilitiesType.WFS || x.getCapabilitiesDocumentType() == CapabilitiesType.Atom)
+//                .collect(Collectors.toList());
+//
+//        List<CapabilitiesDocument> view_CapDocs = record.getDocumentLinks().stream()
+//                .map(x->x.getCapabilitiesDocument())
+//                .filter(x-> x != null)
+//                .filter(x->x.getCapabilitiesDocumentType() == CapabilitiesType.WMS || x.getCapabilitiesDocumentType() == CapabilitiesType.WMTS)
+//                .collect(Collectors.toList());
+//
+//        List<CapabilitiesRemoteDatasetMetadataDocument>  download_capDatasetDocs = download_CapDocs.stream()
+//                .map(x->x.getCapabilitiesDatasetMetadataLinkList())
+//                .flatMap(List::stream)
+//                .filter(x-> x != null)
+//                .map(x->x.getCapabilitiesRemoteDatasetMetadataDocument())
+//                .filter(x-> x != null)
+//                .filter(x->x.getDatasetIdentifier() !=null && x.getFileIdentifier() !=null)
+//                .collect(Collectors.toList());
+//
+//        List<CapabilitiesRemoteDatasetMetadataDocument>  view_capDatasetDocs = view_CapDocs.stream()
+//                .map(x->x.getCapabilitiesDatasetMetadataLinkList())
+//                .flatMap(List::stream)
+//                .filter(x-> x != null)
+//                .map(x->x.getCapabilitiesRemoteDatasetMetadataDocument())
+//                .filter(x-> x != null)
+//                .filter(x->x.getDatasetIdentifier() !=null && x.getFileIdentifier() !=null)
+//                .collect(Collectors.toList());
+//
+//
+//
+//        //check to see if there's a match
+//       boolean download_match = download_capDatasetDocs.stream()
+//                .anyMatch(x->x.getFileIdentifier().equals(record.getFileIdentifier()) && x.getDatasetIdentifier().equals(record.getDatasetIdentifier()));
+//
+//        boolean view_match = view_capDatasetDocs.stream()
+//                .anyMatch(x->x.getFileIdentifier().equals(record.getFileIdentifier()) && x.getDatasetIdentifier().equals(record.getDatasetIdentifier()));
+//
+//
+//            record.setINDICATOR_LAYER_MATCHES(IndicatorStatus.FAIL);
+//            record.setINDICATOR_LAYER_MATCHES_DOWNLOAD(IndicatorStatus.FAIL);
+//            record.setINDICATOR_LAYER_MATCHES_VIEW(IndicatorStatus.FAIL);
+//
+//
+//        if (download_match) {
+//            record.setINDICATOR_LAYER_MATCHES(IndicatorStatus.PASS);
+//            record.setINDICATOR_LAYER_MATCHES_DOWNLOAD(IndicatorStatus.PASS);
+//        }
+//        if (view_match  ) {
+//            record.setINDICATOR_LAYER_MATCHES(IndicatorStatus.PASS);
+//            record.setINDICATOR_LAYER_MATCHES_VIEW(IndicatorStatus.PASS);
+//
+//        }
 
 
 

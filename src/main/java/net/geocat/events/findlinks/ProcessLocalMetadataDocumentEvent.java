@@ -92,6 +92,6 @@ public class ProcessLocalMetadataDocumentEvent extends Event {
 
     @Override
     public String toString() {
-        return "ProcessServiceMetadataDocumentEvent - linkCheckJobId:" + linkCheckJobId + ",harvestJobId:" + harvestJobId + ", sha2:" + sha2+", underlyingHarvestMetadataRecordId="+underlyingHarvestMetadataRecordId;
+        return "ProcessLocalMetadataDocumentEvent - linkCheckJobId:" + linkCheckJobId + ",harvestJobId:" + harvestJobId + ", sha2:" + sha2+", underlyingHarvestMetadataRecordId="+underlyingHarvestMetadataRecordId;
     }
 }

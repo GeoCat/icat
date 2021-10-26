@@ -60,9 +60,14 @@ public abstract class DocumentLink extends  RetrievableSimpleLink {
 
     //---------------------------------------------------------------
 
-    public abstract void setCapabilitiesDocument(CapabilitiesDocument document);
-    public abstract CapabilitiesDocument getCapabilitiesDocument();
 
+    public CapabilitiesDocument getCapabilitiesDocument() {
+        return capabilitiesDocument;
+    }
+
+    public void setCapabilitiesDocument(CapabilitiesDocument capabilitiesDocument) {
+        this.capabilitiesDocument = capabilitiesDocument;
+    }
 
     public DocumentLink(){
         super();

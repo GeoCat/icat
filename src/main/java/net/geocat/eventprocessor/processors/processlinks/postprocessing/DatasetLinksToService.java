@@ -31,23 +31,21 @@
  *  ==============================================================================
  */
 
-package net.geocat.service.downloadhelpers;
+package net.geocat.eventprocessor.processors.processlinks.postprocessing;
 
-import net.geocat.http.IContinueReadingPredicate;
-import net.geocat.xml.XmlStringTools;
+import net.geocat.database.linkchecker.entities.LocalDatasetMetadataRecord;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+@Component
+@Scope("prototype")
+public class DatasetLinksToService {
+
+    public void process(LocalDatasetMetadataRecord record) {
+        //first, need to see what Service record's operatesOn points to this record (via file ID)
+        //     - also, need to know what type (WMS/WFS) so we can code as View/Download
+        //second, need to see if the services' capabilities document also points to the record
 
 
-public class XmlContinueReadingPredicate implements IContinueReadingPredicate {
-
-    @Override
-    public boolean continueReading(byte[] head) {
-        try {
-            String doc = XmlStringTools.bytea2String(head);
-            if (!XmlStringTools.isXML(doc))
-                return false; //not XML
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

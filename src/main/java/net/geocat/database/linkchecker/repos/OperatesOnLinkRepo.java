@@ -34,13 +34,42 @@
 package net.geocat.database.linkchecker.repos;
 
 import net.geocat.database.linkchecker.entities.OperatesOnLink;
+import net.geocat.database.linkchecker.entities.helper.ServiceDocSearchResult;
 import org.springframework.context.annotation.Scope;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 
 @Component
 @Scope("prototype")
 public interface OperatesOnLinkRepo extends CrudRepository<OperatesOnLink, Long> {
+
+
+    @Query(value = "SELECT servicemetadatarecord.servicemetadatadocumentid as serviceid,metadataservicetype as metadataservicetype\n" +
+            " FROM\n" +
+            "    operatesonlink\n" +
+            "      JOIN servicemetadatarecord \n" +
+            "                ON operatesonlink.servicemetadatarecord_servicemetadatadocumentid = servicemetadatarecord.servicemetadatadocumentid\n" +
+            "WHERE\n" +
+            "    operatesonlink.fileidentifier = ?1 \n" +
+            "    AND operatesonlink.datasetidentifier = ?2" +
+            "    AND operatesonlink.linkcheckjobid= ?3 "
+            ,nativeQuery = true)
+    List<ServiceDocSearchResult>  linkToService(String fileidentifier,String datasetId, String linkcheckjobid);
+
+    // use this one if datasetID = null
+    @Query(value = "SELECT servicemetadatarecord.servicemetadatadocumentid as serviceid,metadataservicetype as metadataservicetype\n" +
+            " FROM\n" +
+            "    operatesonlink\n" +
+            "      JOIN servicemetadatarecord \n" +
+            "                ON operatesonlink.servicemetadatarecord_servicemetadatadocumentid = servicemetadatarecord.servicemetadatadocumentid\n" +
+            "WHERE\n" +
+            "    operatesonlink.fileidentifier = ?1 \n" +
+            "    AND operatesonlink.linkcheckjobid= ?2 "
+            ,nativeQuery = true)
+    List<ServiceDocSearchResult>  linkToService(String fileidentifier,  String linkcheckjobid);
 
 }

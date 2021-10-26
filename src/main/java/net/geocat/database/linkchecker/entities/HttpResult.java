@@ -118,6 +118,26 @@ public class HttpResult {
 
     }
 
+    public HttpResult(HttpResult other) {
+        this.httpResultId = other.httpResultId;
+        this.linkCheckJobId = other.linkCheckJobId;
+        this.data = other.data;
+        this.fullyRead = other.fullyRead;
+        this.httpCode = other.httpCode;
+        this.contentType = other.contentType;
+        this.specialToSendCookie = other.specialToSendCookie;
+        this.errorOccurred = other.errorOccurred;
+        this.isHTTPS = other.isHTTPS;
+        this.URL = other.URL;
+        this.finalURL = other.finalURL;
+        this.sentCookie = other.sentCookie;
+        this.receivedCookie = other.receivedCookie;
+        this.sslTrusted = other.sslTrusted;
+        this.sslUnTrustedReason = other.sslUnTrustedReason;
+    }
+
+
+
     public HttpResult(byte[] data) {
         this.data = data;
     }

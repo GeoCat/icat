@@ -64,13 +64,6 @@ public class ServiceDocumentLink extends DocumentLink {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long serviceMetadataLinkId;
 
-    //if this link resolves to a capabilities XML document, this represents that document
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Fetch(value = FetchMode.SELECT)
-    @JoinColumn(name = "capabilitiesDocumentId")
-    private CapabilitiesDocument capabilitiesDocument;
-
-
 
     //---------------------------------------------------------------------------
 
@@ -105,13 +98,6 @@ public class ServiceDocumentLink extends DocumentLink {
         this.serviceMetadataRecord = localServiceMetadataRecord;
     }
 
-    public CapabilitiesDocument getCapabilitiesDocument() {
-        return capabilitiesDocument;
-    }
-
-    public void setCapabilitiesDocument(CapabilitiesDocument capabilitiesDocument) {
-        this.capabilitiesDocument = capabilitiesDocument;
-    }
 
     //---------------------------------------------------------------------------
 
@@ -134,21 +120,10 @@ public class ServiceDocumentLink extends DocumentLink {
     public String toString() {
         String result = "ServiceDocumentLink {\n";
         result += "      serviceMetadataLinkId: " + serviceMetadataLinkId + "\n";
-
-
-//        if ( (serviceMetadataRecord != null)   )
-//            result += "      serviceMetadataRecord record identifier: "+ serviceMetadataRecord.getFileIdentifier()+"\n";
-//        if ( (serviceMetadataRecord != null)   )
-//            result += "      serviceMetadataRecord Id: "+ serviceMetadataRecord.getServiceMetadataDocumentId()+"\n";
+        result += "      serviceMetadataRecord Id: "+ serviceMetadataRecord.getServiceMetadataDocumentId()+"\n";
 
         result += "\n";
         result += super.toString();
-        result += "\n";
-        result += "     +  Link is Capabilities Document: " + (getCapabilitiesDocument() != null) + "\n";
-//        if (getCapabilitiesDocument() != null) {
-//            result += getCapabilitiesDocument().toString(8);
-//        }
-
         result += "\n";
 
         result += "  }";

@@ -36,6 +36,10 @@ package net.geocat.http;
 
 import net.geocat.database.linkchecker.entities.HttpResult;
 import net.geocat.database.linkchecker.repos.HttpResultRepo;
+import net.geocat.service.capabilities.CapabilitiesDownloadingService;
+import net.geocat.service.helper.ProcessLockingService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -43,22 +47,32 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.concurrent.locks.Lock;
 
 @Component
 @Scope("prototype")
 @Qualifier("cachingHttpRetriever")
  public class CachingHttpRetriever implements IHTTPRetriever {
 
+    Logger logger = LoggerFactory.getLogger(CachingHttpRetriever.class);
+
+
     @Autowired
     HttpResultRepo httpResultRepo;
+
+    @Autowired
+    ProcessLockingService processLockingService;
+
 
     @Autowired
     @Qualifier("cookieAttachingRetriever")
     public CookieAttachingRetriever retriever; // public for testing
 
-    boolean limitByJobId = true; // false = testing (do not use in production)
+    boolean limitByJobId = true; // false = testing (do not use in production)  TODO: fix
 
     String linkCheckJobId;
+
+    public static Object lockingObject = new Object();
 
     public CachingHttpRetriever() {
         linkCheckJobId = MDC.get("JMSCorrelationID");
@@ -67,35 +81,47 @@ import java.io.IOException;
     @Override
     public HttpResult retrieveXML(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate) throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
 
-        if ( (linkCheckJobId == null) || (linkCheckJobId.isEmpty()) )
-            return retriever.retrieveXML( verb,  location,  body,  cookie,  predicate);
+        Lock lock = processLockingService.getLock(location); // don't want to have two processes downloading at the same time...
+        lock.lock();
+        try {
+            if ((linkCheckJobId == null) || (linkCheckJobId.isEmpty()))
+                return retriever.retrieveXML(verb, location, body, cookie, predicate);
 
-        HttpResult result = getCached(location);
-        if (result != null)
+            HttpResult result = getCached(location);
+            if (result != null) {
+                logger.debug("    * CACHED - "+location);
+                return result;
+            }
+
+            result = retriever.retrieveXML(verb, location, body, cookie, predicate);
+            result.setURL(location); // in a re-direct, this can get changed -- use the finalURL()
+            result.setLinkCheckJobId(linkCheckJobId);
+            result = saveResult(result,location);
+
             return result;
-
-        result = retriever.retrieveXML( verb,  location,  body,  cookie,  predicate);
-        result.setLinkCheckJobId(linkCheckJobId);
-        result = saveResult(result);
-
-        return result;
-
+        }
+        finally
+        {
+            lock.unlock();
         }
 
-    //chance that this throws...
-    private synchronized  HttpResult saveResult(HttpResult result) {
+    }
 
-        if (limitByJobId) {
-            //could be parallel processes that did this...
-            if (httpResultRepo.existsByLinkCheckJobIdAndURL(linkCheckJobId, result.getURL()))
-                return result;
-        }
-        else {
-            if (httpResultRepo.existsByURL(  result.getURL()))
-                return result;
-        }
 
-        return httpResultRepo.save(result);
+        //chance that this throws...
+    private    HttpResult  saveResult(HttpResult result,String originalLocation) {
+        synchronized (lockingObject) {
+            if (limitByJobId) {
+                //could be parallel processes that did this...
+                if (httpResultRepo.existsByLinkCheckJobIdAndURL(linkCheckJobId, result.getURL()))
+                    return result;
+            } else {
+                if (httpResultRepo.existsByURL(result.getURL()))
+                    return result;
+            }
+
+            return httpResultRepo.save(result);
+        }
     }
 
     private HttpResult getCached(String location) {

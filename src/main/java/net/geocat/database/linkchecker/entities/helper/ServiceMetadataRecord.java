@@ -86,11 +86,11 @@ public class ServiceMetadataRecord extends MetadataRecord {
     @Column(columnDefinition = "varchar(5)")
     IndicatorStatus INDICATOR_CAPABILITIES_RESOLVES_TO_SERVICE;
 
-    //PASS if ANY linked capabilities document's Service Metadata Record has the same file identifier and the XML documents are the same as our starting service metadata record.
-    // null = not evaluated
-    @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "varchar(5)")
-    IndicatorStatus INDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES;
+//    //PASS if ANY linked capabilities document's Service Metadata Record has the same file identifier and the XML documents are the same as our starting service metadata record.
+//    // null = not evaluated
+//    @Enumerated(EnumType.STRING)
+//    @Column(columnDefinition = "varchar(5)")
+//    IndicatorStatus INDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES;
 
     //PASS if ANY linked capabilities document's Service Metadata Record has the same file identifier as our starting service metadata record.
     // null = not evaluated
@@ -145,13 +145,13 @@ public class ServiceMetadataRecord extends MetadataRecord {
         this.INDICATOR_CAPABILITIES_RESOLVES_TO_SERVICE = INDICATOR_CAPABILITIES_RESOLVES_TO_SERVICE;
     }
 
-    public IndicatorStatus getINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES() {
-        return INDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES;
-    }
-
-    public void setINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES(IndicatorStatus INDICATOR_CAPABILITIES_SERVICE_MATCHES) {
-        this.INDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES = INDICATOR_CAPABILITIES_SERVICE_MATCHES;
-    }
+//    public IndicatorStatus getINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES() {
+//        return INDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES;
+//    }
+//
+//    public void setINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES(IndicatorStatus INDICATOR_CAPABILITIES_SERVICE_MATCHES) {
+//        this.INDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES = INDICATOR_CAPABILITIES_SERVICE_MATCHES;
+//    }
 
     public IndicatorStatus getINDICATOR_ALL_CAPABILITIES_LAYER_RESOLVE() {
         return INDICATOR_ALL_CAPABILITIES_LAYER_RESOLVE;

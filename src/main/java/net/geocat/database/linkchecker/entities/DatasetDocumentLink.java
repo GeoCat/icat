@@ -67,11 +67,11 @@ public class DatasetDocumentLink extends DocumentLink {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long datasetMetadataLinkId;
 
-    //if this link resolved to a capabilities document, which one
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "capabilitiesDocumentId")
-    @Fetch(value = FetchMode.SELECT)
-    private CapabilitiesDocument capabilitiesDocument;
+//    //if this link resolved to a capabilities document, which one
+//    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    @JoinColumn(name = "capabilitiesDocumentId")
+//    @Fetch(value = FetchMode.SELECT)
+//    private CapabilitiesDocument capabilitiesDocument;
 
 
 
@@ -102,13 +102,6 @@ public class DatasetDocumentLink extends DocumentLink {
         this.datasetMetadataLinkId = datasetMetadataLinkId;
     }
 
-    public CapabilitiesDocument getCapabilitiesDocument() {
-        return capabilitiesDocument;
-    }
-
-    public void setCapabilitiesDocument(CapabilitiesDocument capabilitiesDocument) {
-        this.capabilitiesDocument = capabilitiesDocument;
-    }
 
     //---------------------------------------------------------------------------
 

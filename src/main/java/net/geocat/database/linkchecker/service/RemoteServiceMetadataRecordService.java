@@ -34,8 +34,7 @@
 package net.geocat.database.linkchecker.service;
 
 import net.geocat.database.linkchecker.entities.CapabilitiesDocument;
-import net.geocat.database.linkchecker.entities.RemoteServiceMetadataRecord;
-import net.geocat.database.linkchecker.entities.RemoteServiceMetadataRecordLink;
+ import net.geocat.database.linkchecker.entities.RemoteServiceMetadataRecordLink;
 import net.geocat.database.linkchecker.entities.helper.LinkState;
 import net.geocat.service.capabilities.DatasetLinkFixer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,15 +53,10 @@ public class RemoteServiceMetadataRecordService {
         result.setLinkState(LinkState.Created);
         result.setRawURL(rawURL);
         result.setFixedURL(datasetLinkFixer.fix(rawURL));
-        result.setCapabilitiesDocument(capabilitiesDocument);
+        result.setLinkCheckJobId(capabilitiesDocument.getLinkCheckJobId());
+       //  result.setCapabilitiesDocument(capabilitiesDocument);
         return result;
     }
 
-    public RemoteServiceMetadataRecord create(RemoteServiceMetadataRecordLink link) {
-        RemoteServiceMetadataRecord result = new RemoteServiceMetadataRecord();
-        result.setRemoteServiceMetadataRecordLink(link);
-        link.setRemoteServiceMetadataRecord(result);
 
-        return result;
-    }
 }

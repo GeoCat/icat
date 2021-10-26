@@ -34,6 +34,7 @@
 package net.geocat.simple;
 
 import net.geocat.service.downloadhelpers.CapabilitiesContinueReadingPredicate;
+import net.geocat.xml.XmlStringTools;
 import net.geocat.xml.helpers.CapabilityDeterminer;
 import org.junit.Test;
 
@@ -53,7 +54,7 @@ public class TestCapabilitiesContinueReadingPredicate {
         String s_nodecl = s.substring(38);
         String s_rootOnly = s.substring(38,409);
 
-       assertTrue(pred.isXML(s));
+       assertTrue(XmlStringTools.isXML(s));
 
        assertEquals(s_nodecl,pred.replaceXMLDecl(s));
 
@@ -77,7 +78,7 @@ public class TestCapabilitiesContinueReadingPredicate {
         String s_nodecl = s.substring(38);
         String s_rootOnly = s.substring(38,401);
 
-        assertTrue(pred.isXML(s));
+        assertTrue(XmlStringTools.isXML(s));
 
         assertEquals(s_nodecl,pred.replaceXMLDecl(s));
 

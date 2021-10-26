@@ -66,12 +66,19 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
     };
     Logger logger = LoggerFactory.getLogger(BasicHTTPRetriever.class);
     int TIMEOUT_MS = 2 * 60 * 1000;
-    int initialReadSize = 2000;
+    int initialReadSize = 4096;
 
     public boolean shouldReadMore(byte[] tinyBuffer, IContinueReadingPredicate predicate) {
         if (predicate == null)
             return true;
+
         return predicate.continueReading(tinyBuffer);
+    }
+
+    public HttpResult retrieveJSON(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate)
+            throws IOException, SecurityException, ExceptionWithCookies, RedirectException
+    {
+        return retrieve(verb,location,body, cookie,predicate, "application/json","application/json");
     }
 
     /**
@@ -82,7 +89,22 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
      * @return response from server
      * @throws Exception
      */
-    public HttpResult retrieveXML(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate) throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
+    public HttpResult retrieveXML(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate)
+            throws IOException, SecurityException, ExceptionWithCookies, RedirectException
+    {
+        return retrieve(verb,location,body, cookie,predicate, "application/xml",  "application/xml; q=1.0,text/xml; q=1.0,application/atom+xml; q=0.9");
+    }
+
+
+    /**
+     * @param verb     GET or POST
+     * @param location url
+     * @param body     for POST, body
+     * @param cookie   cookies to attach -   http.setRequestProperty("Cookie", cookie);
+     * @return response from server
+     * @throws Exception
+     */
+    public HttpResult retrieve (String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,String contentType,String accept) throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
 
         if (body == null)
             body = "";
@@ -114,6 +136,7 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
         }
 
 
+
         http.setConnectTimeout(TIMEOUT_MS);
         http.setReadTimeout(TIMEOUT_MS);
         http.setRequestMethod(verb);
@@ -123,8 +146,10 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
             http.setFixedLengthStreamingMode(body_bytes.length);
            // http.setRequestProperty("Content-Type", "application/xml");
         }
-        http.setRequestProperty("Content-Type", "application/xml");
-        http.setRequestProperty("Accept", "application/xml,text/xml");
+        if (verb.equals("POST")) {
+            http.setRequestProperty("Content-Type", contentType); // some servers don't like this set if there's no body
+        }
+        http.setRequestProperty("Accept", accept);
         if ((cookie != null) && (!cookie.isEmpty()))
             http.setRequestProperty("Cookie", cookie);
 

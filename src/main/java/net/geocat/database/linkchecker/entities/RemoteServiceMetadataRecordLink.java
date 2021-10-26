@@ -42,14 +42,21 @@ import javax.persistence.*;
 @Entity
 public class RemoteServiceMetadataRecordLink extends RetrievableSimpleLink {
 
-    //which capabilities document did this link come from?
-    @OneToOne(mappedBy = "remoteServiceMetadataRecordLink")
-    CapabilitiesDocument capabilitiesDocument;
+//    //which capabilities document did this link come from?
+//    @OneToOne(mappedBy = "remoteServiceMetadataRecordLink")
+//    CapabilitiesDocument capabilitiesDocument;
 
-    //when this link resolved to a service metadata xml record, this object represent that document
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name = "remoteServiceMetadataRecordId")
-    RemoteServiceMetadataRecord remoteServiceMetadataRecord;
+    public String getFileIdentifier() {
+        return fileIdentifier;
+    }
+
+    public void setFileIdentifier(String fileIdentifier) {
+        this.fileIdentifier = fileIdentifier;
+    }
+
+    //fileIdentifier
+    @Column(columnDefinition = "text")
+    private String fileIdentifier;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -73,21 +80,7 @@ public class RemoteServiceMetadataRecordLink extends RetrievableSimpleLink {
         this.remoteServiceMetadataRecordLinkId = remoteServiceMetadataRecordId;
     }
 
-    public CapabilitiesDocument getCapabilitiesDocument() {
-        return capabilitiesDocument;
-    }
 
-    public void setCapabilitiesDocument(CapabilitiesDocument capabilitiesDocument) {
-        this.capabilitiesDocument = capabilitiesDocument;
-    }
-
-    public RemoteServiceMetadataRecord getRemoteServiceMetadataRecord() {
-        return remoteServiceMetadataRecord;
-    }
-
-    public void setRemoteServiceMetadataRecord(RemoteServiceMetadataRecord remoteServiceMetadataRecord) {
-        this.remoteServiceMetadataRecord = remoteServiceMetadataRecord;
-    }
     //---------------------------------------------------------------------------
 
     @PreUpdate
@@ -110,16 +103,18 @@ public class RemoteServiceMetadataRecordLink extends RetrievableSimpleLink {
         String result = "RemoteServiceMetadataRecordLink {\n";
         result += "      remoteServiceMetadataRecordLinkId: " + remoteServiceMetadataRecordLinkId + "\n";
 
+        result += "\n";
+        result += "      file identifier: "+fileIdentifier;
 
         result += "\n";
         result += super.toString();
         result += "\n";
 
 
-        result += "      has remote Service Metadata Record :" + (remoteServiceMetadataRecord != null) + "\n";
-        if (remoteServiceMetadataRecord != null) {
-            result += "      Remote Service Metadata Record file identifier:" + remoteServiceMetadataRecord.getFileIdentifier() + "\n";
-        }
+//        result += "      has remote Service Metadata Record :" + (remoteServiceMetadataRecord != null) + "\n";
+//        if (remoteServiceMetadataRecord != null) {
+//            result += "      Remote Service Metadata Record file identifier:" + remoteServiceMetadataRecord.getFileIdentifier() + "\n";
+//        }
         result += "  }";
         return result;
     }

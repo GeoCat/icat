@@ -76,36 +76,23 @@ public class EventProcessor_PostProcessServiceDocumentEvent extends BaseEventPro
 
     @Override
     public EventProcessor_PostProcessServiceDocumentEvent externalProcessing() throws Exception {
-        localServiceMetadataRecord = localServiceMetadataRecordRepo.fullId(getInitiatingEvent().getServiceMetadataId());// make sure we re-load
-
-
+        localServiceMetadataRecord = localServiceMetadataRecordRepo.findById(getInitiatingEvent().getServiceMetadataId()).get();// make sure we re-load
+        localServiceMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_POSTPROCESSED);
+        localServiceMetadataRecordRepo.save(localServiceMetadataRecord);
         return this;
     }
 
-
-    public void save(boolean reload){
-        localServiceMetadataRecord = localServiceMetadataRecordRepo.save(localServiceMetadataRecord);
-        localServiceMetadataRecord = null;
-        if (reload)
-            localServiceMetadataRecord = localServiceMetadataRecordRepo.fullId(localServiceMetadataRecord.getServiceMetadataDocumentId());
-    }
+//
+//    public void save(boolean reload){
+//        localServiceMetadataRecord = localServiceMetadataRecordRepo.save(localServiceMetadataRecord);
+//        localServiceMetadataRecord = null;
+//        if (reload)
+//            localServiceMetadataRecord = localServiceMetadataRecordRepo.fullId(localServiceMetadataRecord.getServiceMetadataDocumentId());
+//    }
 
 
     @Override
     public EventProcessor_PostProcessServiceDocumentEvent internalProcessing() throws Exception {
-
-        try{
-            localServiceMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_POSTPROCESSED);
-            save(false);
-            logger.debug("finished postprocessing documentid="+getInitiatingEvent().getServiceMetadataId()  );
-
-        }
-        catch(Exception e){
-            logger.error("postprocessing exception for datasetMetadataRecordId="+getInitiatingEvent().getServiceMetadataId(),e);
-            localServiceMetadataRecord.setState(ServiceMetadataDocumentState.ERROR);
-            localServiceMetadataRecord.setErrorMessage(  convertToString(e) );
-            save(false);
-        }
         return this;
     }
 

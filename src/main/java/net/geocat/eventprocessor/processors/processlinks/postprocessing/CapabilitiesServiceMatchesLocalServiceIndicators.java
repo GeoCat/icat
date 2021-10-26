@@ -34,9 +34,7 @@
 package net.geocat.eventprocessor.processors.processlinks.postprocessing;
 
 import net.geocat.database.linkchecker.entities.LocalServiceMetadataRecord;
-import net.geocat.database.linkchecker.entities.RemoteServiceMetadataRecord;
-import net.geocat.database.linkchecker.entities.helper.DocumentLink;
-import net.geocat.database.linkchecker.entities.helper.IndicatorStatus;
+
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -49,31 +47,31 @@ import java.util.stream.Collectors;
 public class CapabilitiesServiceMatchesLocalServiceIndicators {
 
     public LocalServiceMetadataRecord process(LocalServiceMetadataRecord record) {
-        List<DocumentLink> links = new ArrayList<DocumentLink>(record.getServiceDocumentLinks());
-
-        if ( (record.getINDICATOR_RESOLVES_TO_CAPABILITIES() == null) || (record.getINDICATOR_RESOLVES_TO_CAPABILITIES() ==0 ) ) {
-            record.setINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES(IndicatorStatus.FAIL);
-            record.setINDICATOR_CAPABILITIES_SERVICE_FILE_ID_MATCHES(IndicatorStatus.FAIL);
-            return record;
-        }
-
-        List<RemoteServiceMetadataRecord> remoteServiceMetadataRecords =  links.stream()
-                .map(x->x.getCapabilitiesDocument())
-                .filter(x-> x != null)
-                .map(x->x.getRemoteServiceMetadataRecordLink())
-                .filter(x-> x != null)
-                .map(x-> x.getRemoteServiceMetadataRecord())
-                .filter(x-> x != null)
-                .collect(Collectors.toList());
-
-        record.setINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES(IndicatorStatus.FAIL);
-        record.setINDICATOR_CAPABILITIES_SERVICE_FILE_ID_MATCHES(IndicatorStatus.FAIL);
-        for(RemoteServiceMetadataRecord remoteServiceMetadataRecord : remoteServiceMetadataRecords) {
-            if (remoteServiceMetadataRecord.getIndicator_CompareServiceMetadataLink_FileIdentifier() == IndicatorStatus.PASS)
-                record.setINDICATOR_CAPABILITIES_SERVICE_FILE_ID_MATCHES(IndicatorStatus.PASS);
-            if (remoteServiceMetadataRecord.getIndicator_CompareServiceMetadataLink_Full() == IndicatorStatus.PASS)
-                record.setINDICATOR_CAPABILITIES_SERVICE_FILE_ID_MATCHES(IndicatorStatus.PASS);
-        }
+//        List<DocumentLink> links = new ArrayList<DocumentLink>(record.getServiceDocumentLinks());
+//
+//        if ( (record.getINDICATOR_RESOLVES_TO_CAPABILITIES() == null) || (record.getINDICATOR_RESOLVES_TO_CAPABILITIES() ==0 ) ) {
+//            record.setINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES(IndicatorStatus.FAIL);
+//            record.setINDICATOR_CAPABILITIES_SERVICE_FILE_ID_MATCHES(IndicatorStatus.FAIL);
+//            return record;
+//        }
+//
+//        List<RemoteServiceMetadataRecord> remoteServiceMetadataRecords =  links.stream()
+//                .map(x->x.getCapabilitiesDocument())
+//                .filter(x-> x != null)
+//                .map(x->x.getRemoteServiceMetadataRecordLink())
+//                .filter(x-> x != null)
+//                .map(x-> x.getRemoteServiceMetadataRecord())
+//                .filter(x-> x != null)
+//                .collect(Collectors.toList());
+//
+//        record.setINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES(IndicatorStatus.FAIL);
+//        record.setINDICATOR_CAPABILITIES_SERVICE_FILE_ID_MATCHES(IndicatorStatus.FAIL);
+//        for(RemoteServiceMetadataRecord remoteServiceMetadataRecord : remoteServiceMetadataRecords) {
+//            if (remoteServiceMetadataRecord.getIndicator_CompareServiceMetadataLink_FileIdentifier() == IndicatorStatus.PASS)
+//                record.setINDICATOR_CAPABILITIES_SERVICE_FILE_ID_MATCHES(IndicatorStatus.PASS);
+//            if (remoteServiceMetadataRecord.getIndicator_CompareServiceMetadataLink_Full() == IndicatorStatus.PASS)
+//                record.setINDICATOR_CAPABILITIES_SERVICE_FILE_ID_MATCHES(IndicatorStatus.PASS);
+//        }
 
         return record;
     }

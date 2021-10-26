@@ -53,6 +53,8 @@ public class CapabilityDeterminer {
             return CapabilitiesType.WMTS;
         if (rootTagName.equals("WFS_Capabilities") && (ns.equalsIgnoreCase("http://www.opengis.net/wfs/2.0")))
             return CapabilitiesType.WFS;
+        if (rootTagName.equals("WFS_Capabilities") && (ns.equalsIgnoreCase("http://www.opengis.net/wfs")))
+            return CapabilitiesType.WFS;
 //        if (rootTagName.equals("Capabilities")&& (ns.equalsIgnoreCase("http://www.opengis.net/wcs/2.0")) )
 //            return CapabilitiesType.WCS;
 //        if (rootTagName.equals("Capabilities")&& (ns.equalsIgnoreCase("http://www.opengis.net/sos/2.0")) )

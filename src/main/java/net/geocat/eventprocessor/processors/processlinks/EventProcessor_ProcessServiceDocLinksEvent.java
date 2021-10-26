@@ -36,6 +36,7 @@ package net.geocat.eventprocessor.processors.processlinks;
 
 import net.geocat.database.linkchecker.entities.*;
 import net.geocat.database.linkchecker.entities.helper.LinkState;
+import net.geocat.database.linkchecker.entities.helper.SHA2JobIdCompositeKey;
 import net.geocat.database.linkchecker.entities.helper.ServiceMetadataDocumentState;
 import net.geocat.database.linkchecker.repos.*;
 
@@ -45,6 +46,7 @@ import net.geocat.events.Event;
 import net.geocat.events.EventFactory;
 import net.geocat.events.processlinks.ProcessServiceDocLinksEvent;
 import net.geocat.service.*;
+import net.geocat.service.capabilities.CapabilitiesDownloadingService;
 import net.geocat.service.capabilities.CapabilitiesLinkFixer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,9 +56,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static net.geocat.database.linkchecker.service.DatabaseUpdateService.convertToString;
@@ -97,17 +96,15 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
    @Autowired
    CapabilitiesDocumentRepo capabilitiesDocumentRepo;
 
-   @Autowired
-    RemoteServiceMetadataRecordRepo remoteServiceMetadataRecordRepo;
-
-   @Autowired
-    CapabilitiesRemoteDatasetMetadataDocumentRepo capabilitiesRemoteDatasetMetadataDocumentRepo;
+//   @Autowired
+//    RemoteServiceMetadataRecordRepo remoteServiceMetadataRecordRepo;
 
    @Autowired
    HumanReadableServiceMetadata humanReadableServiceMetadata;
 
+
    @Autowired
-    OperatesOnRemoteDatasetMetadataRecordRepo operatesOnRemoteDatasetMetadataRecordRepo;
+    ServiceDocOperatesOnProcessor serviceDocOperatesOnProcessor;
 
    @Autowired
    EventFactory eventFactory;
@@ -130,6 +127,8 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
    @Autowired
    ServiceOperatesOnIndicators serviceOperatesOnIndicators;
 
+    @Autowired
+    CapabilitiesDownloadingService capabilitiesDownloadingService;
 
     @Autowired
     CapabilitiesLinkFixer capabilitiesLinkFixer;
@@ -141,10 +140,10 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
 
     @Override
     public EventProcessor_ProcessServiceDocLinksEvent externalProcessing() throws Exception {
-       // localServiceMetadataRecord = localServiceMetadataRecordRepo.findById(getInitiatingEvent().getServiceMetadataId()).get();// make sure we re-load
-        localServiceMetadataRecord = localServiceMetadataRecordRepo.fullId(getInitiatingEvent().getServiceMetadataId());// make sure we re-load
+         localServiceMetadataRecord = localServiceMetadataRecordRepo.findById(getInitiatingEvent().getServiceMetadataId()).get();// make sure we re-load
+     //   localServiceMetadataRecord = localServiceMetadataRecordRepo.fullId(getInitiatingEvent().getServiceMetadataId());// make sure we re-load
 
-        prune(); // remove any previous work (if this is being re-run)
+       // prune(); // remove any previous work (if this is being re-run)
 
         try {
             int nlinksCap = localServiceMetadataRecord.getServiceDocumentLinks().size();
@@ -153,150 +152,43 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
 
             processDocumentLinks();
 
-            processOperatesOnLinks();
-             save(false);
+            processOperatesOnLinks(localServiceMetadataRecord);
 
-             logger.debug("finished initial processing  documentid="+getInitiatingEvent().getServiceMetadataId()  );
+          //  localServiceMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_PROCESSED);
+
+            save();
+            logger.debug("finished initial processing  documentid="+getInitiatingEvent().getServiceMetadataId()  );
 
         }
         catch(Exception e){
             logger.error("exception for serviceMetadataRecordId="+getInitiatingEvent().getServiceMetadataId(),e);
             localServiceMetadataRecord.setState(ServiceMetadataDocumentState.ERROR);
             localServiceMetadataRecord.setErrorMessage(  convertToString(e) );
-            save(false);
+            save();
         }
 
 
         return this;
     }
 
-    // for re-entry - need to clean up object (and database)
-    public void prune(){
-        List<CapabilitiesDocument> capDocuments = new ArrayList<>();
-        List<OperatesOnRemoteDatasetMetadataRecord> opsOnDocuments = new ArrayList<>();
 
-        //find objects and de-attach them
-        for(ServiceDocumentLink link : localServiceMetadataRecord.getServiceDocumentLinks()) {
-            CapabilitiesDocument capDoc = link.getCapabilitiesDocument();
-            if (capDoc != null) {
-                if (capDoc.getServiceDocumentLink() != null)
-                    capDoc.getServiceDocumentLink().setCapabilitiesDocument(null);
-                capDoc.setServiceDocumentLink(null);
-                capDocuments.add(capDoc); // to be deleted
-            }
-        }
-
-        for(OperatesOnLink link : localServiceMetadataRecord.getOperatesOnLinks()) {
-            OperatesOnRemoteDatasetMetadataRecord record = link.getDatasetMetadataRecord();
-            if (record != null) {
-                record.getOperatesOnLink().setDatasetMetadataRecord(null);
-                record.setOperatesOnLink(null);
-                opsOnDocuments.add(record); // to be deleted
-            }
-        }
-
-        if (capDocuments.isEmpty() && opsOnDocuments.isEmpty())
-            return; //nothing to do
-
-        save(true); //save with objects detached
-
-        for (CapabilitiesDocument capDoc: capDocuments){
-            capabilitiesDocumentRepo.delete(capDoc);
-
-        }
-        for(OperatesOnRemoteDatasetMetadataRecord record : opsOnDocuments) {
-            operatesOnRemoteDatasetMetadataRecordRepo.delete(record);
-        }
-
-        save(true);
-    }
-
-    public void save(boolean reload){
+    public void save( ){
         localServiceMetadataRecord = localServiceMetadataRecordRepo.save(localServiceMetadataRecord);
-        localServiceMetadataRecord=null;
-        if (reload)
-            localServiceMetadataRecord = localServiceMetadataRecordRepo.fullId(localServiceMetadataRecord.getServiceMetadataDocumentId());
+
+    }
+
+    private void processOperatesOnLinks(LocalServiceMetadataRecord localServiceMetadataRecord) throws  Exception {
+        serviceDocOperatesOnProcessor.process(localServiceMetadataRecord);
     }
 
 
-    private void processOperatesOnLinks() throws ExecutionException, InterruptedException {
-        int nlinks = localServiceMetadataRecord.getOperatesOnLinks().size();
-        int linkIdx = 0;
-        logger.debug("processing  "+nlinks+ " operates on links for documentid="+getInitiatingEvent().getServiceMetadataId());
 
 
 
-        ForkJoinPool pool = new ForkJoinPool(3);
-        int nTotal = localServiceMetadataRecord.getOperatesOnLinks().size();
-        AtomicInteger counter = new AtomicInteger(0);
-        try {
-            pool.submit(() ->
-                    localServiceMetadataRecord.getOperatesOnLinks().stream().parallel()
-                            .forEach(x -> {
-                                handleOperatesOnLink(x);
-                                int ndone = counter.incrementAndGet();
-                                String text = "processed operates on DS link " + ndone + " of " + nTotal;
-                                 if (x.getDatasetMetadataRecord() !=null) {
-                                   text += " - returned a Dataset Metadata Record" ;
-                                }
-                                else {
-                                     text += " -  DID NOT return a Dataset Metadata Record" ;
-                                }
-                                logger.debug(text);
-                            })
-            ).get();
-        }
-        finally {
-            pool.shutdown();
-        }
-
-
-
-//        for (OperatesOnLink link : localServiceMetadataRecord.getOperatesOnLinks()) {
-//            logger.debug("processing operates on link "+linkIdx+" of "+nlinks+" links");
-//            linkIdx++;
-//            handleOperatesOnLink(link);
-//            if (link.getDatasetMetadataRecord() !=null) {
-//                logger.debug("link returned a Dataset Metadata Record");
-//            }
-//            else {
-//                logger.debug("link DID NOT return a Dataset Metadata Record");
-//            }
-//        }
-        logger.debug("FINISHED processing  "+nlinks+ " operates on links for documentid="+getInitiatingEvent().getServiceMetadataId());
-    }
-
-    private void handleOperatesOnLink(OperatesOnLink link) {
-        try {
-            String jobid = getInitiatingEvent().getLinkCheckJobId();
-            link = retrieveOperatesOnLink.process(link,jobid);
-
-            link.setLinkState(LinkState.Complete);
-        }
-        catch(Exception e){
-            logger.error("error occurred while processing ServiceMetadataDocumentId="+localServiceMetadataRecord.getServiceMetadataDocumentId()
-                    +", OperatesOnLink="+link+", error="+e.getMessage());
-            link.setLinkState(LinkState.ERROR);
-            link.setErrorMessage(  convertToString(e) );
-
-        }
-    }
-
-    private void processDocumentLinks() throws ExecutionException, InterruptedException {
+    private void processDocumentLinks() throws Exception {
         int nlinks = localServiceMetadataRecord.getServiceDocumentLinks().size();
-        // get a more cannonical list of URLs -- this way we can tell if they are the same easier...
-        List<String> t = localServiceMetadataRecord.getServiceDocumentLinks().stream()
-                .map(x-> {
-                    try {
-                          x.setFixedURL(capabilitiesLinkFixer.fix(x.getRawURL()));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        x.setFixedURL(x.getRawURL());
-                    }
-                    return x;
-                })
-                .map(x->x.getFixedURL())
-                .collect(Collectors.toList());
+
+        fixURLs();
         int linkIdx = 0;
         logger.debug("processing "+nlinks+" service document links for documentid="+getInitiatingEvent().getServiceMetadataId());
         List<String> processedURLs = new ArrayList<>();
@@ -307,121 +199,45 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
             if (processedURLs.contains(thisURL))
             {
                 logger.debug("this url has already been processed - no action!");
+                link.setLinkState(LinkState.Redundant);
             }
             else {
                 processedURLs.add(link.getFixedURL());
-                handleSingleDocumentLink(link);
+                capabilitiesDownloadingService.handleLink(link);
             }
         }
         logger.debug("FINISHED processing "+nlinks+" service document links for documentid="+getInitiatingEvent().getServiceMetadataId());
     }
 
-    // should retrieve a capabilities document
-    // if so;
-    //   a) resolve the service metadata link (in cap doc)
-    //   b) for each of the layers in the cap doc, retrieve the dataset metadata link
-    private ServiceDocumentLink handleSingleDocumentLink(ServiceDocumentLink link) throws ExecutionException, InterruptedException {
-        getCapabilitiesDoc(link);
-        if (link.getCapabilitiesDocument() != null) {
-            CapabilitiesDocument capabilitiesDocument = link.getCapabilitiesDocument();
-            int nlinks =  capabilitiesDocument.getCapabilitiesDatasetMetadataLinkList().size();
-            RemoteServiceMetadataRecordLink rsmrl = capabilitiesDocument.getRemoteServiceMetadataRecordLink();
-            logger.debug("link produced a capabilities document has Service Metadata Link="+(rsmrl!=null)+", and "+nlinks+" dataset links.");
-
-            if (rsmrl != null) {
-                logger.debug("getting Capabilities Document's remote service metadata record...");
-                getRemoteServiceMetadataRecordLink(rsmrl);
-                if (rsmrl.getRemoteServiceMetadataRecord() !=null) {
-                    RemoteServiceMetadataRecord remoteServiceMetadataRecord=  rsmrl.getRemoteServiceMetadataRecord();
-
-                }
-            }
-            int linkIdx = 0;
-            logger.debug("processing "+nlinks+" dataset links from the capabilities document");
-
-            ForkJoinPool pool = new ForkJoinPool(3);
-            int nTotal = capabilitiesDocument.getCapabilitiesDatasetMetadataLinkList().size();
-            AtomicInteger counter = new AtomicInteger(0);
-            try {
-                pool.submit(() ->
-                        capabilitiesDocument.getCapabilitiesDatasetMetadataLinkList().stream().parallel()
-                                .forEach(x -> {
-                                    handleLayerDatasetLink(x);
-                                    int ndone = counter.incrementAndGet();
-                                    logger.debug("processed link cap's DS link " + ndone + " of " + nTotal); // a wee bit of a lie, but will be "accurate"
-                                })
-                ).get();
-            }
-            finally {
-                pool.shutdown();
-            }
-
-//            for (CapabilitiesDatasetMetadataLink capabilitiesDatasetMetadataLink : capabilitiesDocument.getCapabilitiesDatasetMetadataLinkList()) {
-//                logger.debug("processing link "+linkIdx+" of "+nlinks+" dataset links from the capabilities document");
-//                linkIdx++;
-//                handleLayerDatasetLink(capabilitiesDatasetMetadataLink);
-//                if (capabilitiesDatasetMetadataLink.getCapabilitiesRemoteDatasetMetadataDocument() !=null) {
-//                    logger.debug("link produced a Dataset Metadata Document");
-//                    CapabilitiesRemoteDatasetMetadataDocument capabilitiesRemoteDatasetMetadataDocument =capabilitiesDatasetMetadataLink.getCapabilitiesRemoteDatasetMetadataDocument();
-//                }
-//                else {
-//                    logger.debug("link DID NOT produce a Dataset Metadata Document");
-//                }
-//            }
-        }
-        else {
-            logger.debug("link DID NOT produced a capabilities document");
-
-        }
-
-        return link;
+    // get a more cannonical list of URLs -- this way we can tell if they are the same easier...
+    private List<String> fixURLs() {
+        return localServiceMetadataRecord.getServiceDocumentLinks().stream()
+                .map(x-> {
+                    try {
+                          x.setFixedURL(capabilitiesLinkFixer.fix(x.getRawURL(),localServiceMetadataRecord.getMetadataServiceType()));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        x.setFixedURL(x.getRawURL());
+                    }
+                    return x;
+                })
+                .map(x->x.getFixedURL())
+                .collect(Collectors.toList());
     }
 
-    private void handleLayerDatasetLink(CapabilitiesDatasetMetadataLink capabilitiesDatasetMetadataLink) {
-        try {
-            String jobid = getInitiatingEvent().getLinkCheckJobId();
+    //optimize - don't keep loading it
+    List<CapabilitiesDocument> getCapabilities(LocalServiceMetadataRecord record) {
+        List<String>  cap_sha2s =     record.getServiceDocumentLinks().stream()
+                .filter(x->x.getSha2() != null)
+                .map(x->x.getSha2())
+                .distinct()
+                .collect(Collectors.toList());
 
-            capabilitiesDatasetMetadataLink = retrieveCapabilitiesDatasetMetadataLink.process(capabilitiesDatasetMetadataLink,jobid);
+        List<CapabilitiesDocument> capdocs = cap_sha2s.stream()
+                .map(x-> capabilitiesDocumentRepo.findById(new SHA2JobIdCompositeKey(x ,record.getLinkCheckJobId())).get())
+                .collect(Collectors.toList());
 
-            capabilitiesDatasetMetadataLink.setLinkState(LinkState.Complete);
-        }
-        catch(Exception e){
-            logger.error("error occurred while processing ServiceMetadataDocumentId="+localServiceMetadataRecord.getServiceMetadataDocumentId()
-                    +", CapabilitiesDatasetMetadataLink="+capabilitiesDatasetMetadataLink+", error="+e.getMessage(),e);
-            capabilitiesDatasetMetadataLink.setLinkState(LinkState.ERROR);
-            capabilitiesDatasetMetadataLink.setErrorMessage(  convertToString(e) );
-        }
-    }
-
-    private void getRemoteServiceMetadataRecordLink(RemoteServiceMetadataRecordLink rsmrl) {
-        try {
-
-            rsmrl = remoteServiceMetadataRecordLinkRetriever.process(rsmrl);
-
-            rsmrl.setLinkState(LinkState.Complete);
-        }
-        catch(Exception e){
-            logger.error("error occurred while processing ServiceMetadataDocumentId="+localServiceMetadataRecord.getServiceMetadataDocumentId()
-                    +", RemoteServiceMetadataRecordLink="+rsmrl+", error="+e.getMessage(),e);
-            rsmrl.setLinkState(LinkState.ERROR);
-            rsmrl.setErrorMessage(  convertToString(e) );
-        }
-    }
-
-    private ServiceDocumentLink getCapabilitiesDoc(ServiceDocumentLink link) {
-        try {
-            link = (ServiceDocumentLink) retrieveServiceDocumentLink.process(link);
-
-            link.setLinkState(LinkState.Complete);
-        }
-        catch (Exception e){
-            logger.error("error occurred while processing ServiceMetadataDocumentId="+localServiceMetadataRecord.getServiceMetadataDocumentId()
-               +", ServiceDocumentLink="+link+", error="+e.getMessage(),e);
-            link.setLinkState(LinkState.ERROR);
-            link.setErrorMessage(  convertToString(e) );
-        }
-
-        return link;
+        return capdocs;
     }
 
 
@@ -429,26 +245,29 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
     public EventProcessor_ProcessServiceDocLinksEvent internalProcessing() throws Exception {
         //handle post-procssing
         //reload for any outstanding transactions
-      // localServiceMetadataRecord = localServiceMetadataRecordRepo.findById(getInitiatingEvent().getServiceMetadataId()).get();// make sure we re-load
-        localServiceMetadataRecord = localServiceMetadataRecordRepo.fullId(getInitiatingEvent().getServiceMetadataId());// make sure we re-load
+          localServiceMetadataRecord = localServiceMetadataRecordRepo.findById(getInitiatingEvent().getServiceMetadataId()).get();// make sure we re-load
 
         try {
-            capabilitiesResolvesIndicators.process(localServiceMetadataRecord); // simple record->cap indicators
-            capabilitiesServiceLinkIndicators.process(localServiceMetadataRecord); // see if caps' service record matches local service record
-            capabilitiesServiceMatchesLocalServiceIndicators.process(localServiceMetadataRecord); // see if cap links back to original service records
-            capabilitiesDatasetLinksResolveIndicators.process(localServiceMetadataRecord); // looks at the cap's DS layers
-            serviceOperatesOnIndicators.process(localServiceMetadataRecord); // check the operates on links
 
-            localServiceMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_PROCESSED);
-            localServiceMetadataRecord.setHumanReadable(humanReadableServiceMetadata.getHumanReadable(localServiceMetadataRecord));
-            save(false);
-            logger.debug("finished post processing  documentid="+getInitiatingEvent().getServiceMetadataId()  );
+            List<CapabilitiesDocument> capDocs = getCapabilities(localServiceMetadataRecord);
+
+            capabilitiesResolvesIndicators.process(localServiceMetadataRecord,capDocs); // simple record->cap indicators
+            capabilitiesServiceLinkIndicators.process(localServiceMetadataRecord,capDocs); // see if a cap links back to original service records
+
+      //    capabilitiesServiceMatchesLocalServiceIndicators.process(localServiceMetadataRecord); // see if cap links back to original service records
+             capabilitiesDatasetLinksResolveIndicators.process(localServiceMetadataRecord,capDocs); // looks at the cap's DS layers
+             serviceOperatesOnIndicators.process(localServiceMetadataRecord,capDocs); // check the operates on links
+
+           localServiceMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_PROCESSED);
+           localServiceMetadataRecord.setHumanReadable(humanReadableServiceMetadata.getHumanReadable(localServiceMetadataRecord));
+           save( );
+           logger.debug("finished initial post processing  documentid="+getInitiatingEvent().getServiceMetadataId()  );
         }
         catch(Exception e){
             logger.error("post processing exception for serviceMetadataRecordId="+getInitiatingEvent().getServiceMetadataId(),e);
             localServiceMetadataRecord.setState(ServiceMetadataDocumentState.ERROR);
             localServiceMetadataRecord.setErrorMessage(  convertToString(e) );
-            save(false);
+            save( );
         }
 
         return this;

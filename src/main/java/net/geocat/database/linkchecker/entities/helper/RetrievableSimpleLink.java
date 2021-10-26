@@ -71,6 +71,10 @@ public class RetrievableSimpleLink extends UpdateCreateDateTimeEntity {
     @Column(columnDefinition = "varchar(64)")
     private String sha2;
 
+    //what link check job this is apart of
+    @Column(columnDefinition = "varchar(40)")
+    private String linkCheckJobId;
+
     //is the final URL https?
     private Boolean linkIsHTTS;
 
@@ -126,6 +130,14 @@ public class RetrievableSimpleLink extends UpdateCreateDateTimeEntity {
 
     //---------------------------------------------------------------------------
 
+
+    public String getLinkCheckJobId() {
+        return linkCheckJobId;
+    }
+
+    public void setLinkCheckJobId(String jobId) {
+        this.linkCheckJobId = jobId;
+    }
 
     public String getXmlDocInfo() {
         return xmlDocInfo;
@@ -305,6 +317,9 @@ public class RetrievableSimpleLink extends UpdateCreateDateTimeEntity {
 
         if (urlFullyRead != null)
             result += "     +  fully downloaded: " + urlFullyRead + "\n";
+        if (sha2 !=null)
+            result += "     +  sha2: " + sha2 + "\n";
+
 
         if (getLinkHTTPException() != null)
             result += "     +  URL threw exception: " + getLinkHTTPException() + "\n";
@@ -337,7 +352,8 @@ public class RetrievableSimpleLink extends UpdateCreateDateTimeEntity {
         }
         if ((sha2 != null) && (!sha2.isEmpty()))
             result += "     +  SHA2: " + getSha2() + "\n";
-
+        if ((linkCheckJobId != null) && (!linkCheckJobId.isEmpty()))
+            result += "     +  jobId: " + getLinkCheckJobId() + "\n";
 
         return result;
 

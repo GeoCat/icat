@@ -33,17 +33,19 @@
 
 package net.geocat.eventprocessor.processors.processlinks.postprocessing;
 
-import net.geocat.database.linkchecker.entities.DatasetDocumentLink;
-import net.geocat.database.linkchecker.entities.LocalDatasetMetadataRecord;
-import net.geocat.database.linkchecker.entities.LocalServiceMetadataRecord;
-import net.geocat.database.linkchecker.entities.ServiceDocumentLink;
+import net.geocat.database.linkchecker.entities.*;
 import net.geocat.database.linkchecker.entities.helper.DocumentLink;
 import net.geocat.database.linkchecker.entities.helper.MetadataRecord;
+import net.geocat.database.linkchecker.entities.helper.SHA2JobIdCompositeKey;
+import net.geocat.database.linkchecker.repos.CapabilitiesDocumentRepo;
+import net.geocat.service.capabilities.DatasetLink;
 import net.geocat.xml.helpers.CapabilitiesType;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -55,28 +57,50 @@ import java.util.stream.Stream;
 @Scope("prototype")
 public class CapabilitiesResolvesIndicators {
 
-    public LocalServiceMetadataRecord process(LocalServiceMetadataRecord record) {
+
+    @Autowired
+    CapabilitiesDocumentRepo capabilitiesDocumentRepo;
+
+    public LocalServiceMetadataRecord process(LocalServiceMetadataRecord record,List<CapabilitiesDocument> capDocs) {
         List<DocumentLink> links = new ArrayList<DocumentLink>(record.getServiceDocumentLinks());
-        process(record,links);
+        process(record,links,capDocs);
         return record;
     }
 
-    public LocalDatasetMetadataRecord process (LocalDatasetMetadataRecord record) {
+    public LocalDatasetMetadataRecord process (LocalDatasetMetadataRecord record,List<CapabilitiesDocument> capDocs) {
         List<DocumentLink> links = new ArrayList<DocumentLink>(record.getDocumentLinks());
-        process(record,links);
+        process(record,links,capDocs);
         return record;
+    }
+
+
+    public static List<String> unique(List<String> list) {
+        HashSet hs = new HashSet();
+        hs.addAll(list);
+        list.clear();
+        list.addAll(hs);
+        return list;
     }
 
     //populates
     //Integer INDICATOR_RESOLVES_TO_CAPABILITIES;
     //CapabilitiesType INDICATOR_CAPABILITIES_TYPE;
-    public void process(MetadataRecord record, List<DocumentLink> links) {
-        int nCapDocs = (int) links.stream().filter(x->x.getCapabilitiesDocument() != null).count();
+    public void process(MetadataRecord record, List<DocumentLink> links,List<CapabilitiesDocument> capDocs) {
+
+        if ( (links ==null) || (links.isEmpty()) )
+            return;
+
+        int nCapDocs = (int) capDocs.size();
         record.setINDICATOR_RESOLVES_TO_CAPABILITIES(nCapDocs);
+
         if (nCapDocs ==0)
             return; //nothing more to do
 
-        List<CapabilitiesType> allTypes = links.stream().filter(x->x.getCapabilitiesDocument() != null).map(x->x.getCapabilitiesDocument().getCapabilitiesDocumentType()).collect(Collectors.toList());
+
+
+        List<CapabilitiesType> allTypes = capDocs.stream()
+                 .map(x->x.getCapabilitiesDocumentType())
+                .collect(Collectors.toList());
 
         if (nCapDocs == 1){
             record.setINDICATOR_CAPABILITIES_TYPE(allTypes.get(0));

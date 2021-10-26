@@ -31,15 +31,55 @@
  *  ==============================================================================
  */
 
-package net.geocat.database.linkchecker.repos;
+package net.geocat.xml;
 
-import net.geocat.database.linkchecker.entities.OperatesOnRemoteDatasetMetadataRecord;
-import net.geocat.database.linkchecker.entities.RemoteServiceMetadataRecord;
 import org.springframework.context.annotation.Scope;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.Charset;
+
 @Component
-@Scope("prototype")
-public interface OperatesOnRemoteDatasetMetadataRecordRepo  extends CrudRepository<OperatesOnRemoteDatasetMetadataRecord, Long> {
+@Scope("singleton")
+public class XmlStringTools {
+
+    public final static String UTF8_BOM = "\uFEFF";
+    private final static Charset UTF8_CHARSET = Charset.forName("UTF-8");
+
+
+    public static String trim(String s){
+        String result = s.trim();
+
+        if (result.startsWith(UTF8_BOM)) {
+            result = result.substring(1).trim();
+        }
+
+        return result;
+    }
+
+    public static String bytea2String(byte[] bytes) {
+        return trim(new String(bytes, UTF8_CHARSET));
+    }
+
+    public static boolean isXML(String doc) {
+        try {
+            if (!doc.startsWith("<?xml")) {
+                // sometimes it doesn't start with the xml declaration
+                doc =  trim(doc);
+                if (!doc.startsWith("<"))
+                    return false; //not xml
+                if (doc.length() < 4)
+                    return false;
+                //flaky, is second char a letter?
+                return Character.isLetter(doc.charAt(1));
+            }
+
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public static boolean isXML(byte[] data) {
+        return isXML(bytea2String(data));
+    }
 }

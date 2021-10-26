@@ -68,7 +68,11 @@ public class XmlServiceRecordDoc extends XmlMetadataDocument {
       //  NodeList nl = xpath_nodeset("//srv:operatesOn");
         Node main = getFirstNode();
         Node secondary = WMSCapabilitiesDatasetLinkExtractor.findNode(main,"identificationInfo");
+        if (secondary == null)
+            return; //nothing to process
         secondary = WMSCapabilitiesDatasetLinkExtractor.findNode(secondary,"SV_ServiceIdentification");
+        if (secondary == null)
+            return; //nothing to process
         List<Node> nl = WMSCapabilitiesDatasetLinkExtractor.findNodes(secondary,"operatesOn");
         operatesOns = OperatesOn.create(nl);
     }

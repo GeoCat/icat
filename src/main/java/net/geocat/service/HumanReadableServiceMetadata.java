@@ -69,13 +69,13 @@ public class HumanReadableServiceMetadata {
                         result += "Capabilities Document link to Service Record\n";
                         result += "--------------------------------------------\n\n";
                         result += remoteServiceMetadataRecordLink.toString() + "\n\n";
-                        if (remoteServiceMetadataRecordLink.getRemoteServiceMetadataRecord() != null) {
-                            RemoteServiceMetadataRecord remoteServiceMetadataRecord = remoteServiceMetadataRecordLink.getRemoteServiceMetadataRecord();
-                            result += "Capabilities Document Service Record\n";
-                            result += "------------------------------------\n\n";
-                            result += remoteServiceMetadataRecord.toString() + "\n\n";
-
-                        }
+//                        if (remoteServiceMetadataRecordLink.getRemoteServiceMetadataRecord() != null) {
+//                            RemoteServiceMetadataRecord remoteServiceMetadataRecord = remoteServiceMetadataRecordLink.getRemoteServiceMetadataRecord();
+//                            result += "Capabilities Document Service Record\n";
+//                            result += "------------------------------------\n\n";
+//                            result += remoteServiceMetadataRecord.toString() + "\n\n";
+//
+//                        }
                     }
                     if (!capabilitiesDocument.getCapabilitiesDatasetMetadataLinkList().isEmpty()) {
                         result += "Capabilities Document links to Datasets\n";
@@ -86,12 +86,12 @@ public class HumanReadableServiceMetadata {
                             result += "Capabilities document Link #" + idx2 + " to dataset MD\n";
                             result += "------------------------------------------------\n\n";
                             result += link2.toString() + "\n\n";
-                            if (link2.getCapabilitiesRemoteDatasetMetadataDocument() != null) {
-                                CapabilitiesRemoteDatasetMetadataDocument capabilitiesRemoteDatasetMetadataDocument = link2.getCapabilitiesRemoteDatasetMetadataDocument();
-                                result += "Capabilities Document Dataset MD Record\n";
-                                result += "----------------------------------------\n\n";
-                                result += capabilitiesRemoteDatasetMetadataDocument.toString() + "\n\n";
-                            }
+//                            if (link2.getCapabilitiesRemoteDatasetMetadataDocument() != null) {
+//                                CapabilitiesRemoteDatasetMetadataDocument capabilitiesRemoteDatasetMetadataDocument = link2.getCapabilitiesRemoteDatasetMetadataDocument();
+//                                result += "Capabilities Document Dataset MD Record\n";
+//                                result += "----------------------------------------\n\n";
+//                                result += capabilitiesRemoteDatasetMetadataDocument.toString() + "\n\n";
+//                            }
                         }
                     }
                 }
@@ -111,12 +111,12 @@ public class HumanReadableServiceMetadata {
                 result += "OperatesOn Link #" + idx + "\n";
                 result += "-------------------\n\n";
                 result += link.toString() + "\n\n";
-                if (link.getDatasetMetadataRecord() != null) {
-                    OperatesOnRemoteDatasetMetadataRecord operatesOnRemoteDatasetMetadataRecord = link.getDatasetMetadataRecord();
-                    result += "OperatesOn Dataset MD Record\n";
-                    result += "----------------------------------------\n\n";
-                    result += operatesOnRemoteDatasetMetadataRecord.toString() + "\n\n";
-                }
+//                if (link.getDatasetMetadataRecord() != null) {
+//                    OperatesOnRemoteDatasetMetadataRecord operatesOnRemoteDatasetMetadataRecord = link.getDatasetMetadataRecord();
+//                    result += "OperatesOn Dataset MD Record\n";
+//                    result += "----------------------------------------\n\n";
+//                    result += operatesOnRemoteDatasetMetadataRecord.toString() + "\n\n";
+//                }
                 idx++;
             }
             result += "=================================================\n\n";

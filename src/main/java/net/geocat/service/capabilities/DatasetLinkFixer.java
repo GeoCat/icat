@@ -67,7 +67,7 @@ public class DatasetLinkFixer implements ILinkFixer {
                 return link;
 
             String request = getQueryParam(link, requestParam);
-            if (!request.equalsIgnoreCase("GetRecordById"))
+            if ( (request == null) || (!request.equalsIgnoreCase("GetRecordById")) )
                 return link; //only process GetRecordById requests
 
             String outputSchemaParam = CapabilitiesLinkFixer.findQueryParmName(link, "outputSchema");

@@ -93,7 +93,7 @@ public class MetadataDocumentFactory {
 
     }
 
-    public void augment(ServiceMetadataRecord serviceMetadataRecord, XmlServiceRecordDoc xml) throws Exception {
+    public void augment(LocalServiceMetadataRecord serviceMetadataRecord, XmlServiceRecordDoc xml) throws Exception {
         augment((MetadataRecord) serviceMetadataRecord, (XmlMetadataDocument) xml);
 
         serviceMetadataRecord.setMetadataServiceType(xml.getServiceType());
@@ -132,6 +132,9 @@ public class MetadataDocumentFactory {
                                                                        String linkCheckJobId,
                                                                        String sha2) throws Exception {
         LocalNotProcessedMetadataRecord result =  new LocalNotProcessedMetadataRecord();
+
+        result.setTitle(doc.getTitle());
+
         result.setHarvesterMetadataRecordId(underlyingHarvestMetadataRecordId);
         result.setLinkCheckJobId(linkCheckJobId);
         result.setSha2(sha2);
@@ -146,28 +149,22 @@ public class MetadataDocumentFactory {
         return result;
     }
 
-    public RemoteServiceMetadataRecord createRemoteServiceMetadataRecord(RemoteServiceMetadataRecordLink link, XmlServiceRecordDoc xmlServiceRecordDoc, String sha2) throws Exception {
-        RemoteServiceMetadataRecord result = remoteServiceMetadataRecordService.create(link);
-        augment(result, xmlServiceRecordDoc);
-        link.setRemoteServiceMetadataRecord(result);
-        result.setSha2(sha2);
-        return result;
-    }
 
-    public OperatesOnRemoteDatasetMetadataRecord createRemoteDatasetMetadataRecord(OperatesOnLink link, XmlDatasetMetadataDocument doc,String jobid) throws Exception {
-        OperatesOnRemoteDatasetMetadataRecord result = remoteDatasetMetadataRecordService.createRemoteDatasetMetadataRecord(link);
-        result.setLinkCheckJobId(jobid);
-        augment(result, doc);
-        result.setOperatesOnLink(link);
-        return result;
-    }
+//
+//    public OperatesOnRemoteDatasetMetadataRecord createRemoteDatasetMetadataRecord(OperatesOnLink link, XmlDatasetMetadataDocument doc,String jobid) throws Exception {
+//        OperatesOnRemoteDatasetMetadataRecord result = remoteDatasetMetadataRecordService.createRemoteDatasetMetadataRecord(link);
+//        result.setLinkCheckJobId(jobid);
+//        augment(result, doc);
+//        result.setOperatesOnLink(link);
+//        return result;
+//    }
 
-    public CapabilitiesRemoteDatasetMetadataDocument createCapabilitiesRemoteDatasetMetadataDocument(
-            CapabilitiesDatasetMetadataLink link, XmlDatasetMetadataDocument doc,String jobid) throws Exception {
-        CapabilitiesRemoteDatasetMetadataDocument result = remoteDatasetMetadataRecordService.createCapabilitiesRemoteDatasetMetadataDocument(link,jobid);
-        augment(result, doc);
-        result.setCapabilitiesDatasetMetadataLink(link);
-        return result;
-    }
+//    public CapabilitiesRemoteDatasetMetadataDocument createCapabilitiesRemoteDatasetMetadataDocument(
+//            CapabilitiesDatasetMetadataLink link, XmlDatasetMetadataDocument doc,String jobid) throws Exception {
+//        CapabilitiesRemoteDatasetMetadataDocument result = remoteDatasetMetadataRecordService.createCapabilitiesRemoteDatasetMetadataDocument(link,jobid);
+//        augment(result, doc);
+//        result.setCapabilitiesDatasetMetadataLink(link);
+//        return result;
+//    }
 
 }

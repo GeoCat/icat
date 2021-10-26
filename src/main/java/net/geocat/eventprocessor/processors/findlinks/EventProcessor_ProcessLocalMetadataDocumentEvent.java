@@ -133,6 +133,8 @@ public class EventProcessor_ProcessLocalMetadataDocumentEvent extends BaseEventP
             handleDataset((LocalDatasetMetadataRecord)metadataRecord);
         } else if (metadataRecord instanceof  LocalNotProcessedMetadataRecord) {
             handleWillNotProcess((LocalNotProcessedMetadataRecord)metadataRecord);
+        } else {
+            int t=0;
         }
 
         return this;

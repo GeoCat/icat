@@ -33,9 +33,7 @@
 
 package net.geocat.database.linkchecker.entities;
 
-import net.geocat.database.linkchecker.entities.helper.DocumentLink;
-import net.geocat.database.linkchecker.entities.helper.UpdateCreateDateTimeEntity;
-import net.geocat.database.linkchecker.entities.helper.IndicatorStatus;
+import net.geocat.database.linkchecker.entities.helper.*;
 import net.geocat.xml.helpers.CapabilitiesType;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -47,32 +45,26 @@ import java.util.List;
 
 //represent a capabilities document
 @Entity
+@IdClass(SHA2JobIdCompositeKey.class)
 public class CapabilitiesDocument extends UpdateCreateDateTimeEntity {
 
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long capabilitiesDocumentId;
-
     //sha2 of the XML's text
+    @Id
     @Column(columnDefinition = "varchar(64)")
     private String sha2;
+
+    //what link check job this is apart of
+    @Id
+    @Column(columnDefinition = "varchar(40)")
+    private String linkCheckJobId;
+
+    @Enumerated(EnumType.STRING)
+    private CapabilitiesDocumentState state;
 
     //Type of this Capabilities Document (i.e. WFS/WMS/...)
     @Enumerated(EnumType.STRING)
     private CapabilitiesType capabilitiesDocumentType;
 
-    //TODO: handle this better - might want to make a super class and two subclasses for CapabilitiesDocuments
-    //      that start from a Dataset document or Service Document.
-    //NOTE: either serviceDocumentLink or datasetDocumentLink will be filled in (not both).
-
-    // if this CapabilitiesDocument came from a service document, this references which one
-    @OneToOne(mappedBy = "capabilitiesDocument",cascade = {CascadeType.PERSIST,CascadeType.MERGE})
-    private ServiceDocumentLink serviceDocumentLink;
-
-    // if this CapabilitiesDocument came from a dataset document, this references which one
-    @OneToOne(mappedBy = "capabilitiesDocument",cascade = {CascadeType.PERSIST,CascadeType.MERGE})
-    private DatasetDocumentLink datasetDocumentLink;
 
     //does this XML CapabilitiesDocument have extended capabilities (i.e. <inspire_ds:ExtendedCapabilities>)
     @Enumerated(EnumType.STRING)
@@ -91,11 +83,21 @@ public class CapabilitiesDocument extends UpdateCreateDateTimeEntity {
 
 
     //list of the links to Datasets (i.e. one for each layer)
-    @OneToMany(mappedBy = "capabilitiesDocument",
+    @OneToMany(//mappedBy = "capabilitiesDocument",
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
+    @JoinColumns(
+            {
+                    @JoinColumn(name="cap_sha2",referencedColumnName = "sha2"),
+                    @JoinColumn(name="cap_jobId",referencedColumnName = "linkcheckjobid")
+            }
+    )
     private List<CapabilitiesDatasetMetadataLink> capabilitiesDatasetMetadataLinkList;
 
+
+    //number of layers (CapabilitiesDatasetMetadataLink) in this document -- saved for easy access
+    // i.e. capabilitiesDatasetMetadataLinkList.size()
+    private Integer numberOfDatasetLinks;
 
     // summary for display
     @Column(columnDefinition = "text")
@@ -104,31 +106,26 @@ public class CapabilitiesDocument extends UpdateCreateDateTimeEntity {
 
     public CapabilitiesDocument(){
         this.capabilitiesDatasetMetadataLinkList = new ArrayList<>();
+        this.state = CapabilitiesDocumentState.CREATED;
     }
 
     //---------------------------------------------------------------------------
 
-    public DatasetDocumentLink getDatasetDocumentLink() {
-        return datasetDocumentLink;
+
+    public CapabilitiesDocumentState getState() {
+        return state;
     }
 
-    public void setDatasetDocumentLink(DatasetDocumentLink datasetDocumentLink) {
-        this.datasetDocumentLink = datasetDocumentLink;
+    public void setState(CapabilitiesDocumentState state) {
+        this.state = state;
     }
 
-    public void setParent(DocumentLink link) {
-        if (link instanceof ServiceDocumentLink)
-            setServiceDocumentLink( (ServiceDocumentLink) link);
-        if (link instanceof  DatasetDocumentLink)
-            setDatasetDocumentLink((DatasetDocumentLink) link);
+    public String getLinkCheckJobId() {
+        return linkCheckJobId;
     }
 
-    public long getCapabilitiesDocumentId() {
-        return capabilitiesDocumentId;
-    }
-
-    public void setCapabilitiesDocumentId(long capabilitiesDocumentId) {
-        this.capabilitiesDocumentId = capabilitiesDocumentId;
+    public void setLinkCheckJobId(String linkCheckJobId) {
+        this.linkCheckJobId = linkCheckJobId;
     }
 
     public String getSha2() {
@@ -139,13 +136,6 @@ public class CapabilitiesDocument extends UpdateCreateDateTimeEntity {
         this.sha2 = sha2;
     }
 
-    public ServiceDocumentLink getServiceDocumentLink() {
-        return serviceDocumentLink;
-    }
-
-    public void setServiceDocumentLink(ServiceDocumentLink serviceDocumentLink) {
-        this.serviceDocumentLink = serviceDocumentLink;
-    }
 
     public CapabilitiesType getCapabilitiesDocumentType() {
         return capabilitiesDocumentType;
@@ -194,12 +184,14 @@ public class CapabilitiesDocument extends UpdateCreateDateTimeEntity {
     protected void onUpdate() {
         super.onUpdate();
         this.summary = this.toString();
+        this.numberOfDatasetLinks = this.capabilitiesDatasetMetadataLinkList.size();
     }
 
     @PrePersist
     protected void onInsert() {
         super.onInsert();
         this.summary = this.toString();
+        this.numberOfDatasetLinks = this.capabilitiesDatasetMetadataLinkList.size();
     }
 
     //---------------------------------------------------------------------------
@@ -212,7 +204,7 @@ public class CapabilitiesDocument extends UpdateCreateDateTimeEntity {
     public String toString(int indentSpaces) {
         String indent = "                                                     ".substring(0, indentSpaces);
         String result = indent + "CapabilitiesDocument {\n";
-        result += indent + "      capabilitiesDocumentId: " + capabilitiesDocumentId + "\n";
+       // result += indent + "      capabilitiesDocumentId: " + capabilitiesDocumentId + "\n";
 
         result+= super.toString();
 

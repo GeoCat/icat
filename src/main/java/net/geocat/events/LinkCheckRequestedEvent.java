@@ -37,13 +37,23 @@ public class LinkCheckRequestedEvent extends Event {
 
     private String linkCheckJobId;
     private String harvestJobId;
+    private String longTermTag;
 
     public LinkCheckRequestedEvent() {
     }
 
-    public LinkCheckRequestedEvent(String linkCheckJobId, String harvestJobId) {
+    public LinkCheckRequestedEvent(String linkCheckJobId, String harvestJobId, String longTermTag) {
         this.harvestJobId = harvestJobId;
         this.linkCheckJobId = linkCheckJobId;
+        this.longTermTag = longTermTag;
+    }
+
+    public String getLongTermTag() {
+        return longTermTag;
+    }
+
+    public void setLongTermTag(String longTermTag) {
+        this.longTermTag = longTermTag;
     }
 
     public String getLinkCheckJobId() {

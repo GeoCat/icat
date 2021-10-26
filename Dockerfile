@@ -1,15 +1,26 @@
-FROM maven:3-adoptopenjdk-8 as builder
+FROM maven:3-eclipse-temurin-8 as builder
 
 COPY ./pom.xml ./pom.xml
+# store maven dependencies so next build doesn't have to download them again
+RUN mvn dependency:go-offline -B
+
 COPY ./src ./src
 
-RUN mvn -B dependency:go-offline
+
 RUN mvn -B package -DskipTests
+RUN mkdir /application && \
+    cp target/*.jar /application/icat.jar
+
+WORKDIR /application
+
+# Extract spring boot JAR layers
+RUN java -Djarmode=layertools -jar icat.jar extract
 
 
-FROM adoptopenjdk:8-jre-hotspot
+FROM eclipse-temurin:8-jre
 
 LABEL vendor="GeoCat B.V."
+LABEL org.opencontainers.image.source https://github.com/GeoCat/icat
 
 
 # Check the file application.properties for a description of the environment variables that can be customized.
@@ -17,9 +28,13 @@ LABEL vendor="GeoCat B.V."
 # with underscores. For example harvester.jdbc.url -> HARVESTER_JDBC_URL
 
 RUN mkdir -p /opt/icat
-COPY --from=builder target/*.jar /opt/icat/icat.jar
 WORKDIR /opt/icat
+COPY --from=builder /application/dependencies/ ./
+COPY --from=builder /application/spring-boot-loader ./
+COPY --from=builder /application/snapshot-dependencies/ ./
+COPY --from=builder /application/application/ ./
+
 
 EXPOSE 9999
-CMD [ "java", "-jar", "icat.jar" ]
+CMD [ "java", "org.springframework.boot.loader.JarLauncher" ]
 #ENTRYPOINT exec java $JAVA_OPTS -jar ingester.jar

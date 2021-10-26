@@ -95,9 +95,9 @@ public class EventService {
 
         if (!StringUtils.isEmpty(linkCheckRunConfig.getLongTermTag())) {
             Optional<HarvestJob> harvestJob = harvestJobRepo.findMostRecentHarvestJobByLongTermTag(linkCheckRunConfig.getLongTermTag());
-            result = new LinkCheckRequestedEvent(processID, harvestJob.get().getJobId());
+            result = new LinkCheckRequestedEvent(processID, harvestJob.get().getJobId(), linkCheckRunConfig.getLongTermTag());
         } else {
-            result = new LinkCheckRequestedEvent(processID, linkCheckRunConfig.getHarvestJobId());
+            result = new LinkCheckRequestedEvent(processID, linkCheckRunConfig.getHarvestJobId(), linkCheckRunConfig.getLongTermTag());
         }
 
         return result;

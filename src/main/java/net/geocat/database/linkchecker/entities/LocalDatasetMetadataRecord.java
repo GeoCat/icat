@@ -38,8 +38,7 @@ import net.geocat.database.linkchecker.entities.helper.ServiceMetadataDocumentSt
 
 import javax.persistence.*;
 
-//TODO: make a parent for LocalDatasetMetadataRecord, LocalServiceMetadataRecord, and LocalNotProcessedMetadataRecord
-//represents a harvested (local) Dataset document
+ //represents a harvested (local) Dataset document
 @Entity
 @DiscriminatorValue("LocalDatasetMetadataRecord")
 public class LocalDatasetMetadataRecord extends DatasetMetadataRecord {

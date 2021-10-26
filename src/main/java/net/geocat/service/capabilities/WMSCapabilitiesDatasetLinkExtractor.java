@@ -44,6 +44,7 @@ import org.w3c.dom.NodeList;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @Scope("prototype")
@@ -93,9 +94,9 @@ public class WMSCapabilitiesDatasetLinkExtractor implements ICapabilitiesDataset
         int idx = 0;
         for(Node n : ns) {
           //  logger.debug("indx = "+idx);
-            DatasetLink link = processLayer(doc, n);
-            if (link != null)
-                result.add(link);
+            List<DatasetLink> links = processLayer(doc, n);
+            if (links != null)
+                result.addAll(links);
             idx++;
         }
 
@@ -103,69 +104,88 @@ public class WMSCapabilitiesDatasetLinkExtractor implements ICapabilitiesDataset
         return unique(result);
     }
 
-    public DatasetLink processLayer(XmlDoc doc, Node layer) throws Exception {
+    public List<DatasetLink> processLayer(XmlDoc doc, Node layer) throws Exception {
+        List<DatasetLink> result = new ArrayList<>();
+
         String identifier = searchIdentifier(doc, layer);
-        String metadataUrl = searchMetadataUrl(doc, layer);
+        List<String> metadataUrls = searchMetadataUrls(doc, layer);
         String authority = searchAuthority(doc,layer);
 
-        if ((identifier != null) || (metadataUrl != null)) {
-            DatasetLink result= new DatasetLink(identifier, metadataUrl);
-            if ((authority != null) && (!authority.isEmpty()) )
-                result.setAuthority(authority);
-            return result;
-        }
-        return null;
-    }
-
-    protected Node findBestMetadataURL(Node layer) {
-        List<Node> metadataURLs = findAllNodes(layer, "MetadataURL");
-        if (metadataURLs.isEmpty())
-            return null;
-        if (metadataURLs.size() == 1) //only one, no need to choose
-            return metadataURLs.get(0);
-
-        Node good = null;
-
-        for (Node metadataURL: metadataURLs){
-            Node format = findNode(metadataURL,"Format");
-            if ( (format !=null) && (format.getTextContent() != null) ){
-                String mime = format.getTextContent().trim();
-                if (mime.toLowerCase().contains("/xml")) //  text/xml  application/xml
-                    return metadataURL;
-                if (mime.toLowerCase().contains("xml"))  // might catch something...
-                    good= metadataURL;
+        if ((identifier != null) || (metadataUrls != null)) {
+            if (metadataUrls !=null) {
+                for (String url : metadataUrls) {
+                    DatasetLink item = new DatasetLink(identifier, url);
+                    if ((authority != null) && (!authority.isEmpty()))
+                        item.setAuthority(authority);
+                    result.add(item);
+                }
+            }
+            else {
+                DatasetLink item = new DatasetLink(identifier, null);
+                if ((authority != null) && (!authority.isEmpty()))
+                    item.setAuthority(authority);
+                result.add(item);
             }
         }
-        if (good !=null)
-            return good;
-        return metadataURLs.get(0);
-
+        return result;
     }
 
-    protected String findMetadataURL(Node layer) throws Exception {
-      //  Node n = XmlDoc.xpath_node(layer, "wms:MetadataURL/wms:OnlineResource");
-       // Node nn = findNode(layer, "MetadataURL");
-        Node nn =findBestMetadataURL(layer);
-        if (nn == null)
-            return null;
-        Node n = findNode(nn, "OnlineResource");
-        if (n == null)
-            return null;
-        Node att = n.getAttributes().getNamedItem("xlink:href");
-        if (att == null)
-            return null;
-        return att.getTextContent();
+//    protected Node findMetadataURLs(Node layer) {
+//        List<Node> metadataURLs = findAllNodes(layer, "MetadataURL");
+//        if (metadataURLs.isEmpty())
+//            return null;
+//        if (metadataURLs.size() == 1) //only one, no need to choose
+//            return metadataURLs.get(0);
+//
+//        Node good = null;
+//
+//        for (Node metadataURL: metadataURLs){
+//            Node format = findNode(metadataURL,"Format");
+//            if ( (format !=null) && (format.getTextContent() != null) ){
+//                String mime = format.getTextContent().trim();
+//                if (mime.toLowerCase().contains("/xml")) //  text/xml  application/xml
+//                    return metadataURL;
+//                if (mime.toLowerCase().contains("xml"))  // might catch something...
+//                    good= metadataURL;
+//            }
+//        }
+//        if (good !=null)
+//            return good;
+//        return metadataURLs.get(0);
+//
+//    }
+
+    protected List<String> findMetadataURLs(Node layer) throws Exception {
+
+        List<Node> metadataURLs = findAllNodes(layer, "MetadataURL");
+
+        return metadataURLs.stream()
+                .map(x-> findNode(x, "OnlineResource"))
+                .filter(x->x !=null)
+                .map(x->x.getAttributes().getNamedItem("xlink:href"))
+                .filter(x->x !=null && (x.getTextContent() != null) && (!x.getTextContent().trim().isEmpty()))
+                .map(x->x.getTextContent().trim())
+                .collect(Collectors.toList());
+//        if (nn == null)
+//            return null;
+//        Node n = findNode(nn, "OnlineResource");
+//        if (n == null)
+//            return null;
+//        Node att = n.getAttributes().getNamedItem("xlink:href");
+//        if (att == null)
+//            return null;
+//        return att.getTextContent();
     }
 
 
-    private String searchMetadataUrl(XmlDoc doc, Node layer) throws Exception {
-        String metadataURL = findMetadataURL(layer);
+    private List<String> searchMetadataUrls(XmlDoc doc, Node layer) throws Exception {
+        List<String> metadataURL = findMetadataURLs(layer);
         if ((metadataURL != null) && (!metadataURL.isEmpty()))
             return metadataURL;
         Node parentLayer = layer.getParentNode();
         if (parentLayer.getLocalName().equals("Layer"))
-            return searchMetadataUrl(doc, parentLayer);
-        return null;
+            return searchMetadataUrls(doc, parentLayer);
+        return metadataURL;
     }
 
     public static Node findNode(Node n, String localName) {

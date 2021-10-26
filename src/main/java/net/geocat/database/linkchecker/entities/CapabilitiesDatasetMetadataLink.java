@@ -44,15 +44,21 @@ import javax.persistence.*;
 @Entity
 public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
 
-    // link to the actual Dataset document (if it resolves to one)
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name = "datasetMetadataRecordId")
-    @Fetch(value = FetchMode.JOIN)
-    CapabilitiesRemoteDatasetMetadataDocument capabilitiesRemoteDatasetMetadataDocument;
+//    // link to the actual Dataset document (if it resolves to one)
+//    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+//    @JoinColumn(name = "datasetMetadataRecordId")
+//    @Fetch(value = FetchMode.JOIN)
+//    CapabilitiesRemoteDatasetMetadataDocument capabilitiesRemoteDatasetMetadataDocument;
 
-    //link back to the capabilities document this link came from
-    @ManyToOne(fetch = FetchType.EAGER,cascade = {CascadeType.ALL})
-    CapabilitiesDocument capabilitiesDocument;
+     @Column(columnDefinition = "text")
+    String fileIdentifier;
+
+     @Column(columnDefinition = "text")
+    String datasetIdentifier;
+
+//    //link back to the capabilities document this link came from
+//    @ManyToOne(fetch = FetchType.EAGER,cascade = {CascadeType.ALL})
+//    CapabilitiesDocument capabilitiesDocument;
 
     //from the Capabilities document - identity for the layer
     @Column(columnDefinition = "text")
@@ -73,12 +79,21 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
 
     //---------------------------------------------------------------------------
 
-    public CapabilitiesRemoteDatasetMetadataDocument getCapabilitiesRemoteDatasetMetadataDocument() {
-        return capabilitiesRemoteDatasetMetadataDocument;
+
+    public String getFileIdentifier() {
+        return fileIdentifier;
     }
 
-    public void setCapabilitiesRemoteDatasetMetadataDocument(CapabilitiesRemoteDatasetMetadataDocument capabilitiesRemoteDatasetMetadataDocument) {
-        this.capabilitiesRemoteDatasetMetadataDocument = capabilitiesRemoteDatasetMetadataDocument;
+    public void setFileIdentifier(String fileIdentifier) {
+        this.fileIdentifier = fileIdentifier;
+    }
+
+    public String getDatasetIdentifier() {
+        return datasetIdentifier;
+    }
+
+    public void setDatasetIdentifier(String datasetIdentifier) {
+        this.datasetIdentifier = datasetIdentifier;
     }
 
     public long getCapabilitiesDatasetMetadataLinkId() {
@@ -89,13 +104,6 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
         this.capabilitiesDatasetMetadataLinkId = capabilitiesDatasetMetadataLinkId;
     }
 
-    public CapabilitiesDocument getCapabilitiesDocument() {
-        return capabilitiesDocument;
-    }
-
-    public void setCapabilitiesDocument(CapabilitiesDocument capabilitiesDocument) {
-        this.capabilitiesDocument = capabilitiesDocument;
-    }
 
     public String getIdentity() {
         return identity;
@@ -124,12 +132,13 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
         String result = "CapabilitiesDatasetMetadataLink {\n";
         result += "      capabilitiesDatasetMetadataLinkId: " + capabilitiesDatasetMetadataLinkId + "\n";
         result += "      identity: " + identity + "\n";
+        result += "      file Identifier: " + fileIdentifier + "\n";
+        result += "      dataset identifier: " + datasetIdentifier + "\n";
 
         result += "\n";
         result += super.toString();
         result += "\n";
 
-        result += "      has Remote Dataset Metadata Document: " + (getCapabilitiesRemoteDatasetMetadataDocument() != null) + "\n";
 
         result += "  }";
         return result;

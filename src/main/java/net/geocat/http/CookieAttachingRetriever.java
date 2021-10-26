@@ -42,6 +42,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.charset.MalformedInputException;
 
 @Component
 @Scope("prototype")
@@ -57,13 +59,58 @@ public class CookieAttachingRetriever implements IHTTPRetriever {
 
     }
 
-    @Override
+        public HttpResult retrieveXML_underlying(boolean throwIfError,String verb, String location, String body, String cookie, IContinueReadingPredicate predicate) throws IOException, SecurityException, ExceptionWithCookies, RedirectException
+        {
+            try {
+                HttpResult result = retriever.retrieveXML(verb, location, body, cookie, predicate);
+                return result;
+            }
+            catch(MalformedURLException m)
+            {
+                throw m;//not recoverable with retry
+            }
+            catch (Exception e) {
+                    logger.debug("error occurred getting - "+location+", error="+e.getClass().getSimpleName() + " - " + e.getMessage());
+                if (throwIfError)
+                    throw e;
+                return null;
+            }
+        }
+
+        @Override
     public HttpResult retrieveXML(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate) throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
 
-        HttpResult result = retriever.retrieveXML(verb, location, body, cookie, predicate);
-        if (result.isErrorOccurred()) {
-            return retriever.retrieveXML(verb, location, body, result.getSpecialToSendCookie(), predicate);
+        HttpResult result = retrieveXML_underlying(false,verb, location, body, cookie, predicate);
+        if ( (result !=null) && (result.getHttpCode() == 404))
+            return result; // short cut -- not going to change with a retry
+
+        if (result==null || result.isErrorOccurred() || (result.getHttpCode() ==500) ) {
+            try {
+                Thread.sleep((long) (2.5 * 1000));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            logger.debug("retrying - "+location);
+            String _cookie = result !=null ? result.getSpecialToSendCookie(): null;
+            result= retrieveXML_underlying(false,verb, location, body,_cookie, predicate);
         }
+
+        if  ( (result !=null) && (result.getHttpCode() == 403))
+            return result; // short cut -- not going to change with a retry (probably shouldn't have re-tried in the first place, but...)
+
+        //3rd try
+        if (result==null || result.isErrorOccurred() || (result.getHttpCode() ==500) ) {
+            try {
+                Thread.sleep((long) (10 * 1000));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            logger.debug("retrying2 - "+location);
+            String _cookie = result !=null ? result.getSpecialToSendCookie(): null;
+            result= retrieveXML_underlying(true,verb, location, body, _cookie, predicate);
+        }
+
+
         return result;
     }
 }

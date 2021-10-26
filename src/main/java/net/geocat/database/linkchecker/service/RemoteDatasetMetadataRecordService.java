@@ -43,17 +43,21 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope("prototype")
 public class RemoteDatasetMetadataRecordService {
-
-    public OperatesOnRemoteDatasetMetadataRecord createRemoteDatasetMetadataRecord(OperatesOnLink link) {
-        OperatesOnRemoteDatasetMetadataRecord result = new OperatesOnRemoteDatasetMetadataRecord();
-        return result;
-    }
+//
+//    public OperatesOnRemoteDatasetMetadataRecord createRemoteDatasetMetadataRecord(OperatesOnLink link) {
+//        OperatesOnRemoteDatasetMetadataRecord result = new OperatesOnRemoteDatasetMetadataRecord();
+//        return result;
+//    }
 
     public LocalDatasetMetadataRecord createLocalDatasetMetadataRecord(XmlDatasetMetadataDocument doc,
                                                                        Long underlyingHarvestMetadataRecordId,
                                                                        String linkCheckJobId,
                                                                        String sha2) {
         LocalDatasetMetadataRecord result = new LocalDatasetMetadataRecord();
+
+        result.setTitle(doc.getTitle());
+
+
         result.setHarvesterMetadataRecordId(underlyingHarvestMetadataRecordId);
         result.setLinkCheckJobId(linkCheckJobId);
         result.setSha2(sha2);
@@ -68,12 +72,12 @@ public class RemoteDatasetMetadataRecordService {
     }
 
 
-    public CapabilitiesRemoteDatasetMetadataDocument createCapabilitiesRemoteDatasetMetadataDocument(CapabilitiesDatasetMetadataLink link,String jobid) {
-
-        CapabilitiesRemoteDatasetMetadataDocument result = new CapabilitiesRemoteDatasetMetadataDocument();
-        result.setLinkCheckJobId(jobid);
-        return result;
-    }
+//    public CapabilitiesRemoteDatasetMetadataDocument createCapabilitiesRemoteDatasetMetadataDocument(CapabilitiesDatasetMetadataLink link,String jobid) {
+//
+//        CapabilitiesRemoteDatasetMetadataDocument result = new CapabilitiesRemoteDatasetMetadataDocument();
+//        result.setLinkCheckJobId(jobid);
+//        return result;
+//    }
 
     public LocalDatasetMetadataRecord createLocalServiceMetadataRecord(XmlDatasetMetadataDocument doc, Long underlyingHarvestMetadataRecordId, String linkCheckJobId, String sha2) {
         LocalDatasetMetadataRecord result = createLocalDatasetMetadataRecord(doc,underlyingHarvestMetadataRecordId,linkCheckJobId,sha2);

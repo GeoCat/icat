@@ -33,13 +33,13 @@
 
 package net.geocat.runner;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import net.geocat.database.harvester.entities.MetadataRecord;
 import net.geocat.database.harvester.repos.MetadataRecordRepo;
 import net.geocat.database.linkchecker.entities.*;
-import net.geocat.database.linkchecker.entities.helper.PartialDownloadHint;
-import net.geocat.database.linkchecker.entities.helper.ServiceMetadataRecord;
-import net.geocat.database.linkchecker.entities.helper.StatusQueryItem;
-import net.geocat.database.linkchecker.entities.helper.IndicatorStatus;
+import net.geocat.database.linkchecker.entities.helper.*;
 import net.geocat.database.linkchecker.repos.*;
 import net.geocat.database.linkchecker.service.*;
 import net.geocat.eventprocessor.processors.processlinks.postprocessing.*;
@@ -47,8 +47,7 @@ import net.geocat.http.BasicHTTPRetriever;
 import net.geocat.http.IHTTPRetriever;
 import net.geocat.service.*;
 
-import net.geocat.service.capabilities.DatasetLink;
-import net.geocat.service.capabilities.WMSCapabilitiesDatasetLinkExtractor;
+import net.geocat.service.capabilities.*;
 import net.geocat.service.downloadhelpers.PartialDownloadPredicateFactory;
 import net.geocat.xml.*;
 
@@ -64,10 +63,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.persistence.EntityManager;
+import javax.transaction.TransactionManager;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.*;
@@ -180,9 +184,6 @@ public class MyCommandLineRunner implements CommandLineRunner {
     CapabilitiesDatasetMetadataLinkService capabilitiesDatasetMetadataLinkService;
 
     @Autowired
-    CapabilitiesRemoteDatasetMetadataDocumentRepo capabilitiesRemoteDatasetMetadataDocumentRepo;
-
-    @Autowired
     DatasetToLayerIndicators datasetToLayerIndicators;
 
     @Autowired
@@ -191,18 +192,40 @@ public class MyCommandLineRunner implements CommandLineRunner {
     @Autowired
     BasicHTTPRetriever basicHTTPRetriever;
 
+    @Autowired
+    LocalNotProcessedMetadataRecordRepo localNotProcessedMetadataRecordRepo;
+
+    @Autowired
+    LinkCheckJobService linkCheckJobService;
+
+    @Autowired
+    CapabilitiesDownloadingService capabilitiesDownloadingService;
+
+    @Autowired
+    CapabilitiesLinkFixer capabilitiesLinkFixer;
+
+
+    @Autowired
+    DatasetLinkFixer datasetLinkFixer;
+
     @Override
     public void run(String... args) throws Exception {
-        // run3(args);
-      //  LocalServiceMetadataRecord sm11 = localServiceMetadataRecordRepo.findById(12248L).get();
+
         try {
 
-        // run_2(args);
-         //   run12(args);
+// run_scrape();
 
-        //   run12(args);
+//
+//            HttpResult hr = basicHTTPRetriever.retrieveXML("GET","https://haleconnect.com/services/bsp/org.874.42282e73-5afb-424d-993a-9e0a0cd3eeca/md/dataset/dataset1",null,null,null);
+//int t=0;
 
-        //    run11(args);
+   run_3("8ad016ec-c6b9-4345-9d8c-19f241a7e6f4\n",
+           "348bf9da-a328-45c2-8047-9f367834f6fa\n",
+           "");
+
+// run12("e5e22f75-2267-4b0a-9f1a-1b1bcedabd8d");
+
+
         }
         catch(Exception e){
             int t=0;
@@ -210,10 +233,226 @@ public class MyCommandLineRunner implements CommandLineRunner {
         logger.debug("DONE!");
     }
 
+
+    @Autowired
+    @Qualifier("entityManagerFactory")
+    LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean;
+
+    @Autowired
+    //@Qualifier("transactionManager")
+    PlatformTransactionManager transactionManager;
+
+    EntityManager entityManager;
+
+
+    public void executeSQL2(String sql) {
+        if (entityManager == null)
+            entityManager =  localContainerEntityManagerFactoryBean.createNativeEntityManager(null);
+       entityManager.getTransaction().begin();
+        entityManager.createNativeQuery(sql).executeUpdate();
+       entityManager.getTransaction().commit();
+    }
+
+    /*
+    delete from scrap;
+    drop table scrap;
+      CREATE TABLE scrap (title text, is_view boolean, is_download boolean, country_code text,
+                file_id text, local_is_view boolean , local_is_download boolean);
+
+        update scrap set file_id = (select fileidentifier from datasetmetadatarecord where datasetmetadatarecord.title = scrap.title limit 1);
+        update scrap set local_is_view = (select indicator_layer_matches_view = 'PASS' from datasetmetadatarecord where datasetmetadatarecord.fileidentifier = scrap.file_id);
+        update scrap set local_is_download = (select indicator_layer_matches_download = 'PASS' from datasetmetadatarecord where datasetmetadatarecord.fileidentifier = scrap.file_id);
+--delete from scrap where file_id is null;
+
+        select file_id, title, is_view, local_is_view from scrap where is_view !=  local_is_view and is_view order by title;
+        select file_id, title, is_download, local_is_download from scrap where is_download !=  local_is_download and is_download order by title;
+
+
+
+     */
+    public void run_scrape() throws  Exception {
+        String url = "https://inspire-geoportal.ec.europa.eu/solr/select?wt=json&q=*:*^1.0&sow=false&fq=sourceMetadataResourceLocator:*&fq=resourceType:(dataset%20OR%20series)&fq=memberStateCountryCode:%22MYCOUNTRYCODE%22&fl=id,resourceTitle,resourceTitle_*,providedTranslationLanguage,automatedTranslationLanguage,memberStateCountryCode,metadataLanguage,isDw:query($isDwQ),isVw:query($isVwQ),spatialScope&isDwQ=interoperabilityAspect:(DOWNLOAD_MATCHING_DATA_IS_AVAILABLE%20AND%20DATA_DOWNLOAD_LINK_IS_AVAILABLE)&isVwQ=interoperabilityAspect:(LAYER_MATCHING_DATA_IS_AVAILABLE)&isDwVwQ=interoperabilityAspect:(DOWNLOAD_MATCHING_DATA_IS_AVAILABLE%20AND%20DATA_DOWNLOAD_LINK_IS_AVAILABLE%20AND%20LAYER_MATCHING_DATA_IS_AVAILABLE)&sort=query($isDwVwQ)%20desc,%20query($isDwQ)%20desc,%20query($isVwQ)%20desc,%20resourceTitle%20asc&start=0&rows=10000&callback=?&json.wrf=processData_dtResults&_=1634538073094";
+        url = url.replace("MYCOUNTRYCODE","mt");
+
+            HttpResult result = basicHTTPRetriever.retrieveJSON("GET", url, null, null, null);
+
+            String json = new String(result.getData());
+            json = json.replace("processData_dtResults(","");
+
+          ObjectMapper m = new ObjectMapper();
+      JsonNode rootNode = m.readValue(json, JsonNode.class);
+
+       JsonNode response =  rootNode.get("response");
+       ArrayNode docs = (ArrayNode) response.get("docs");
+
+      // executeSQL2("create table delme(i int)");
+       for(JsonNode doc : docs) {
+            String title = doc.get("resourceTitle").asText();
+            boolean isView = (doc.get("isVw") != null);
+            boolean isDownload = (doc.get("isDw") != null);
+            String country = doc.get("memberStateCountryCode").asText();
+            String sql =  String.format("INSERT INTO scrap  (title,is_view,is_download, country_code) VALUES ('%s',%s,%s,'%s') "
+                    , title, String.valueOf(isView), String.valueOf(isDownload),country);
+            executeSQL2(sql);
+           int tt=0;
+
+       }
+        int t=0;
+    }
+
+    public void run33() throws Exception {
+        String linkCheckJobId = "782a4b94-3f73-4d0b-9c89-866e8d0aa4ec";
+             LinkCheckJob job = linkCheckJobService.find(linkCheckJobId);
+
+
+            long nRecords = job.getNumberOfDocumentsInBatch();
+
+            long nrecordsServiceComplete = localServiceMetadataRecordRepo.countCompletedState(linkCheckJobId);
+            long nrecordsDatasetComplete = localDatasetMetadataRecordRepo.countCompletedState(linkCheckJobId);
+            long nrecordWillNotProcess = localNotProcessedMetadataRecordRepo.countCompletedState(linkCheckJobId);
+
+            boolean result=  (nRecords ) == (nrecordsServiceComplete+nrecordsDatasetComplete+nrecordWillNotProcess);
+
+    }
+
+    public void run_3(String dsId, String serviceId, String linkCheckJobId) throws Exception {
+
+        dsId = dsId.trim();
+        serviceId = serviceId.trim();
+        linkCheckJobId = linkCheckJobId.trim();
+        LocalDatasetMetadataRecord dsRecord;
+
+        if  ( (linkCheckJobId == null) || (linkCheckJobId.isEmpty()) )
+            dsRecord = localDatasetMetadataRecordRepo.findFirstByFileIdentifier(dsId);
+        else
+            dsRecord = localDatasetMetadataRecordRepo.findFirstByFileIdentifierAndLinkCheckJobId(dsId,linkCheckJobId);
+
+        String capabilities_layer_matches_download = dsRecord.getINDICATOR_LAYER_MATCHES_DOWNLOAD().toString();
+        String capabilities_layer_matches_view = dsRecord.getINDICATOR_LAYER_MATCHES_VIEW().toString();
+
+
+        String ds_xml = blobStorageService.findXML(dsRecord.getSha2());
+
+        List<ServiceDocSearchResult> serviceLinks =  operatesOnLinkRepo.linkToService(dsRecord.getFileIdentifier(), dsRecord.getDatasetIdentifier(),   dsRecord.getLinkCheckJobId());
+        List<CapabilitiesLinkResult> capLinks =  capabilitiesDatasetMetadataLinkRepo.linkToCapabilities(dsRecord.getFileIdentifier(),dsRecord.getDatasetIdentifier(), dsRecord.getLinkCheckJobId());
+
+        List<LocalServiceMetadataRecord> serviceDocs = serviceLinks.stream()
+                .map(x-> localServiceMetadataRecordRepo.findById(x.getServiceid()).get())
+                .collect(Collectors.toList());
+
+        List<CapabilitiesDocument> capDocs = capLinks.stream()
+                .map(x-> capabilitiesDocumentRepo.findById( new SHA2JobIdCompositeKey(x.getSha2(),x.getLinkcheckjobid())).get())
+                .collect(Collectors.toList());
+
+        LocalServiceMetadataRecord missing;
+        if  ( (linkCheckJobId == null) || (linkCheckJobId.isEmpty()) )
+            missing = localServiceMetadataRecordRepo.findFirstByFileIdentifier(serviceId);
+        else
+            missing = localServiceMetadataRecordRepo.findFirstByFileIdentifierAndLinkCheckJobId(serviceId,linkCheckJobId);
+
+        List<String> urls = missing.getServiceDocumentLinks().stream()
+                .map(x-> {
+                    try {
+                        return capabilitiesLinkFixer.fix(x.getRawURL(), missing.getMetadataServiceType());
+                    } catch (Exception e) {
+                       return null;
+                    }
+                })
+                .collect(Collectors.toList());
+
+        String missingXML = blobStorageService.findXML(missing.getSha2());
+
+        List<CapabilitiesDocument> missing_caps = missing.getServiceDocumentLinks().stream()
+                .filter(x-> x.getSha2() != null)
+                .map(x-> capabilitiesDocumentRepo.findById( new SHA2JobIdCompositeKey(x.getSha2(), missing.getLinkCheckJobId())).get() )
+                .collect(Collectors.toList());
+        List<String> missing_caps_xml = missing_caps.stream()
+                .filter(x-> x.getSha2() != null)
+                .map(x-> linkCheckBlobStorageRepo.findById(x.getSha2()).get().getTextValue() )
+                .collect(Collectors.toList());
+
+//        for(CapabilitiesDocument cap : missing_caps) {
+//            List<CapabilitiesDatasetMetadataLink> links = cap.getCapabilitiesDatasetMetadataLinkList().stream()
+//                        .filter(x->x.getIdentity().startsWith("MSFD_Descriptor_1_and_6"))
+//                    .collect(Collectors.toList());
+//            int tt=0;
+//        }
+
+        List<XmlDoc> parsed_missing_xml = missing_caps_xml.stream()
+                .map(x-> {
+                    try {
+                        return xmlDocumentFactory.create(x);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    return null;
+                })
+                .collect(Collectors.toList());
+
+//          List<ServiceDocumentLink> processed = missing.getServiceDocumentLinks().stream()
+//                .map(x-> {
+//                    try {
+//                        x.setLinkState(LinkState.Created);
+//                          capabilitiesDownloadingService.handleLink(x);
+//                          return x;
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                        return x;
+//                    }
+//
+//                })
+//                .collect(Collectors.toList());
+
+//        String uurl = datasetLinkFixer.fix(missing_caps.get(1).getCapabilitiesDatasetMetadataLinkList().get(101).getRawURL());
+         int t=0;
+
+    }
+
     public void run_2(String... args) throws Exception {
 
-        LocalServiceMetadataRecord serviceRecord = localServiceMetadataRecordRepo.findById(298852L).get();
-        LocalServiceMetadataRecord serviceRecord2 = localServiceMetadataRecordRepo.fullId(298852L);
+        LocalServiceMetadataRecord serviceRecord = localServiceMetadataRecordRepo.findById(3156L).get();
+        LocalServiceMetadataRecord serviceRecord2 = localServiceMetadataRecordRepo.findById(3156L).get();
+
+        List<CapabilitiesDocument> capdocs = serviceRecord.getServiceDocumentLinks().stream()
+            .filter(x->x.getSha2() !=null)
+            .map(x-> capabilitiesDocumentRepo.findById(new SHA2JobIdCompositeKey(x.getSha2(),x.getLinkCheckJobId())).get())
+            .collect(Collectors.toList());
+
+        List<String> capdocs_xml = serviceRecord.getServiceDocumentLinks().stream()
+                .filter(x->x.getSha2() !=null)
+                .map(x-> linkCheckBlobStorageRepo.findById(x.getSha2()).get().getTextValue())
+                .collect(Collectors.toList());
+
+        List<XmlCapabilitiesDocument> capdocs_xml_parsed = capdocs_xml.stream()
+                .map(x-> {
+                    try {
+                        return (XmlCapabilitiesDocument) xmlDocumentFactory.create(x);
+                    } catch (Exception e) {   }
+                    return null;
+                })
+                .collect(Collectors.toList());
+
+        List<CapabilitiesDocument> capdocs2 = serviceRecord2.getServiceDocumentLinks().stream()
+                .filter(x->x.getSha2() !=null)
+                .map(x-> capabilitiesDocumentRepo.findById(new SHA2JobIdCompositeKey(x.getSha2(),x.getLinkCheckJobId())).get())
+                .collect(Collectors.toList());
+
+        List<String> capdocs2_xml = serviceRecord2.getServiceDocumentLinks().stream()
+                .filter(x->x.getSha2() !=null)
+                .map(x-> linkCheckBlobStorageRepo.findById(x.getSha2()).get().getTextValue())
+                .collect(Collectors.toList());
+
+        List<XmlCapabilitiesDocument> capdocs2_xml_parsed = capdocs2_xml.stream()
+                .map(x-> {
+                    try {
+                        return (XmlCapabilitiesDocument) xmlDocumentFactory.create(x);
+                    } catch (Exception e) {   }
+                    return null;
+                })
+                .collect(Collectors.toList());
+
+
+        //     LocalServiceMetadataRecord serviceRecord2 = localServiceMetadataRecordRepo.fullId(298852L);
         int t=0;
     }
 
@@ -351,35 +590,14 @@ public class MyCommandLineRunner implements CommandLineRunner {
     public void run12(String... args) throws Exception {
         long startTime;
         long endTime;
-//        LocalDatasetMetadataRecord rr1 =   localDatasetMetadataRecordRepo.findById( 39316L).get();
-//
-//        CapabilitiesDocument cdd = rr1.getDocumentLinks().get(1).getCapabilitiesDocument();
-////     Optional<LocalDatasetMetadataRecord> rr =   localDatasetMetadataRecordRepo.findById_( 39316L);
-//
-//
-//       startTime = System.currentTimeMillis();
-//       List<CapabilitiesDatasetMetadataLink> abc = rr1.getDocumentLinks().get(1).getCapabilitiesDocument().getCapabilitiesDatasetMetadataLinkList();
-//        startTime = System.currentTimeMillis();
-//        CapabilitiesRemoteDatasetMetadataDocument def = abc.get(10).getCapabilitiesRemoteDatasetMetadataDocument();
-//        startTime = System.currentTimeMillis();
-//        startTime = System.currentTimeMillis();
-
-//
-//        List<LocalDatasetMetadataRecord> records2 =   localDatasetMetadataRecordRepo.partialByLinkCheckJobId("ef19f12a-14a9-4a71-8c79-6d1d178a3768");
-//
-//        endTime = System.currentTimeMillis();
-//        System.out.println("records2 total execution time: " + (endTime - startTime));
-
-//        startTime = System.currentTimeMillis();
-//        List<LocalDatasetMetadataRecord> records3 =   localDatasetMetadataRecordRepo.fullByLinkCheckJobId("ef19f12a-14a9-4a71-8c79-6d1d178a3768");
-//        endTime = System.currentTimeMillis();
-//        System.out.println("records3 total execution time: " + (endTime - startTime));
 
         startTime = System.currentTimeMillis();
-        String jobid= "22c3d08e-0146-40cd-b2b3-a4ab87a90c3f";
+        String jobid= "b5b30611-0197-40f6-bd1f-fb039eab447c";
+        if ( (args !=null) && (args.length==1) )
+            jobid = args[0];
+
         List<LocalDatasetMetadataRecord> records =   localDatasetMetadataRecordRepo.findByLinkCheckJobId(jobid);
 
-      //  records = records.stream().filter(x->x.getFileIdentifier().equals("46035049-89f3-4723-93e9-c1af0a1274ae")).collect(Collectors.toList());
 
         endTime = System.currentTimeMillis();
         System.out.println("records  total execution time: " + (endTime - startTime));
@@ -391,139 +609,26 @@ public class MyCommandLineRunner implements CommandLineRunner {
         int layer_matches_view = 0;
         int layer_matches_download = 0;
 
+        int service_matches_view = 0;
+        int service_matches_download = 0;
+
         for(LocalDatasetMetadataRecord r:records) {
-//            CapabilitiesDocument cc = r.getDocumentLinks().get(1).getCapabilitiesDocument();
-//            String s = cc.toString();
-            if (r.getINDICATOR_RESOLVES_TO_CAPABILITIES() > 0)
-                cap_resolves++;
-            else {
-                LocalDatasetMetadataRecord rr = localDatasetMetadataRecordRepo.fullId(r.getDatasetMetadataDocumentId());
-                int tt=0;
-            }
+
+//            if (r.getINDICATOR_RESOLVES_TO_CAPABILITIES() > 0)
+//                cap_resolves++;
+//            else {
+//                 int tt=0;
+//            }
             if (r.getINDICATOR_LAYER_MATCHES() == IndicatorStatus.PASS)
                 layer_matches++;
             if (r.getINDICATOR_LAYER_MATCHES_DOWNLOAD() == IndicatorStatus.PASS)
                 layer_matches_download++;
-            else {
-                LocalDatasetMetadataRecord rr = localDatasetMetadataRecordRepo.fullId(r.getDatasetMetadataDocumentId());
-
-                List<CapabilitiesDocument> docs = rr.getDocumentLinks().stream()
-                        .filter(x->x.getCapabilitiesDocument() != null)
-                        .map(x->x.getCapabilitiesDocument())
-                        .collect(Collectors.toList());
-                List<String> xmls = docs.stream()
-                        .map(x-> linkCheckBlobStorageRepo.findById(x.getSha2()).get().getTextValue())
-                        .collect(Collectors.toList());
-
-                List<XmlCapabilitiesDocument> xmlDocs = xmls.stream()
-                        .map(x-> {
-                            try {
-                                return (XmlCapabilitiesDocument) xmlDocumentFactory.create(x);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                            return null;
-                        })
-                        .collect(Collectors.toList());
-                List<CapabilitiesDatasetMetadataLink> dsLinks_download  =  rr.getDocumentLinks().stream()
-                        .map(x->x.getCapabilitiesDocument())
-                        .filter(x-> x != null)
-                        .filter(x-> x.getCapabilitiesDocumentType() == CapabilitiesType.WFS||x.getCapabilitiesDocumentType() == CapabilitiesType.Atom)
-                        .map(x->x.getCapabilitiesDatasetMetadataLinkList())
-                        .flatMap(List::stream)
-                        .filter(x-> x != null)
-                        .collect(Collectors.toList());
-                String rr_xml = blobStorageService.findXML(rr.getSha2());
-
-                String ds_fileId = rr.getFileIdentifier();
-                String ds_dsID = rr.getDatasetIdentifier();
-
-//                List<LocalServiceMetadataRecord> items=  localServiceMetadataRecordRepo.searchByLinkCheckJobIdAndOperatesOnFileID(jobid, ds_fileId);
-//                items = items.stream().map(x-> localServiceMetadataRecordRepo.fullId(x.getServiceMetadataDocumentId())).collect(Collectors.toList());
-
-
-//                LocalServiceMetadataRecord ss1 = localServiceMetadataRecordRepo.fullId(14803L);
-//
-//                String ss_xml1 = blobStorageService.findXML(ss1.getSha2());
-//
-//                LocalServiceMetadataRecord ss2 = localServiceMetadataRecordRepo.fullId(14782L);
-//                String ss_xml2 = blobStorageService.findXML(ss1.getSha2());
-
-               // String url = ((ServiceDocumentLink) ss.getServiceDocumentLinks().toArray()[0]).getFinalURL();
-              //  HttpResult hr = basicHTTPRetriever.retrieveXML("GET",url,null,null,partialDownloadPredicateFactory.create(PartialDownloadHint.CAPABILITIES_ONLY) );
-
-               // List<CapabilitiesRemoteDatasetMetadataDocument> serviceRecords = capabilitiesRemoteDatasetMetadataDocumentRepo.findBylinkCheckJobIdAndFileIdentifier(jobid,rr.getFileIdentifier());
-
-
-
-                int t=0;
-            }
             if (r.getINDICATOR_LAYER_MATCHES_VIEW() == IndicatorStatus.PASS)
                 layer_matches_view++;
-
-            else if  (r.getINDICATOR_RESOLVES_TO_CAPABILITIES()>0) { //is a cap, but no match
-                LocalDatasetMetadataRecord rr = localDatasetMetadataRecordRepo.fullId(r.getDatasetMetadataDocumentId());
-//
-//                String rr_xml = blobStorageService.findXML(rr.getSha2());
-//
-//                List<CapabilitiesDocument> docs = rr.getDocumentLinks().stream()
-//                        .filter(x->x.getCapabilitiesDocument() != null)
-//                        .map(x->x.getCapabilitiesDocument())
-//                        .collect(Collectors.toList());
-//                List<String> xmls = docs.stream()
-//                        .map(x-> linkCheckBlobStorageRepo.findById(x.getSha2()).get().getTextValue())
-//                        .collect(Collectors.toList());
-//
-//                List<XmlCapabilitiesDocument> xmlDocs = xmls.stream()
-//                        .map(x-> {
-//                            try {
-//                                return (XmlCapabilitiesDocument) xmlDocumentFactory.create(x);
-//                            } catch (Exception e) {
-//                                e.printStackTrace();
-//                            }
-//                            return null;
-//                        })
-//                        .collect(Collectors.toList());
-//
-//                List<CapabilitiesDatasetMetadataLink> dsLinks  =  rr.getDocumentLinks().stream()
-//                        .map(x->x.getCapabilitiesDocument())
-//                        .filter(x-> x != null)
-//                        .map(x->x.getCapabilitiesDatasetMetadataLinkList())
-//                        .flatMap(List::stream)
-//                        .filter(x-> x != null)
-//                        .collect(Collectors.toList());
-//
-//                List<CapabilitiesRemoteDatasetMetadataDocument>  capDatasetDocs =  rr.getDocumentLinks().stream()
-//                        .map(x->x.getCapabilitiesDocument())
-//                        .filter(x-> x != null)
-//                        .map(x->x.getCapabilitiesDatasetMetadataLinkList())
-//                        .flatMap(List::stream)
-//                        .filter(x-> x != null)
-//                        .map(x->x.getCapabilitiesRemoteDatasetMetadataDocument())
-//                        .filter(x-> x != null)
-//                        .filter(x->x.getDatasetIdentifier() !=null && x.getFileIdentifier() !=null)
-//                        .collect(Collectors.toList());
-//                datasetToLayerIndicators.process(rr);
-
-                Optional<DatasetDocumentLink> doc = rr.getDocumentLinks().stream()
-                        .filter(x->x.getCapabilitiesDocument() != null).findFirst();
-                if (doc.isPresent()){
-                    CapabilitiesDocument capdoc = doc.get().getCapabilitiesDocument();
-                     String xmlCap = linkCheckBlobStorageRepo.findById(capdoc.getSha2()).get().getTextValue();
-                     XmlCapabilitiesDocument xmlCapDoc = (XmlCapabilitiesDocument) xmlDocumentFactory.create(xmlCap);
-                    List<CapabilitiesDatasetMetadataLink> dslinks = capabilitiesDatasetMetadataLinkService.createCapabilitiesDatasetMetadataLinks(capdoc, xmlCapDoc);
-
-                    CapabilitiesDocument cd = createCap(xmlCapDoc);
-                    cd= capabilitiesDocumentRepo.save(cd);
-                    CapabilitiesDocument cd2=capabilitiesDocumentRepo.findById(cd.getCapabilitiesDocumentId()).get();
-
-                    if (!capdoc.getCapabilitiesDatasetMetadataLinkList().isEmpty()) {
-                         CapabilitiesDatasetMetadataLink dd = capdoc.getCapabilitiesDatasetMetadataLinkList().get(0);
-                         int uu=0;
-                     }
-                    int ttt=0;
-                 }
-            }
+            if (r.getINDICATOR_SERVICE_MATCHES_DOWNLOAD() == IndicatorStatus.PASS)
+                service_matches_download++;
+            if (r.getINDICATOR_SERVICE_MATCHES_VIEW() == IndicatorStatus.PASS)
+                service_matches_view++;
         }
 
         double percent_cap_resolves = ((double) cap_resolves)/total * 100.0;
@@ -531,19 +636,27 @@ public class MyCommandLineRunner implements CommandLineRunner {
         double percent_layer_matches_view = ((double) layer_matches_view)/total * 100.0;
         double percent_layer_matches_download = ((double) layer_matches_download)/total * 100.0;
 
+       double percent_service_matches_download = ((double) service_matches_download)/total * 100.0;
+       double percent_service_matches_view = ((double) service_matches_view)/total * 100.0;
 
-        logger.debug("Dataset");
+
+            logger.debug("Dataset");
         logger.debug("-------");
         logger.debug("% cap doc resolves: "+percent_cap_resolves+"%");
         logger.debug("% layer matches the dataset: "+percent_layer_matches+"%");
         logger.debug("% layer matches the dataset (view): "+percent_layer_matches_view+"%");
         logger.debug("% layer matches the dataset (download): "+percent_layer_matches_download+"%");
+        logger.debug("% service matches the dataset (view): "+percent_service_matches_view+" ");
+        logger.debug("% service matches the dataset (download): "+percent_service_matches_download+" ");
 
+        logger.debug("");
         logger.debug("number of docs: "+total+"");
         logger.debug("number cap doc resolves: "+cap_resolves+" ");
         logger.debug("number layer matches the dataset (either via view or download): "+layer_matches+" ");
         logger.debug("number layer matches the dataset (view): "+layer_matches_view+" ");
         logger.debug("number layer matches the dataset (download): "+layer_matches_download+" ");
+        logger.debug("number service matches the dataset (view): "+service_matches_view+" ");
+        logger.debug("number service matches the dataset (download): "+service_matches_download+" ");
 
         int tt=0;
     }
@@ -578,50 +691,48 @@ public class MyCommandLineRunner implements CommandLineRunner {
                 all_opson_match++;
             else {
 
-                LocalServiceMetadataRecord rr = localServiceMetadataRecordRepo.fullId(r.getServiceMetadataDocumentId());
-                String rr_xml = blobStorageService.findXML(rr.getSha2());
-
-                List<OperatesOnLink> opsonlinks = new ArrayList(rr.getOperatesOnLinks());
-
-                List<OperatesOnRemoteDatasetMetadataRecord> opsonlinks_docs =     opsonlinks.stream()
-                            .filter(x-> x.getDatasetMetadataRecord() !=null)
-                            .map(x->x.getDatasetMetadataRecord())
-                            .collect(Collectors.toList());
-
-                List<String> opson_docs_xml = opsonlinks_docs.stream()
-                        .map(x-> linkCheckBlobStorageRepo.findById(x.getSha2()).get().getTextValue())
-                        .collect(Collectors.toList());
 
 
-                List<String> opson_docs_fileid = opsonlinks_docs.stream()
-                        .map(x-> x.getFileIdentifier())
-                        .collect(Collectors.toList());
 
+//                List<OperatesOnRemoteDatasetMetadataRecord> opsonlinks_docs =     opsonlinks.stream()
+//                            .filter(x-> x.getDatasetMetadataRecord() !=null)
+//                            .map(x->x.getDatasetMetadataRecord())
+//                            .collect(Collectors.toList());
 
-                List<String> opson_docs_dsid = opsonlinks_docs.stream()
-                        .map(x-> x.getDatasetIdentifier())
-                        .collect(Collectors.toList());
+//                List<String> opson_docs_xml = opsonlinks_docs.stream()
+//                        .map(x-> linkCheckBlobStorageRepo.findById(x.getSha2()).get().getTextValue())
+//                        .collect(Collectors.toList());
+//
+//
+//                List<String> opson_docs_fileid = opsonlinks_docs.stream()
+//                        .map(x-> x.getFileIdentifier())
+//                        .collect(Collectors.toList());
+//
+//
+//                List<String> opson_docs_dsid = opsonlinks_docs.stream()
+//                        .map(x-> x.getDatasetIdentifier())
+//                        .collect(Collectors.toList());
 
-                List<CapabilitiesDocument> capDocs = rr.getServiceDocumentLinks().stream()
-                            .filter(x->x.getCapabilitiesDocument() != null)
-                            .map(x->x.getCapabilitiesDocument())
-                            .collect(Collectors.toList());
-                List<String> capDocs_xmls = capDocs.stream()
-                        .map(x-> linkCheckBlobStorageRepo.findById(x.getSha2()).get().getTextValue())
-                        .collect(Collectors.toList());
+//                List<CapabilitiesDocument> capDocs = rr.getServiceDocumentLinks().stream()
+//                            .filter(x->x.getCapabilitiesDocument() != null)
+//                            .map(x->x.getCapabilitiesDocument())
+//                            .collect(Collectors.toList());
+//                List<String> capDocs_xmls = capDocs.stream()
+//                        .map(x-> linkCheckBlobStorageRepo.findById(x.getSha2()).get().getTextValue())
+//                        .collect(Collectors.toList());
 
-                List<CapabilitiesRemoteDatasetMetadataDocument> cap_dsdocs = capDocs.stream()
-                        .map(x-> x.getCapabilitiesDatasetMetadataLinkList())
-                        .flatMap(List::stream)
-                        .map(x->x.getCapabilitiesRemoteDatasetMetadataDocument())
-                        .filter(x->x  != null)
-                        .collect(Collectors.toList());
-                List<String> cap_dsdocs_xmls = cap_dsdocs.stream()
-                        .map(x-> linkCheckBlobStorageRepo.findById(x.getSha2()).get().getTextValue())
-                        .collect(Collectors.toList());
-
-                boolean no_capabilities_doc = cap_dsdocs.isEmpty();
-                boolean no_operates_on = opsonlinks.isEmpty();
+//                List<CapabilitiesRemoteDatasetMetadataDocument> cap_dsdocs = capDocs.stream()
+//                        .map(x-> x.getCapabilitiesDatasetMetadataLinkList())
+//                        .flatMap(List::stream)
+//                        .map(x->x.getCapabilitiesRemoteDatasetMetadataDocument())
+//                        .filter(x->x  != null)
+//                        .collect(Collectors.toList());
+//                List<String> cap_dsdocs_xmls = cap_dsdocs.stream()
+//                        .map(x-> linkCheckBlobStorageRepo.findById(x.getSha2()).get().getTextValue())
+//                        .collect(Collectors.toList());
+//
+//                boolean no_capabilities_doc = cap_dsdocs.isEmpty();
+//                boolean no_operates_on = opsonlinks.isEmpty();
 
                 int tta=1;
 //
@@ -738,8 +849,8 @@ public class MyCommandLineRunner implements CommandLineRunner {
 //                   int u = 0;
  //              }
            }
-           if (r.getINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES() == IndicatorStatus.PASS)
-               cap_link_to_service_full_match++;
+//           if (r.getINDICATOR_CAPABILITIES_SERVICE_FULLY_MATCHES() == IndicatorStatus.PASS)
+            //   cap_link_to_service_full_match++;
 
            if (r.getINDICATOR_ALL_CAPABILITIES_LAYER_RESOLVE() == IndicatorStatus.PASS)
                cap_ds_links_resolve++;
@@ -802,28 +913,9 @@ public class MyCommandLineRunner implements CommandLineRunner {
         int t=0;
     }
 
-        public void run10(String... args) throws Exception {
-        LocalServiceMetadataRecord r =localServiceMetadataRecordRepo.findById(1L).get();
-        String xml = blobStorageService.findXML(r.getSha2());
-        XmlDoc xmlDoc = xmlDocumentFactory.create(xml);
 
 
-         String xmlCap = linkCheckBlobStorageRepo.findById(r.getServiceDocumentLinks().stream().findFirst().get().getCapabilitiesDocument().getSha2()).get().getTextValue();
-        XmlDoc xmlCapDoc = xmlDocumentFactory.create(xmlCap);
 
-        capabilitiesServiceLinkIndicators.process(r);
-
-    }
-
-        public void run9(String... args) throws Exception {
-        for(LocalServiceMetadataRecord localServiceMetadataRecord : localServiceMetadataRecordRepo.findAll()){
-            capabilitiesServiceLinkIndicators.process(localServiceMetadataRecord);
-        }
-//        for(LocalDatasetMetadataRecord localDatasetMetadataRecord : localDatasetMetadataRecordRepo.findAll()){
-//            capabilitiesResolvesIndicators.process(localDatasetMetadataRecord);
-//        }
-
-    }
 
         public void run8(String... args) throws Exception {
         Iterable<LocalDatasetMetadataRecord> records =  localDatasetMetadataRecordRepo.findAll();
@@ -838,38 +930,6 @@ public class MyCommandLineRunner implements CommandLineRunner {
         }
     }
 
-    public void run7(String... args) throws Exception {
-      //  LinkCheckBlobStorage r1 =  linkCheckBlobStorageRepo.findById("16ADA3D6D77421D38E957705B7E7C06ABF2270242C04D669426C3814F5F6D584").get();
-      //  LinkCheckBlobStorage r2 = linkCheckBlobStorageRepo.findById("988232D8B3AEDF0782B0D290C0DCBB324ACDAEFD98F606C44304B0444D7B658E").get();
-        List<CapabilitiesDocument> docs = capabilitiesDocumentRepo.findByCapabilitiesDocumentType(CapabilitiesType.WFS);
-
-        List<LinkCheckBlobStorage> xmls = docs.stream().map(x->linkCheckBlobStorageRepo.findById(x.getSha2()).get()).collect(Collectors.toList());
-
-//        List<XmlDoc> docs2 = new ArrayList<>();
-//        for (LinkCheckBlobStorage x : xmls) {
-//            XmlDoc xmlDoc = xmlDocumentFactory.create(x.getTextValue());
-//            docs2.add(xmlDoc);
-//        }
-
-        for(CapabilitiesDocument doc : docs) {
-            ServiceMetadataRecord localService = doc.getServiceDocumentLink().getLocalServiceMetadataRecord();
-            Set<OperatesOnLink> opsOns = localService.getOperatesOnLinks();
-            List<CapabilitiesDatasetMetadataLink> capDSs = doc.getCapabilitiesDatasetMetadataLinkList();
-//            if ( (opsOns.size() ==1) && (capDSs.size() == 1) ) {
-//                OperatesOnLink opOn = opsOns.
-//                OperatesOnRemoteDatasetMetadataRecord OpOnDSMD = opOn.getDatasetMetadataRecord();
-//                CapabilitiesDatasetMetadataLink capDSLink = capDSs.get(0);
-//                CapabilitiesRemoteDatasetMetadataDocument capDSMD = capDSLink.getCapabilitiesRemoteDatasetMetadataDocument();
-//                if ( (OpOnDSMD != null) && (capDSMD !=null)){
-//                    int tt=0;
-//                }
-//            }
-            int t=0;
-        }
-
-
-        int t=0;
-    }
 
     public void run6(String... args) throws Exception {
         List<StatusQueryItem> items = localServiceMetadataRecordRepo.getStatus("6da77404-7427-4c88-80a3-0e8eb83966ea");

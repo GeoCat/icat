@@ -43,7 +43,7 @@ import java.util.Comparator;
 import java.util.List;
 
 @Component
-public class CapabilitiesLinkFixer implements ILinkFixer {
+public class CapabilitiesLinkFixer   {
 
 
     public static String findQueryParmName(String link, String name) throws Exception {
@@ -67,8 +67,8 @@ public class CapabilitiesLinkFixer implements ILinkFixer {
         return uriBuilder.build().toString();
     }
 
-    @Override
-    public String fix(String link) throws Exception {
+
+    public String fix(String link, String serviceRecordType) throws Exception {
 
         try {
             if (link == null)
@@ -80,12 +80,42 @@ public class CapabilitiesLinkFixer implements ILinkFixer {
                 link += "request=GetCapabilities";
 
             String requestParam = findQueryParmName(link, "request");
-            if (requestParam == null)
-                return canonicalize(link);
+            if (requestParam ==null)
+                requestParam ="request";
+//            if (requestParam == null)
+//                return canonicalize(link);
 
             URIBuilder uriBuilder = new URIBuilder(link);
             uriBuilder.setParameter(requestParam, "GetCapabilities");
-            return canonicalize(uriBuilder.build().toString());
+            link =  canonicalize(uriBuilder.build().toString());
+
+            // if the link already has a wms/wmts/wfs/atom, we assume we don't need to re-add its (i.e. http://.../WMS.exe?...)
+            if ( (link.toLowerCase().contains("wms")) || (link.toLowerCase().contains("wmts"))
+                 || (link.toLowerCase().contains("wfs"))
+                    || (link.toLowerCase().contains("atom")) )
+                return link;
+
+            if ( (serviceRecordType==null) || (serviceRecordType.isEmpty()))
+                return link; // no info to process
+
+            //assumptions
+            String service = null;
+            if (serviceRecordType.toLowerCase().equals("view"))
+                service = "WMS";
+            if (serviceRecordType.toLowerCase().equals("download"))
+                service = "WFS";
+
+            if (service == null)
+                return link;
+
+            String serviceParam = findQueryParmName(link, "service");
+            if (serviceParam ==null)
+                serviceParam ="service";
+            uriBuilder = new URIBuilder(link);
+            uriBuilder.setParameter(serviceParam, service);
+            link =  canonicalize(uriBuilder.build().toString());
+
+            return link;
         }
         catch(Exception e){
             return link;

@@ -33,6 +33,7 @@
 
 package net.geocat.database.linkchecker.service;
 
+import net.geocat.database.linkchecker.entities.LocalServiceMetadataRecord;
 import net.geocat.database.linkchecker.entities.OperatesOnLink;
 import net.geocat.database.linkchecker.entities.helper.LinkState;
 import net.geocat.database.linkchecker.entities.helper.ServiceMetadataRecord;
@@ -44,9 +45,10 @@ import org.springframework.stereotype.Component;
 @Scope("prototype")
 public class OperatesOnLinkService {
 
-    public OperatesOnLink create(ServiceMetadataRecord serviceMetadataRecord, OperatesOn operatesOn) {
+    public OperatesOnLink create(LocalServiceMetadataRecord serviceMetadataRecord, OperatesOn operatesOn) {
         OperatesOnLink result = new OperatesOnLink();
 
+        result.setLinkCheckJobId(serviceMetadataRecord.getLinkCheckJobId());
         result.setLinkState(LinkState.Created);
         result.setRawURL(operatesOn.getRawUrl());
         result.setUuidref(operatesOn.getUuidref());

@@ -37,6 +37,7 @@ import net.geocat.xml.helpers.OnlineResource;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.xml.xpath.XPathExpressionException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,6 +48,7 @@ public class XmlMetadataDocument extends XmlDoc {
     String fileIdentifier;
     List<OnlineResource> transferOptions = new ArrayList<>();
     List<OnlineResource> connectPoints = new ArrayList<>();
+    String title;
 
 
     public XmlMetadataDocument(XmlDoc doc) throws Exception {
@@ -54,10 +56,11 @@ public class XmlMetadataDocument extends XmlDoc {
         if (!getRootTagName().equals("MD_Metadata"))
             throw new Exception("XmlMetadataDocument -- root node should be MD_Metadata");
         setup_XmlMetadataDocument();
-
     }
 
     public void setup_XmlMetadataDocument() throws Exception {
+        setupTitle();
+
         Node n = xpath_node("/gmd:MD_Metadata/gmd:hierarchyLevel/gmd:MD_ScopeCode/@codeListValue");
         String _metadataDocumentType = "";
 
@@ -78,6 +81,16 @@ public class XmlMetadataDocument extends XmlDoc {
 
         nl = xpath_nodeset("//srv:containsOperations/srv:SV_OperationMetadata");
         connectPoints = OnlineResource.create(nl);
+    }
+
+    private void setupTitle() throws XPathExpressionException {
+           Node n =  xpath_node("/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString");
+           if ( (n==null) || (n.getTextContent().trim().isEmpty()))
+                  n= xpath_node("/gmd:MD_Metadata/gmd:identificationInfo/srv:SV_ServiceIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString");
+
+           if ( (n !=null) && (!n.getTextContent().trim().isEmpty()) )
+               setTitle(n.getTextContent().trim());
+
     }
 
     public MetadataDocumentType determineMetadataDocumentType(String xmlText) {
@@ -109,10 +122,36 @@ public class XmlMetadataDocument extends XmlDoc {
         return connectPoints;
     }
 
+    public void setMetadataDocumentType(MetadataDocumentType metadataDocumentType) {
+        this.metadataDocumentType = metadataDocumentType;
+    }
+
+    public void setFileIdentifier(String fileIdentifier) {
+        this.fileIdentifier = fileIdentifier;
+    }
+
+
+    public void setTransferOptions(List<OnlineResource> transferOptions) {
+        this.transferOptions = transferOptions;
+    }
+
+    public void setConnectPoints(List<OnlineResource> connectPoints) {
+        this.connectPoints = connectPoints;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
     @Override
     public String toString() {
         String result =  "XmlMetadataDocument(fileIdentifier="+fileIdentifier;
         result += ", metadataDocumentType = "+metadataDocumentType;
+        result += ", title="+title;
         result += ")";
         return result;
     }

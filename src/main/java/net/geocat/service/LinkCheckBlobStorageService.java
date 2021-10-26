@@ -45,6 +45,8 @@ import java.util.Optional;
 @Scope("prototype")
 public class LinkCheckBlobStorageService {
 
+    public static Object lockingObject=new Object();
+
     @Autowired
     LinkCheckBlobStorageRepo linkCheckBlobStorageRepo;
 
@@ -53,13 +55,23 @@ public class LinkCheckBlobStorageService {
     }
 
 
-    public void ensureBlobExists(String xmlStr, String sha2) {
-        Optional<LinkCheckBlobStorage> item = linkCheckBlobStorageRepo.findById(sha2);
-        if (item.isPresent())
-            return;
-        LinkCheckBlobStorage blob = new LinkCheckBlobStorage();
-        blob.setSha2(sha2);
-        blob.setTextValue(xmlStr);
-        linkCheckBlobStorageRepo.save(blob); // very very slight chance this could throw, but so unlikely and it will fix itself when rerun by camel
+    public   void ensureBlobExists(String xmlStr, String sha2) {
+
+        synchronized (lockingObject) {
+
+            Optional<LinkCheckBlobStorage> item = linkCheckBlobStorageRepo.findById(sha2);
+            if (item.isPresent())
+                return;
+            LinkCheckBlobStorage blob = new LinkCheckBlobStorage();
+            blob.setSha2(sha2);
+            blob.setTextValue(xmlStr);
+            try {
+                linkCheckBlobStorageRepo.save(blob); // very very slight chance this could throw, but so unlikely and it will fix itself when rerun by camel
+            } catch (Exception e) {
+                int t = 0;
+                throw e;
+            }
+
+        }
     }
 }

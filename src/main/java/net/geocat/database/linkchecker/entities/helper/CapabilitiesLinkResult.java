@@ -31,23 +31,13 @@
  *  ==============================================================================
  */
 
-package net.geocat.service.downloadhelpers;
+package net.geocat.database.linkchecker.entities.helper;
 
-import net.geocat.http.IContinueReadingPredicate;
-import net.geocat.xml.XmlStringTools;
+public interface CapabilitiesLinkResult {
+    String getSha2();
 
+    String getLinkcheckjobid();
 
-public class XmlContinueReadingPredicate implements IContinueReadingPredicate {
+    String getCapabilitiesdocumenttype();
 
-    @Override
-    public boolean continueReading(byte[] head) {
-        try {
-            String doc = XmlStringTools.bytea2String(head);
-            if (!XmlStringTools.isXML(doc))
-                return false; //not XML
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
 }

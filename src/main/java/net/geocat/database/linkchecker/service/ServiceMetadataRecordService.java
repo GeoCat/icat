@@ -50,6 +50,8 @@ public class ServiceMetadataRecordService {
                                              String sha2) {
         LocalServiceMetadataRecord result = new LocalServiceMetadataRecord();
 
+        result.setTitle(doc.getTitle());
+
         result.setHarvesterMetadataRecordId(underlyingHarvestMetadataRecordId);
         result.setLinkCheckJobId(linkCheckJobId);
         result.setSha2(sha2);

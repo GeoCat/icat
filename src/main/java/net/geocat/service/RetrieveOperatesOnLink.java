@@ -34,12 +34,12 @@
 package net.geocat.service;
 
 import net.geocat.database.linkchecker.entities.OperatesOnLink;
-import net.geocat.database.linkchecker.entities.OperatesOnRemoteDatasetMetadataRecord;
-import net.geocat.database.linkchecker.service.MetadataDocumentFactory;
+ import net.geocat.database.linkchecker.service.MetadataDocumentFactory;
 import net.geocat.service.downloadhelpers.RetrievableSimpleLinkDownloader;
 import net.geocat.xml.XmlDatasetMetadataDocument;
 import net.geocat.xml.XmlDoc;
 import net.geocat.xml.XmlDocumentFactory;
+import net.geocat.xml.XmlStringTools;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -75,7 +75,7 @@ public class RetrieveOperatesOnLink {
         if (!link.getUrlFullyRead())
             return link;
 
-        XmlDoc doc = xmlDocumentFactory.create(new String(link.getFullData()));
+        XmlDoc doc = xmlDocumentFactory.create(XmlStringTools.bytea2String(link.getFullData()));
 
         if (doc !=null)
             link.setXmlDocInfo(doc.toString());
@@ -87,13 +87,15 @@ public class RetrieveOperatesOnLink {
         String xmlStr = XmlDoc.writeXML(doc.getParsedXml());
         String sha2 = doc.computeSHA2(xmlStr);
 
+        link.setFileIdentifier(xmlDatasetMetadataDocument.getFileIdentifier());
+        link.setDatasetIdentifier(xmlDatasetMetadataDocument.getDatasetIdentifier());
 
         link.setSha2(sha2);
         linkCheckBlobStorageService.ensureBlobExists(xmlStr, sha2);
-        OperatesOnRemoteDatasetMetadataRecord operatesOnRemoteDatasetMetadataRecord = metadataDocumentFactory.createRemoteDatasetMetadataRecord(link, xmlDatasetMetadataDocument, jobid);
-        operatesOnRemoteDatasetMetadataRecord.setSha2(sha2);
+      //  OperatesOnRemoteDatasetMetadataRecord operatesOnRemoteDatasetMetadataRecord = metadataDocumentFactory.createRemoteDatasetMetadataRecord(link, xmlDatasetMetadataDocument, jobid);
+     //   operatesOnRemoteDatasetMetadataRecord.setSha2(sha2);
 
-        link.setDatasetMetadataRecord(operatesOnRemoteDatasetMetadataRecord);
+       // link.setDatasetMetadataRecord(operatesOnRemoteDatasetMetadataRecord);
 
         return link;
     }

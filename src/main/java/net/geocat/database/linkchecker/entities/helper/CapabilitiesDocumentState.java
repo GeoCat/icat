@@ -31,20 +31,12 @@
  *  ==============================================================================
  */
 
-package net.geocat.database.linkchecker.repos;
+package net.geocat.database.linkchecker.entities.helper;
 
-import net.geocat.database.linkchecker.entities.CapabilitiesDocument;
-import net.geocat.database.linkchecker.entities.CapabilitiesRemoteDatasetMetadataDocument;
-import org.springframework.context.annotation.Scope;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Component;
-
-import java.util.List;
-
-
-@Component
-@Scope("prototype")
-public interface CapabilitiesRemoteDatasetMetadataDocumentRepo extends CrudRepository<CapabilitiesRemoteDatasetMetadataDocument, Long> {
-
-    List<CapabilitiesRemoteDatasetMetadataDocument> findBylinkCheckJobIdAndFileIdentifier(String linkCheckJobId,String fileIdentifier);
+public enum CapabilitiesDocumentState {
+    CREATED, //nothing done
+    DOWNLOADED, //document XML downloaded from server
+    PARSED, // links saved to DB (service and dataset)
+    COMPLETE, // links retrieved and put in DB
+    ERROR
 }

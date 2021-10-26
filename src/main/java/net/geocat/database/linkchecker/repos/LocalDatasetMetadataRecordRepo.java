@@ -60,6 +60,11 @@ public interface LocalDatasetMetadataRecordRepo extends CrudRepository<LocalData
 //            })
 //    Optional<LocalDatasetMetadataRecord> findById(long id);
 
+    LocalDatasetMetadataRecord findFirstByFileIdentifierAndLinkCheckJobId(String fileID,String linkCheckJobId);
+
+    LocalDatasetMetadataRecord findFirstByFileIdentifier(String fileID);
+
+
     LocalDatasetMetadataRecord findFirstByLinkCheckJobIdAndSha2(String linkCheckJobId, String sha2);
 
     List<LocalDatasetMetadataRecord> findByLinkCheckJobId(String linkCheckJobId);
@@ -80,16 +85,6 @@ public interface LocalDatasetMetadataRecordRepo extends CrudRepository<LocalData
             nativeQuery = true)
     List<StatusQueryItem> getStatus(String LinkCheckJobId);
 
-    @Query(value="select m from LocalDatasetMetadataRecord m  where m.linkCheckJobId= ?1")
-    List<LocalDatasetMetadataRecord> partialByLinkCheckJobId(String linkCheckJobId);
-
-    @Query(value="select a from LocalDatasetMetadataRecord a JOIN fetch a.documentLinks b JOIN FETCH  b.capabilitiesDocument where a.linkCheckJobId= ?1")
-    List<LocalDatasetMetadataRecord> fullByLinkCheckJobId(String linkCheckJobId);
 
 
-    @Query(value="select a from LocalDatasetMetadataRecord a " +
-            "LEFT JOIN FETCH a.documentLinks b " +
-            "LEFT JOIN FETCH  b.capabilitiesDocument " +
-            "where a.datasetMetadataDocumentId= ?1")
-    LocalDatasetMetadataRecord  fullId(long id);
 }

@@ -61,6 +61,23 @@ public class TestWMSCapabilitiesDatasetLinkExtractor {
 
 
     @Test
+    public void test_multiple_MetadataURLs() throws Exception {
+        XmlCapabilitiesWMS xmlCapabilitiesDocument = read("wms_cap_multiple_MetadataURLS.xml");
+        List<DatasetLink> links = wmsCapabilitiesDatasetLinkExtractor.findLinks(xmlCapabilitiesDocument);
+        assertEquals(2,links.size());
+
+        assertEquals("authority", links.get(0).getAuthority());
+        assertEquals("layer2identifierDSURL", links.get(0).getRawUrl());
+        assertEquals("layer2identifier", links.get(0).getIdentifier());
+
+
+        assertEquals("authority", links.get(1).getAuthority());
+        assertEquals("layer2identifierDSURL2", links.get(1).getRawUrl());
+        assertEquals("layer2identifier", links.get(1).getIdentifier());
+
+    }
+
+    @Test
     public void info_fully_in_single_nested_layer() throws Exception {
         XmlCapabilitiesWMS xmlCapabilitiesDocument = read("wms_cap_full_nested.xml");
         List<DatasetLink> links = wmsCapabilitiesDatasetLinkExtractor.findLinks(xmlCapabilitiesDocument);

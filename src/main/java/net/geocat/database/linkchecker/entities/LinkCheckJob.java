@@ -60,6 +60,9 @@ public class LinkCheckJob extends UpdateCreateDateTimeEntity  {
     @Column(columnDefinition = "text")
     private String messages;
 
+    @Column(columnDefinition = "text")
+    private String longTermTag;
+
     // how many documents were harvested
     Long numberOfDocumentsInBatch;
 
@@ -83,6 +86,15 @@ public class LinkCheckJob extends UpdateCreateDateTimeEntity  {
     }
 
     //------------------------------------
+
+
+    public String getLongTermTag() {
+        return longTermTag;
+    }
+
+    public void setLongTermTag(String longTermTag) {
+        this.longTermTag = longTermTag;
+    }
 
     public Long getNumberOfLocalServiceRecords() {
         return numberOfLocalServiceRecords;

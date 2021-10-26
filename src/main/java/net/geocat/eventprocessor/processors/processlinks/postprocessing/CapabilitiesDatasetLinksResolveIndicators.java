@@ -49,13 +49,9 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 public class CapabilitiesDatasetLinksResolveIndicators {
 
-    public LocalServiceMetadataRecord process(LocalServiceMetadataRecord record) {
+    public LocalServiceMetadataRecord process(LocalServiceMetadataRecord record,List<CapabilitiesDocument> capDocs ) {
         List<DocumentLink> links = new ArrayList<DocumentLink>(record.getServiceDocumentLinks());
 
-
-        List<CapabilitiesDocument>  capDocs =  links.stream()
-                .map(x->x.getCapabilitiesDocument())
-                .filter(x-> x != null).collect(Collectors.toList());
 
         boolean result = false;
 
@@ -74,12 +70,12 @@ public class CapabilitiesDatasetLinksResolveIndicators {
     private boolean process(CapabilitiesDocument doc) {
         List<CapabilitiesDatasetMetadataLink> dsLinks = doc.getCapabilitiesDatasetMetadataLinkList();
 
-        //get rid of null links (i.e. no url)
-        dsLinks = dsLinks.stream().filter(x->x.getRawURL() != null && !x.getRawURL().isEmpty()).collect(Collectors.toList());
+         //get rid of null links (i.e. no url)
+         dsLinks = dsLinks.stream().filter(x->x.getRawURL() != null && !x.getRawURL().isEmpty()).collect(Collectors.toList());
 
         int nExpect = dsLinks.size();
 
-        dsLinks =  dsLinks.stream().filter(x-> x.getCapabilitiesRemoteDatasetMetadataDocument() != null).collect(Collectors.toList());
+        dsLinks =  dsLinks.stream().filter(x-> x.getSha2() != null).collect(Collectors.toList());
 
         if (dsLinks.isEmpty())
             return false; // must have at least one
@@ -90,7 +86,4 @@ public class CapabilitiesDatasetLinksResolveIndicators {
         return true;
     }
 
-    private void process(CapabilitiesDatasetMetadataLink link) {
-
-    }
 }

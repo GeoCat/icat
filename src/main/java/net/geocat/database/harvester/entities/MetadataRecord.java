@@ -37,6 +37,7 @@ package net.geocat.database.harvester.entities;
 import javax.persistence.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 @Entity
 @Table(name = "metadata_record"
@@ -119,5 +120,18 @@ public class MetadataRecord {
 
     public void setSha2(String sha2) {
         this.sha2 = sha2;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MetadataRecord that = (MetadataRecord) o;
+        return Objects.equals(recordIdentifier, that.recordIdentifier);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(recordIdentifier);
     }
 }

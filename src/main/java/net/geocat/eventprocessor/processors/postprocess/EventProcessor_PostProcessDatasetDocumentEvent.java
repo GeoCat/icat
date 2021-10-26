@@ -36,10 +36,14 @@ package net.geocat.eventprocessor.processors.postprocess;
 import net.geocat.database.linkchecker.entities.LocalDatasetMetadataRecord;
 import net.geocat.database.linkchecker.entities.LocalServiceMetadataRecord;
 import net.geocat.database.linkchecker.entities.OperatesOnLink;
+import net.geocat.database.linkchecker.entities.helper.CapabilitiesLinkResult;
 import net.geocat.database.linkchecker.entities.helper.IndicatorStatus;
+import net.geocat.database.linkchecker.entities.helper.ServiceDocSearchResult;
 import net.geocat.database.linkchecker.entities.helper.ServiceMetadataDocumentState;
+import net.geocat.database.linkchecker.repos.CapabilitiesDatasetMetadataLinkRepo;
 import net.geocat.database.linkchecker.repos.LocalDatasetMetadataRecordRepo;
 import net.geocat.database.linkchecker.repos.LocalServiceMetadataRecordRepo;
+import net.geocat.database.linkchecker.repos.OperatesOnLinkRepo;
 import net.geocat.eventprocessor.BaseEventProcessor;
 import net.geocat.eventprocessor.processors.processlinks.EventProcessor_ProcessServiceDocLinksEvent;
 import net.geocat.events.Event;
@@ -55,6 +59,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import static net.geocat.database.linkchecker.service.DatabaseUpdateService.convertToString;
@@ -75,6 +80,12 @@ public class EventProcessor_PostProcessDatasetDocumentEvent extends BaseEventPro
     EventFactory eventFactory;
 
     @Autowired
+    OperatesOnLinkRepo operatesOnLinkRepo;
+
+    @Autowired
+    CapabilitiesDatasetMetadataLinkRepo capabilitiesDatasetMetadataLinkRepo;
+
+    @Autowired
     LocalServiceMetadataRecordRepo localServiceMetadataRecordRepo;
 
     LocalDatasetMetadataRecord localDatasetMetadataRecord;
@@ -82,26 +93,24 @@ public class EventProcessor_PostProcessDatasetDocumentEvent extends BaseEventPro
 
     @Override
     public EventProcessor_PostProcessDatasetDocumentEvent externalProcessing() throws Exception {
-        localDatasetMetadataRecord = localDatasetMetadataRecordRepo.findById(getInitiatingEvent().getDatasetDocumentId()).get();// make sure we re-load
         return this;
     }
 
 
-    public void save(boolean reload){
+    public void save()
+    {
         localDatasetMetadataRecord = localDatasetMetadataRecordRepo.save(localDatasetMetadataRecord);
-        localDatasetMetadataRecord = null;
-        if (reload)
-            localDatasetMetadataRecord = localDatasetMetadataRecordRepo.findById(getInitiatingEvent().getDatasetDocumentId()).get();// make sure we re-load
     }
 
 
     @Override
     public EventProcessor_PostProcessDatasetDocumentEvent internalProcessing() throws Exception {
+        localDatasetMetadataRecord = localDatasetMetadataRecordRepo.findById(getInitiatingEvent().getDatasetDocumentId()).get();// make sure we re-load
 
         try{
             process();
             localDatasetMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_POSTPROCESSED);
-            save(false);
+            save();
             logger.debug("finished postprocessing documentid="+getInitiatingEvent().getDatasetDocumentId()  );
 
         }
@@ -109,71 +118,89 @@ public class EventProcessor_PostProcessDatasetDocumentEvent extends BaseEventPro
             logger.error("postprocessing exception for datasetMetadataRecordId="+getInitiatingEvent().getDatasetDocumentId(),e);
             localDatasetMetadataRecord.setState(ServiceMetadataDocumentState.ERROR);
             localDatasetMetadataRecord.setErrorMessage(  convertToString(e) );
-            save(false);
+            save();
         }
         return this;
     }
 
-    private boolean inList(List<LocalServiceMetadataRecord> items_partially_loaded) {
-
-        //quick and easy check - look at the uuids associated with the links
-        List<String> uuids = items_partially_loaded.stream()
-                .map(x->new ArrayList<OperatesOnLink>(x.getOperatesOnLinks()))
-                .flatMap(List::stream)
-                .map(x->x.getUuidref())
-                .filter(x-> x != null)
-                .collect(Collectors.toList());
-
-        if (uuids.contains(this.localDatasetMetadataRecord.getFileIdentifier()))
-            return true;
-
-        // ok, not easy - need to actually get all the details
-        //this can take some time...
-        List<LocalServiceMetadataRecord> items_fully_loaded = items_partially_loaded.stream().map(x-> localServiceMetadataRecordRepo.fullId_operatesOn(x.getServiceMetadataDocumentId())).collect(Collectors.toList());
-
-        List<String> fileIds = items_fully_loaded.stream()
-                .map(x->new ArrayList<OperatesOnLink>(x.getOperatesOnLinks()))
-                .flatMap(List::stream)
-                .map(x->x.getDatasetMetadataRecord())
-                .filter(x-> x != null)
-                .map(x->x.getFileIdentifier())
-                .collect(Collectors.toList());
-
-        return (uuids.contains(this.localDatasetMetadataRecord.getFileIdentifier()));
-
-    }
-
     private void process() {
-        String linkCheckJobId = getInitiatingEvent().getLinkCheckJobId();
-        String ds_fileId = localDatasetMetadataRecord.getFileIdentifier();
+        String fileId = localDatasetMetadataRecord.getFileIdentifier();
+        String datasetid=localDatasetMetadataRecord.getDatasetIdentifier();
 
-        List<LocalServiceMetadataRecord> items_partiallyLoaded=  localServiceMetadataRecordRepo.searchByLinkCheckJobIdAndOperatesOnFileID(linkCheckJobId, ds_fileId);
+        String linkcheckjobid=localDatasetMetadataRecord.getLinkCheckJobId();
 
-        List<LocalServiceMetadataRecord> items_view_partiallyLoaded = items_partiallyLoaded.stream()
-                .filter(x->x.getMetadataServiceType().equalsIgnoreCase("view"))
-                .collect(Collectors.toList());
+        List<ServiceDocSearchResult> serviceLinks =  new ArrayList<>();
+        List<CapabilitiesLinkResult> capLinks =  new ArrayList<>();
 
-        List<LocalServiceMetadataRecord> items_download_partiallyLoaded = items_partiallyLoaded.stream()
-                .filter(x->x.getMetadataServiceType().equalsIgnoreCase("download"))
-                .collect(Collectors.toList());
+        if (datasetid == null) {
+            serviceLinks =  operatesOnLinkRepo.linkToService(fileId, linkcheckjobid);
+            capLinks =  capabilitiesDatasetMetadataLinkRepo.linkToCapabilities(fileId, linkcheckjobid);
 
-        boolean view_links = inList(items_view_partiallyLoaded);
-        boolean download_links = inList(items_download_partiallyLoaded);
-
-        this.localDatasetMetadataRecord.setINDICATOR_LAYER_MATCHES_DOWNLOAD(IndicatorStatus.FAIL);
-        this.localDatasetMetadataRecord.setINDICATOR_LAYER_MATCHES_VIEW(IndicatorStatus.FAIL);
-        this.localDatasetMetadataRecord.setINDICATOR_LAYER_MATCHES(IndicatorStatus.FAIL);
-
-        if (download_links) {
-            this.localDatasetMetadataRecord.setINDICATOR_LAYER_MATCHES_DOWNLOAD(IndicatorStatus.PASS);
-            this.localDatasetMetadataRecord.setINDICATOR_LAYER_MATCHES(IndicatorStatus.PASS);
-        }
-        if (view_links) {
-            this.localDatasetMetadataRecord.setINDICATOR_LAYER_MATCHES_VIEW(IndicatorStatus.PASS);
-            this.localDatasetMetadataRecord.setINDICATOR_LAYER_MATCHES(IndicatorStatus.PASS);
+        } else {
+            serviceLinks =  operatesOnLinkRepo.linkToService(fileId,datasetid, linkcheckjobid);
+            capLinks =  capabilitiesDatasetMetadataLinkRepo.linkToCapabilities(fileId, datasetid,linkcheckjobid);
         }
 
-        int tt=90;
+
+
+        ServiceDocSearchResult service_view = serviceLinks.stream()
+                    .filter(x->x.getMetadataservicetype().equals("view"))
+                    .findAny()
+                    .orElse(null);
+
+        ServiceDocSearchResult service_download = serviceLinks.stream()
+                .filter(x->x.getMetadataservicetype().equals("download"))
+                .findAny()
+                .orElse(null);
+
+        CapabilitiesLinkResult cap_view = capLinks.stream()
+                .filter(x->x.getCapabilitiesdocumenttype().equals("WMS") || x.getCapabilitiesdocumenttype().equals("WMTS"))
+                .findAny()
+                .orElse(null);
+
+        CapabilitiesLinkResult cap_download = capLinks.stream()
+                .filter(x->x.getCapabilitiesdocumenttype().equals("WFS") || x.getCapabilitiesdocumenttype().toLowerCase().equals("atom"))
+                .findAny()
+                .orElse(null);
+
+        List<String> view_cap_sha2s = capLinks.stream()
+                .filter(x->x.getCapabilitiesdocumenttype().equals("WMS") || x.getCapabilitiesdocumenttype().equals("WMTS"))
+                .map(x-> x.getSha2())
+                .collect(Collectors.toList());
+
+        localDatasetMetadataRecord.setLinksToViewCapabilities( String.join(",",view_cap_sha2s));
+
+        List<String> download_cap_sha2s = capLinks.stream()
+                .filter(x->x.getCapabilitiesdocumenttype().equals("WFS") || x.getCapabilitiesdocumenttype().toLowerCase().equals("atom"))
+                .map(x-> x.getSha2())
+                .collect(Collectors.toList());
+
+        localDatasetMetadataRecord.setLinksToDownloadCapabilities( String.join(",",download_cap_sha2s));
+
+
+        localDatasetMetadataRecord.setINDICATOR_LAYER_MATCHES(IndicatorStatus.FAIL);
+        localDatasetMetadataRecord.setINDICATOR_LAYER_MATCHES_VIEW(IndicatorStatus.FAIL);
+        localDatasetMetadataRecord.setINDICATOR_LAYER_MATCHES_DOWNLOAD(IndicatorStatus.FAIL);
+        localDatasetMetadataRecord.setINDICATOR_SERVICE_MATCHES_VIEW(IndicatorStatus.FAIL);
+        localDatasetMetadataRecord.setINDICATOR_SERVICE_MATCHES_DOWNLOAD(IndicatorStatus.FAIL);
+
+
+        if (service_view != null) {
+            localDatasetMetadataRecord.setINDICATOR_SERVICE_MATCHES_VIEW(IndicatorStatus.PASS);
+        }
+        if (service_download !=null) {
+            localDatasetMetadataRecord.setINDICATOR_SERVICE_MATCHES_DOWNLOAD(IndicatorStatus.PASS);
+
+        }
+        if (cap_view != null) {
+            localDatasetMetadataRecord.setINDICATOR_LAYER_MATCHES(IndicatorStatus.PASS);
+            localDatasetMetadataRecord.setINDICATOR_LAYER_MATCHES_VIEW(IndicatorStatus.PASS);
+        }
+        if (cap_download != null){
+            localDatasetMetadataRecord.setINDICATOR_LAYER_MATCHES(IndicatorStatus.PASS);
+            localDatasetMetadataRecord.setINDICATOR_LAYER_MATCHES_DOWNLOAD(IndicatorStatus.PASS);
+        }
+
     }
 
 

@@ -34,6 +34,7 @@
 package net.geocat.service.downloadhelpers;
 
 import net.geocat.http.IContinueReadingPredicate;
+import net.geocat.xml.XmlStringTools;
 import net.geocat.xml.helpers.CapabilitiesType;
 import net.geocat.xml.helpers.CapabilityDeterminer;
 import org.springframework.stereotype.Component;
@@ -44,8 +45,8 @@ import java.util.regex.Pattern;
 @Component
 public class CapabilitiesContinueReadingPredicate implements IContinueReadingPredicate {
 
-    static Pattern tagWithNS = Pattern.compile("^<([^ :<>]+):([^ >]+)[^>]+>", Pattern.MULTILINE);
-    static Pattern tagWithoutNS = Pattern.compile("^<([^ >]+)[^>]+>", Pattern.MULTILINE);
+    static Pattern tagWithNS = Pattern.compile("^<([^ :<>]+):([^ >]+)[^>]+>");
+    static Pattern tagWithoutNS = Pattern.compile("^<([^ >]+)[^>]+>");
 
 
     CapabilityDeterminer capabilityDeterminer;
@@ -54,24 +55,24 @@ public class CapabilitiesContinueReadingPredicate implements IContinueReadingPre
         this.capabilityDeterminer = capabilityDeterminer;
     }
 
-    public static boolean isXML(String doc) {
-        try {
-            if (!doc.startsWith("<?xml")) {
-                // sometimes it doesn't start with the xml declaration
-                doc = doc.trim();
-                if (!doc.startsWith("<"))
-                    return false; //not xml
-                if (doc.length() < 4)
-                    return false;
-                //flaky, is second char a letter?
-                return Character.isLetter(doc.charAt(1));
-            }
-
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
+//    public static boolean isXML(String doc) {
+//        try {
+//            if (!doc.startsWith("<?xml")) {
+//                // sometimes it doesn't start with the xml declaration
+//                doc = doc.trim();
+//                if (!doc.startsWith("<"))
+//                    return false; //not xml
+//                if (doc.length() < 4)
+//                    return false;
+//                //flaky, is second char a letter?
+//                return Character.isLetter(doc.charAt(1));
+//            }
+//
+//            return true;
+//        } catch (Exception e) {
+//            return false;
+//        }
+//    }
 
     public static String replaceXMLDecl(String doc) {
         doc = doc.replaceFirst("<\\?xml[^\\?>]+\\?>", "");
@@ -127,8 +128,8 @@ public class CapabilitiesContinueReadingPredicate implements IContinueReadingPre
     @Override
     public boolean continueReading(byte[] head) {
         try {
-            String doc = new String(head).trim();
-            if (!isXML(doc))
+            String doc = XmlStringTools.bytea2String(head) ;
+            if (!XmlStringTools.isXML(doc))
                 return false; //not XML
 
             doc = replaceXMLDecl(doc);

@@ -97,20 +97,12 @@ public class EventFactory {
         return result;
     }
 
-//    public ProcessServiceDocLinksEvent createProcessLinkEvent(Link l) {
-//        ProcessServiceDocLinksEvent result = new ProcessServiceDocLinksEvent(l.getLinkId(), l.getLinkCheckJobId());
-//        return result;
-//    }
 
     public AllLinksCheckedEvent createAllLinksCheckedEvent(String linkcheckJobId) {
         AllLinksCheckedEvent event = new AllLinksCheckedEvent(linkcheckJobId);
         return event;
     }
-//
-//    public ProcessDatasetMetadataDocumentEvent createProcessDatasetMetadataDocumentEvent(String linkCheckJobId, String harvestJobId, String sha2, MetadataDocumentType metadataRecordType) {
-//        ProcessDatasetMetadataDocumentEvent result = new ProcessDatasetMetadataDocumentEvent(linkCheckJobId, harvestJobId, sha2, metadataRecordType);
-//        return result;
-//    }
+
 
     public ProcessServiceDocLinksEvent createProcessServiceDocLinkEvent(long linkId, String linkCheckJobId){
         ProcessServiceDocLinksEvent result = new ProcessServiceDocLinksEvent(linkId,linkCheckJobId);

@@ -31,11 +31,22 @@
  *  ==============================================================================
  */
 
-package net.geocat.database.linkchecker.repos;
+package net.geocat.service.helper;
 
-import net.geocat.database.linkchecker.entities.RemoteServiceMetadataRecord;
-import net.geocat.database.linkchecker.entities.RemoteServiceMetadataRecordLink;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
-public interface RemoteServiceMetadataRecordRepo extends CrudRepository<RemoteServiceMetadataRecord, Long> {
+import java.util.concurrent.ForkJoinPool;
+
+@Component
+@Scope("singleton")
+public class SharedForkJoinPool {
+
+    public static ForkJoinPool pool = new ForkJoinPool(12);
+
+
+    public   ForkJoinPool getPool() {
+        return pool;
+    }
+
 }

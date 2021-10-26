@@ -41,5 +41,7 @@ public enum LinkState {
 
     Complete,
 
+    Redundant, // there's another link with the same URL
+
     ERROR
 }
