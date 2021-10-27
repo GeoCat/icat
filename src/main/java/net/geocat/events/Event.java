@@ -33,9 +33,38 @@
 
 package net.geocat.events;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import net.geocat.events.findlinks.LinksFoundInAllDocuments;
+import net.geocat.events.findlinks.ProcessLocalMetadataDocumentEvent;
+import net.geocat.events.findlinks.StartProcessDocumentsEvent;
+import net.geocat.events.postprocess.AllPostProcessingCompleteEvent;
+import net.geocat.events.postprocess.PostProcessDatasetDocumentEvent;
+import net.geocat.events.postprocess.PostProcessServiceDocumentEvent;
+import net.geocat.events.postprocess.StartPostProcessEvent;
+import net.geocat.events.processlinks.AllLinksCheckedEvent;
+import net.geocat.events.processlinks.ProcessDatasetDocLinksEvent;
+import net.geocat.events.processlinks.ProcessServiceDocLinksEvent;
+import net.geocat.events.processlinks.StartLinkProcessingEvent;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@class")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = LinkCheckAbortEvent.class, name = "Abort"),
+        @JsonSubTypes.Type(value = LinkCheckRequestedEvent.class, name = "Request"),
+        @JsonSubTypes.Type(value = ProcessLocalMetadataDocumentEvent.class, name = "ProMD"),
+        @JsonSubTypes.Type(value = LinksFoundInAllDocuments.class, name = "AllLinksFound"),
+        @JsonSubTypes.Type(value = StartProcessDocumentsEvent.class, name = "StartPro"),
+        @JsonSubTypes.Type(value = AllPostProcessingCompleteEvent.class, name = "AllPostDone"),
+        @JsonSubTypes.Type(value = PostProcessDatasetDocumentEvent.class, name = "PostDS"),
+        @JsonSubTypes.Type(value = PostProcessServiceDocumentEvent.class, name = "PostSer"),
+        @JsonSubTypes.Type(value = StartPostProcessEvent.class, name = "StartPost"),
+        @JsonSubTypes.Type(value = AllLinksCheckedEvent.class, name = "AllCheck"),
+        @JsonSubTypes.Type(value = ProcessDatasetDocLinksEvent.class, name = "ProsDS"),
+        @JsonSubTypes.Type(value = ProcessServiceDocLinksEvent.class, name = "ProsSer"),
+        @JsonSubTypes.Type(value = StartLinkProcessingEvent.class, name = "StartLink"),
+
+})
 public class Event {
 
 }

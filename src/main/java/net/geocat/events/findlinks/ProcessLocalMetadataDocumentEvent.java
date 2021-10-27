@@ -40,20 +40,18 @@ public class ProcessLocalMetadataDocumentEvent extends Event {
 
     private String linkCheckJobId;
     private String sha2;
-    private String harvestJobId;
+
     private Long underlyingHarvestMetadataRecordId;
 
     public ProcessLocalMetadataDocumentEvent() {
     }
 
     public ProcessLocalMetadataDocumentEvent(String linkCheckJobId,
-                                             String harvestJobId,
-                                             //  long endpointJobId,
                                              String sha2,
                                              Long underlyingHarvestMetadataRecordId) {
         this.linkCheckJobId = linkCheckJobId;
         this.sha2 = sha2;
-        this.harvestJobId = harvestJobId;
+     //   this.harvestJobId = harvestJobId;
         this.underlyingHarvestMetadataRecordId = underlyingHarvestMetadataRecordId;
     }
 
@@ -82,16 +80,16 @@ public class ProcessLocalMetadataDocumentEvent extends Event {
     }
 
 
-    public String getHarvestJobId() {
-        return harvestJobId;
-    }
-
-    public void setHarvestJobId(String harvestJobId) {
-        this.harvestJobId = harvestJobId;
-    }
+//    public String getHarvestJobId() {
+//        return harvestJobId;
+//    }
+//
+//    public void setHarvestJobId(String harvestJobId) {
+//        this.harvestJobId = harvestJobId;
+//    }
 
     @Override
     public String toString() {
-        return "ProcessLocalMetadataDocumentEvent - linkCheckJobId:" + linkCheckJobId + ",harvestJobId:" + harvestJobId + ", sha2:" + sha2+", underlyingHarvestMetadataRecordId="+underlyingHarvestMetadataRecordId;
+        return "ProcessLocalMetadataDocumentEvent - linkCheckJobId:" + linkCheckJobId +  ", sha2:" + sha2+", underlyingHarvestMetadataRecordId="+underlyingHarvestMetadataRecordId;
     }
 }

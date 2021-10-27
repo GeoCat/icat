@@ -121,7 +121,7 @@ public class EventProcessor_ProcessLocalMetadataDocumentEvent extends BaseEventP
     @Override
     public EventProcessor_ProcessLocalMetadataDocumentEvent internalProcessing() throws Exception {
         String sha2 = getInitiatingEvent().getSha2();
-        String harvestJobId = getInitiatingEvent().getHarvestJobId();
+      //  String harvestJobId = getInitiatingEvent().getHarvestJobId();
         String linkCheckJob = getInitiatingEvent().getLinkCheckJobId();
         Long underlyingHarvestMetadataRecordId = getInitiatingEvent().getUnderlyingHarvestMetadataRecordId();
 

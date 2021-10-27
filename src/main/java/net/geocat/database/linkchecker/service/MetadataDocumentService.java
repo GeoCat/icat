@@ -67,15 +67,15 @@ public class MetadataDocumentService {
 
 
 
-    public LocalDatasetMetadataRecord findLocalDataset(String linkCheckJobId, String sha2) {
-        LocalDatasetMetadataRecord doc = localDatasetMetadataRecordRepo.findFirstByLinkCheckJobIdAndSha2(linkCheckJobId,sha2);
-        return doc;
-    }
-
-    public LocalServiceMetadataRecord findLocalServiceDoc(String linkCheckJobId, String sha2) {
-        LocalServiceMetadataRecord doc = localServiceMetadataRecordRepo.findFirstByLinkCheckJobIdAndSha2(linkCheckJobId,sha2);
-        return doc;
-    }
+//    public LocalDatasetMetadataRecord findLocalDataset(String linkCheckJobId, String sha2) {
+//        LocalDatasetMetadataRecord doc = localDatasetMetadataRecordRepo.findFirstByLinkCheckJobIdAndSha2(linkCheckJobId,sha2);
+//        return doc;
+//    }
+//
+//    public LocalServiceMetadataRecord findLocalServiceDoc(String linkCheckJobId, String sha2) {
+//        LocalServiceMetadataRecord doc = localServiceMetadataRecordRepo.findFirstByLinkCheckJobIdAndSha2(linkCheckJobId,sha2);
+//        return doc;
+//    }
 
 //    public MetadataDocument setState(long metadataDocumentId, MetadataDocumentState state){
 //        MetadataDocument doc = metadataDocumentRepo.findById(metadataDocumentId).get();

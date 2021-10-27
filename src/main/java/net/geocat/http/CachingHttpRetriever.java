@@ -68,7 +68,7 @@ import java.util.concurrent.locks.Lock;
     @Qualifier("cookieAttachingRetriever")
     public CookieAttachingRetriever retriever; // public for testing
 
-    boolean limitByJobId = true; // false = testing (do not use in production)  TODO: fix
+    boolean limitByJobId = false; // false = testing (do not use in production)  TODO: fix
 
     String linkCheckJobId;
 

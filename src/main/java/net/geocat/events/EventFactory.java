@@ -79,10 +79,10 @@ public class EventFactory {
     }
 
     public ProcessLocalMetadataDocumentEvent createProcessServiceMetadataDocumentEvent(String linkCheckJobId,
-                                                                                       String harvestJobId,
+
                                                                                        String sha2,
                                                                                        Long underlyingHarvestMetadataRecordId) {
-        ProcessLocalMetadataDocumentEvent result = new ProcessLocalMetadataDocumentEvent(linkCheckJobId, harvestJobId, sha2,underlyingHarvestMetadataRecordId);
+        ProcessLocalMetadataDocumentEvent result = new ProcessLocalMetadataDocumentEvent(linkCheckJobId,  sha2,underlyingHarvestMetadataRecordId);
         return result;
     }
 
@@ -93,7 +93,7 @@ public class EventFactory {
 //    }
 
     public LinksFoundInAllDocuments createLinksFoundInAllDocuments(ProcessLocalMetadataDocumentEvent initiatingEvent) {
-        LinksFoundInAllDocuments result = new LinksFoundInAllDocuments(initiatingEvent.getLinkCheckJobId(), initiatingEvent.getHarvestJobId());
+        LinksFoundInAllDocuments result = new LinksFoundInAllDocuments(initiatingEvent.getLinkCheckJobId() );
         return result;
     }
 

@@ -172,12 +172,13 @@ public class EventProcessor_StartProcessDocumentsEvent extends BaseEventProcesso
         for (net.geocat.database.harvester.entities.MetadataRecord record : metadataRecords) {
             ProcessLocalMetadataDocumentEvent e =
                     eventFactory.createProcessServiceMetadataDocumentEvent(linkCheckJobId,
-                            harvestJobId,
                             record.getSha2(),
                             record.getMetadataRecordId());
             result.add(e);
 
         }
+
+     //   result = result.subList(0,180000);
         logger.debug("Finished sending to-process-document messages for "+metadataRecords.size()+" records.");
 
         return result;

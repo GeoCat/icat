@@ -43,6 +43,8 @@ import net.geocat.database.linkchecker.entities.helper.*;
 import net.geocat.database.linkchecker.repos.*;
 import net.geocat.database.linkchecker.service.*;
 import net.geocat.eventprocessor.processors.processlinks.postprocessing.*;
+import net.geocat.events.Event;
+import net.geocat.events.findlinks.ProcessLocalMetadataDocumentEvent;
 import net.geocat.http.BasicHTTPRetriever;
 import net.geocat.http.IHTTPRetriever;
 import net.geocat.service.*;
@@ -58,6 +60,7 @@ import net.geocat.xml.XmlDocumentFactory;
 import net.geocat.xml.XmlServiceRecordDoc;
 
 import net.geocat.xml.helpers.CapabilitiesType;
+import org.apache.camel.component.jackson.JacksonDataFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -208,6 +211,9 @@ public class MyCommandLineRunner implements CommandLineRunner {
     @Autowired
     DatasetLinkFixer datasetLinkFixer;
 
+    @Autowired
+    LazyLocalServiceMetadataRecordRepo lazyLocalServiceMetadataRecordRepo;
+
     @Override
     public void run(String... args) throws Exception {
 
@@ -215,20 +221,42 @@ public class MyCommandLineRunner implements CommandLineRunner {
 
 // run_scrape();
 
+
+//            ProcessLocalMetadataDocumentEvent e = new ProcessLocalMetadataDocumentEvent("linkCheckId","SHA2", 1234L);
+//            JacksonDataFormat jsonDefHarvesterConfig = new JacksonDataFormat(Event.class);
+//            ObjectMapper mapper = new ObjectMapper();
+//            String jsonDataString = mapper.writeValueAsString(e);
+//            Event ee= mapper.readValue(jsonDataString,Event.class);
+//int t=0;
+
 //
 //            HttpResult hr = basicHTTPRetriever.retrieveXML("GET","https://haleconnect.com/services/bsp/org.874.42282e73-5afb-424d-993a-9e0a0cd3eeca/md/dataset/dataset1",null,null,null);
 //int t=0;
+//            String linkCheckJobId = "883ed410-10bc-4f7b-9292-e626a2372a24";
+//            String fileID = "37569840-7c18-49da-bac5-f730491591e4";
+//           // LocalServiceMetadataRecord lmr = localServiceMetadataRecordRepo.findById(232L).get();
+//
+//            int t=0;
+//
+//            Optional<LocalServiceMetadataRecord> o_lmr2 = lazyLocalServiceMetadataRecordRepo.searchFirstByFileIdentifierAndLinkCheckJobId(fileID,linkCheckJobId);
+//            logger.debug("------------------ hi ------------------ hi");
+//            LocalServiceMetadataRecord lmr2 = o_lmr2.get();
+//            logger.debug("------------------222 hi 222------------------ hi");
+//
+//            int tt=0;
 
-   run_3("8ad016ec-c6b9-4345-9d8c-19f241a7e6f4\n",
-           "348bf9da-a328-45c2-8047-9f367834f6fa\n",
-           "");
-
-// run12("e5e22f75-2267-4b0a-9f1a-1b1bcedabd8d");
+//   run_3("8ad016ec-c6b9-4345-9d8c-19f241a7e6f4\n",
+//           "348bf9da-a328-45c2-8047-9f367834f6fa\n",
+//           "");
+//            run11("883ed410-10bc-4f7b-9292-e626a2372a24");
+//
+// run12("883ed410-10bc-4f7b-9292-e626a2372a24");
 
 
         }
         catch(Exception e){
             int t=0;
+            logger.error("startup test case error",e);
         }
         logger.debug("DONE!");
     }
@@ -662,7 +690,7 @@ public class MyCommandLineRunner implements CommandLineRunner {
     }
     public void run11(String... args) throws Exception {
     //   List<LocalServiceMetadataRecord> records =   localServiceMetadataRecordRepo.findByLinkCheckJobId("b7ee7707-698f-41ac-8dcf-ab0c43ab297a");
-        List<LocalServiceMetadataRecord> records =   localServiceMetadataRecordRepo.findByLinkCheckJobId("5b7d9b34-0b8b-4959-88e6-0a93c278a5f3");
+        List<LocalServiceMetadataRecord> records =   localServiceMetadataRecordRepo.findByLinkCheckJobId(args[0]);
 
 
        int total =records.size();
@@ -904,6 +932,8 @@ public class MyCommandLineRunner implements CommandLineRunner {
 
         logger.debug("Service");
         logger.debug("-------");
+        logger.debug("total: "+total);
+
         logger.debug("% cap doc resolves: "+percent_cap_resolves+"%");
         logger.debug("% cap doc resolves to service: "+percent_cap_resolves_to_service+"%");
         logger.debug("% cap doc's service matches original service record (fileid): "+percent_cap_to_service_fileID+"%");

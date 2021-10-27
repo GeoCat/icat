@@ -40,6 +40,12 @@ import javax.persistence.*;
 
 
 //represents a harvested (local) Service document
+@NamedEntityGraph(
+        name = "LocalServiceMetadataRecord-lazy-graph",
+        attributeNodes = {
+              //none - don't load sub-objects (operatesOn and documentLinks)
+        }
+)
 @Entity
 @DiscriminatorValue("LocalServiceMetadataRecord")
 public class LocalServiceMetadataRecord extends ServiceMetadataRecord {
