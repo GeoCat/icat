@@ -76,11 +76,33 @@ public class XmlCapabilitiesDocument extends XmlDoc {
         setupExtendedCap();
     }
 
+   public Node attemptToFindExtended(){
+        Node n = findNode(parsedXml,"WFS_Capabilities","OperationsMetadata","ExtendedCapabilities");
+        if (n!=null)
+            return n;
+
+       n = findNode(parsedXml,"WMS_Capabilities","Capability","ExtendedCapabilities");
+       if (n!=null)
+           return n;
+
+      return null;
+   }
+
     private void setupExtendedCap() throws Exception {
         //we use this notation because of issues with NS accross servers
-        Node n = xpath_node("//*[local-name()='ExtendedCapabilities']");
-        Node nn = xpath_node("//*[local-name()='feed']/*[local-name()='link'][@rel=\"describedby\"]/@href");
-        Node nnn = xpath_node("//wmts:ServiceMetadataURL/@xlink:href");
+        Node n=null;
+        Node nn=null;
+        Node nnn=null;
+
+        n = attemptToFindExtended();
+        if (n == null) {
+            n = xpath_node("//*[local-name()='ExtendedCapabilities']");
+            if (n == null) {
+                nn = xpath_node("//*[local-name()='feed']/*[local-name()='link'][@rel=\"describedby\"]/@href");
+                if (nn == n)
+                    nnn = xpath_node("//wmts:ServiceMetadataURL/@xlink:href");
+            }
+        }
 
         hasExtendedCapabilities = (n != null) || (nn != null) || (nnn != null);
         if (!hasExtendedCapabilities)
@@ -110,7 +132,10 @@ public class XmlCapabilitiesDocument extends XmlDoc {
 
     private void setup_extendedcap(Node n) throws Exception {
         if (n != null) {
-            Node nn = XmlDoc.xpath_node(n, "//inspire_common:MetadataUrl/inspire_common:URL");
+            //Node nn = XmlDoc.xpath_node(n, "//inspire_common:MetadataUrl/inspire_common:URL");
+            Node nn = XmlDoc.findNode(n, "ExtendedCapabilities","MetadataUrl","URL");
+            if (nn ==null)
+                nn = XmlDoc.findNode(n, "MetadataUrl","URL");
             if (nn != null)
                 this.metadataUrlRaw = nn.getTextContent().trim();
         }

@@ -36,6 +36,7 @@ package net.geocat.xml;
 import org.w3c.dom.Node;
 
 import javax.xml.xpath.XPathExpressionException;
+import java.util.Arrays;
 
 public class XmlDatasetMetadataDocument extends XmlMetadataDocument {
 
@@ -47,12 +48,18 @@ public class XmlDatasetMetadataDocument extends XmlMetadataDocument {
     }
 
     private void setup_XmlDatasetMetadataDocument() throws XPathExpressionException {
-        Node n = xpath_node("/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:identifier/gmd:MD_Identifier/gmd:code/gco:CharacterString");
+       // Node n = xpath_node("/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:identifier/gmd:MD_Identifier/gmd:code/gco:CharacterString");
+       // Node n = xpath_node("/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:identifier/gmd:MD_Identifier/gmd:code/gco:CharacterString");
+        Node n = findNode(parsedXml, Arrays.asList(new String[] {"MD_Metadata","identificationInfo","MD_DataIdentification","citation","CI_Citation","identifier","MD_Identifier","code","CharacterString"}));
+
+
         if (n != null) {
             datasetIdentifier = n.getTextContent();
             return;
         }
-        n = xpath_node("/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:identifier/gmd:MD_Identifier/gmd:code/gmx:Anchor");
+        //n = xpath_node("/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:identifier/gmd:MD_Identifier/gmd:code/gmx:Anchor");
+        n = findNode(parsedXml, Arrays.asList(new String[] {"MD_Metadata","identificationInfo","MD_DataIdentification","citation","CI_Citation","identifier","MD_Identifier","code","Anchor"}));
+
         if (n != null) {
             String text = n.getTextContent();
             if ( (text != null) && (!text.trim().isEmpty()) ) {
@@ -63,12 +70,16 @@ public class XmlDatasetMetadataDocument extends XmlMetadataDocument {
             }
             return;
         }
-        n = xpath_node("/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:identifier/gmd:RS_Identifier/gmd:code/gco:CharacterString");
+       // n = xpath_node("/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:identifier/gmd:RS_Identifier/gmd:code/gco:CharacterString");
+        n = findNode(parsedXml, Arrays.asList(new String[] {"MD_Metadata","identificationInfo","MD_DataIdentification","citation","CI_Citation","identifier","RS_Identifier","code","CharacterString"}));
+
         if (n != null) {
             datasetIdentifier = n.getTextContent();
             return;
         }
-        n = xpath_node("/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:identifier/gmd:RS_Identifier/gmd:code/gmx:Anchor");
+        //n = xpath_node("/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:identifier/gmd:RS_Identifier/gmd:code/gmx:Anchor");
+        n = findNode(parsedXml, Arrays.asList(new String[] {"MD_Metadata","identificationInfo","MD_DataIdentification","citation","CI_Citation","identifier","RS_Identifier","code","Anchor"}));
+
         if (n != null) {
             n = n.getAttributes().getNamedItem("xlink:href");
             datasetIdentifier = n.getNodeValue();

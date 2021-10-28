@@ -78,7 +78,8 @@ public class XmlDocumentFactory {
 
     private XmlDoc simplify(XmlDoc doc) throws Exception {
         if (doc.getRootTagName().equals("GetRecordByIdResponse")) {
-            Node n = doc.xpath_node("//gmd:MD_Metadata");
+           // Node n = doc.xpath_node("//gmd:MD_Metadata");
+            Node n = XmlDoc.findNode(doc.getParsedXml(),"GetRecordByIdResponse","MD_Metadata");
             if (n == null) // likely an empty response...
                 return doc;
             Document d = DocumentBuilderFactory.newInstance()
@@ -108,7 +109,11 @@ public class XmlDocumentFactory {
     public boolean isCSWServiceMetadataDocument(XmlDoc xmlDoc) throws XPathExpressionException {
         if (!isCSWMetadataDocument(xmlDoc))
             return false;
-        Node n = xmlDoc.xpath_node("/gmd:MD_Metadata/gmd:hierarchyLevel/gmd:MD_ScopeCode/@codeListValue");
+        //Node n = xmlDoc.xpath_node("/gmd:MD_Metadata/gmd:hierarchyLevel/gmd:MD_ScopeCode/@codeListValue");
+        Node n = XmlDoc.findNode(xmlDoc.parsedXml,"MD_Metadata","hierarchyLevel","MD_ScopeCode");
+        if (n == null)
+            return false;
+        n= n.getAttributes().getNamedItem("codeListValue");
         if (n == null)
             return false;
         if (n.getNodeValue().equals("service"))

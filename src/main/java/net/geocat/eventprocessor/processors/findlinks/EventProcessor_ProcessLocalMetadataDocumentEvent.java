@@ -199,10 +199,10 @@ public class EventProcessor_ProcessLocalMetadataDocumentEvent extends BaseEventP
         List<MetadataRecord> metadataRecord = metadataRecordRepo.findBySha2(sha2);
         if (metadataRecord.isEmpty())
             return null;
-        String xml = blobStorageService.findXML(sha2);
-
-
-        XmlDoc doc = xmlDocumentFactory.create(xml);
+//        String xml = blobStorageService.findXML(sha2);
+//
+//
+//        XmlDoc doc = xmlDocumentFactory.create(xml);
 
         if (doc instanceof XmlServiceRecordDoc) {
             XmlServiceRecordDoc xmlServiceRecordDoc = (XmlServiceRecordDoc) doc;

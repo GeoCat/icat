@@ -41,6 +41,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.xml.xpath.XPathExpressionException;
+import java.util.List;
+
+import static net.geocat.service.capabilities.WMSCapabilitiesDatasetLinkExtractor.findNodes;
 
 public class XmlCapabilitiesAtom extends XmlCapabilitiesDocument {
 
@@ -50,12 +53,15 @@ public class XmlCapabilitiesAtom extends XmlCapabilitiesDocument {
     }
 
     private void setup_XmlCapabilitiesAtom() throws  Exception {
-        NodeList ns = xpath_nodeset("//atom:entry");
-        for(int idx=0;idx<ns.getLength();idx++) {
+        Node n = getFirstNode();
+        //NodeList ns = xpath_nodeset("//atom:entry");
+        List<Node> ns = XmlDoc.findAllNodes(n,"entry");
+        for(int idx=0;idx<ns.size();idx++) {
             String identity = null;
             String url = null;
-            Node entryNode = ns.item(idx);
-            Node spatial_dataset_identifier_codeNode = xpath_node(entryNode,"inspire_dls:spatial_dataset_identifier_code");
+            Node entryNode = ns.get(idx);
+           // Node spatial_dataset_identifier_codeNode = xpath_node(entryNode,"inspire_dls:spatial_dataset_identifier_code");
+            Node spatial_dataset_identifier_codeNode = findNode(entryNode,"spatial_dataset_identifier_code");
             Node urlNode = xpath_node(entryNode,"atom:link[@rel='describedby']");
 
             if (spatial_dataset_identifier_codeNode != null) {

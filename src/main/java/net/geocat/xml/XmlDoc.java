@@ -58,6 +58,9 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class XmlDoc {
 
@@ -124,6 +127,79 @@ public class XmlDoc {
 
         return writer.getBuffer().toString();
     }
+
+
+    public static Node findNode(Node n, String localName, String localName2, String localName3,String localName4,String localName5) {
+        return findNode(n, Arrays.asList(new String[]{localName,localName2,localName3,localName4,localName5}));
+    }
+
+    public static Node findNode(Node n, String localName, String localName2, String localName3,String localName4) {
+        return findNode(n, Arrays.asList(new String[]{localName,localName2,localName3,localName4}));
+    }
+
+    public static Node findNode(Node n, String localName, String localName2, String localName3) {
+        return findNode(n, Arrays.asList(new String[]{localName,localName2,localName3}));
+    }
+
+    public static Node findNode(Node n, String localName, String localName2) {
+        return findNode(n, Arrays.asList(new String[]{localName,localName2}));
+    }
+
+    public static Node findNode(Node n, List<String> localNames) {
+        for(String localName : localNames) {
+            Node newNode = findNode(n,localName);
+            if (newNode == null)
+                return null;
+            n = newNode;
+        }
+        return n;
+    }
+
+    // finds a node of name "localName" that is a direct child of "n"
+    public static Node findNode(Node n, String localName) {
+        NodeList nl = n.getChildNodes();
+        for (int idx=0; idx <nl.getLength();idx++) {
+            Node nn = nl.item(idx);
+            String name = nn.getLocalName() == null ? nn.getNodeName() : nn.getLocalName();
+            if (name.equals(localName)) {
+                return nn;
+            }
+        }
+        return null;
+    }
+
+    // finds nodes of name "localName" that are direct children of "n"
+    // it will then look for "localName" in children of the these nodes (and so on...)
+    public static List<Node> findNodes_recurse(Node n,String localName) {
+        List<Node> result = new ArrayList<>();
+        NodeList nl = n.getChildNodes();
+        for (int idx=0; idx <nl.getLength();idx++) {
+            Node nn = nl.item(idx);
+            String name = nn.getLocalName() == null ? nn.getNodeName() : nn.getLocalName();
+            if (name.equals(localName)) {
+                result.add(nn);
+                result.addAll(findNodes_recurse(nn,localName)); // recurse
+            }
+        }
+        return result;
+    }
+
+    // finds nodes of name "localName" that are direct children of "n"
+    public static List<Node> findAllNodes(Node n, String localName) {
+        List<Node> result = new ArrayList<>();
+        NodeList nl = n.getChildNodes();
+        for (int idx=0; idx <nl.getLength();idx++) {
+            Node nn = nl.item(idx);
+            String name = nn.getLocalName() == null ? nn.getNodeName() : nn.getLocalName();
+            if (name.equals(localName)) {
+                result.add(nn);
+            }
+        }
+        return result;
+    }
+
+
+
 
     public static XPath createXPath() {
         XPathFactory xPathfactory = XPathFactory.newInstance();
@@ -203,12 +279,20 @@ public class XmlDoc {
     }
 
     public void setup_XmlDoc() throws Exception {
-        rootTagName = getFirstNode().getLocalName();
-        rootNS = getFirstNode().getNamespaceURI();
+        Node n = getFirstNode();
+        rootTagName = n.getLocalName();
+        rootNS = n.getNamespaceURI();
     }
 
     public Node getFirstNode() throws  Exception {
-        return xpath_node("/*");
+        NodeList nl = parsedXml.getChildNodes();
+        for (int t=0;t<nl.getLength();t++) {
+            Node n = nl.item(t);
+            if (n.getNodeType() ==1 )//element
+                return n;
+        }
+        return null;
+
     }
 
     public org.w3c.dom.NodeList xpath_nodeset(String xpathStr) throws XPathExpressionException {

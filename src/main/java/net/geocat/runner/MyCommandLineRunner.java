@@ -43,8 +43,6 @@ import net.geocat.database.linkchecker.entities.helper.*;
 import net.geocat.database.linkchecker.repos.*;
 import net.geocat.database.linkchecker.service.*;
 import net.geocat.eventprocessor.processors.processlinks.postprocessing.*;
-import net.geocat.events.Event;
-import net.geocat.events.findlinks.ProcessLocalMetadataDocumentEvent;
 import net.geocat.http.BasicHTTPRetriever;
 import net.geocat.http.IHTTPRetriever;
 import net.geocat.service.*;
@@ -53,14 +51,11 @@ import net.geocat.service.capabilities.*;
 import net.geocat.service.downloadhelpers.PartialDownloadPredicateFactory;
 import net.geocat.xml.*;
 
-import net.geocat.service.downloadhelpers.PartialDownloadPredicateFactory;
 import net.geocat.xml.XmlCapabilitiesDocument;
 import net.geocat.xml.XmlDoc;
 import net.geocat.xml.XmlDocumentFactory;
 import net.geocat.xml.XmlServiceRecordDoc;
 
-import net.geocat.xml.helpers.CapabilitiesType;
-import org.apache.camel.component.jackson.JacksonDataFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,12 +64,10 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.persistence.EntityManager;
-import javax.transaction.TransactionManager;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.*;
@@ -221,16 +214,14 @@ public class MyCommandLineRunner implements CommandLineRunner {
 
 // run_scrape();
 
+       // time();
+            time2();
 
-//            ProcessLocalMetadataDocumentEvent e = new ProcessLocalMetadataDocumentEvent("linkCheckId","SHA2", 1234L);
-//            JacksonDataFormat jsonDefHarvesterConfig = new JacksonDataFormat(Event.class);
-//            ObjectMapper mapper = new ObjectMapper();
-//            String jsonDataString = mapper.writeValueAsString(e);
-//            Event ee= mapper.readValue(jsonDataString,Event.class);
-//int t=0;
-
-//
-//            HttpResult hr = basicHTTPRetriever.retrieveXML("GET","https://haleconnect.com/services/bsp/org.874.42282e73-5afb-424d-993a-9e0a0cd3eeca/md/dataset/dataset1",null,null,null);
+//            String url = "https://geoportal.sachsen.de/md/9250fce9-8044-41f4-a884-ae148bfbcf8c";
+//            url = canonicalize(url);
+//            HttpResult hr = basicHTTPRetriever.retrieveXML("GET","https://www.geoportal.rlp.de/mapbender/php/mod_dataISOMetadata.php?id=4b73c630-0feb-4f00-f1b7-a7bd0397a3d2&outputFormat=iso19139",null,null,null);
+//            String xml = new String(hr.getData());
+//            XmlDoc xmlDoc = xmlDocumentFactory.create(xml);
 //int t=0;
 //            String linkCheckJobId = "883ed410-10bc-4f7b-9292-e626a2372a24";
 //            String fileID = "37569840-7c18-49da-bac5-f730491591e4";
@@ -245,12 +236,13 @@ public class MyCommandLineRunner implements CommandLineRunner {
 //
 //            int tt=0;
 
-//   run_3("8ad016ec-c6b9-4345-9d8c-19f241a7e6f4\n",
-//           "348bf9da-a328-45c2-8047-9f367834f6fa\n",
-//           "");
-//            run11("883ed410-10bc-4f7b-9292-e626a2372a24");
+//   run_3("18526751-44f8-4caf-9fe1-dd1a2111ef03",
+//           "37569840-7c18-49da-bac5-f730491591e4\n",
+//           "3d5749ad-c88d-4e03-bfa6-96f4fc89210a");
 //
-// run12("883ed410-10bc-4f7b-9292-e626a2372a24");
+//
+//            run11("0d655c1e-aa9c-473e-a92b-f1c9e340b1ed");
+//            run12("0d655c1e-aa9c-473e-a92b-f1c9e340b1ed");
 
 
         }
@@ -259,6 +251,87 @@ public class MyCommandLineRunner implements CommandLineRunner {
             logger.error("startup test case error",e);
         }
         logger.debug("DONE!");
+    }
+
+    public void time2() {
+        List<String> sha2s = new ArrayList();
+        capabilitiesDocumentRepo.findAll().iterator().forEachRemaining(x->sha2s.add(x.getSha2()));
+
+
+        List<String> xmls = sha2s.stream()
+                .map(x-> linkCheckBlobStorageRepo.findById(x).get().getTextValue())
+                .collect(Collectors.toList());
+
+        for(int t=0;t<20; t++){
+            xmls.stream()
+                    .map(x-> {
+                        try {
+                            return xmlDocumentFactory.create(x);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            return null;
+                        }
+                    })
+                    .collect(Collectors.toList());
+        }
+
+        long startTime = System.currentTimeMillis();
+        for(int t=0;t<20; t++){
+            xmls.stream()
+                    .map(x-> {
+                        try {
+                            return xmlDocumentFactory.create(x);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            return null;
+                        }
+                    })
+                    .collect(Collectors.toList());
+        }
+        long endTime = System.currentTimeMillis();
+        logger.debug("Total execution time: " + (endTime - startTime));
+
+    }
+
+    public void time() {
+        List<net.geocat.database.linkchecker.entities.helper.MetadataRecord> records = new ArrayList();
+        localServiceMetadataRecordRepo.findAll().iterator().forEachRemaining(records::add);
+        localDatasetMetadataRecordRepo.findAll().iterator().forEachRemaining(records::add);
+
+        List<String> xmls = records.stream()
+                .map(x->x.getSha2())
+                .map(x-> blobStorageService.findXML((String)x))
+                .collect(Collectors.toList());
+
+        for(int t=0;t<20; t++){
+            xmls.stream()
+                    .map(x-> {
+                        try {
+                            return xmlDocumentFactory.create(x);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            return null;
+                        }
+                    })
+            .collect(Collectors.toList());
+        }
+
+        long startTime = System.currentTimeMillis();
+        for(int t=0;t<20; t++){
+            xmls.stream()
+                    .map(x-> {
+                        try {
+                            return xmlDocumentFactory.create(x);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            return null;
+                        }
+                    })
+                    .collect(Collectors.toList());
+        }
+        long endTime = System.currentTimeMillis();
+       logger.debug("Total execution time: " + (endTime - startTime));
+
     }
 
 
@@ -389,6 +462,7 @@ public class MyCommandLineRunner implements CommandLineRunner {
                 .collect(Collectors.toList());
 
         String missingXML = blobStorageService.findXML(missing.getSha2());
+        XmlDoc missingXMLDoc = xmlDocumentFactory.create(missingXML);
 
         List<CapabilitiesDocument> missing_caps = missing.getServiceDocumentLinks().stream()
                 .filter(x-> x.getSha2() != null)

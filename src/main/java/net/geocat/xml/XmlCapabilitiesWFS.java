@@ -68,33 +68,39 @@ public class XmlCapabilitiesWFS extends XmlCapabilitiesDocument {
 
     }
 
-    private String getLayerMetadataURL() throws  Exception {
-        NodeList nl = xpath_nodeset("//wfs:FeatureType/wfs:MetadataURL/@xlink:href");
-        for(int idx=0;idx<nl.getLength();idx++){
-            Node n = nl.item(idx);
-            String value = n.getNodeValue();
-            if  (  (value == null) || ( value.isEmpty()) )
-                continue;
-            return value.trim();
-        }
-        return null;
-    }
+//    private String getLayerMetadataURL() throws  Exception {
+//        NodeList nl = xpath_nodeset("//wfs:FeatureType/wfs:MetadataURL/@xlink:href");
+//        for(int idx=0;idx<nl.getLength();idx++){
+//            Node n = nl.item(idx);
+//            String value = n.getNodeValue();
+//            if  (  (value == null) || ( value.isEmpty()) )
+//                continue;
+//            return value.trim();
+//        }
+//        return null;
+//    }
 
     private void setup_XmlCapabilitiesWFS() throws Exception {
-        NodeList sdi = xpath_nodeset("//inspire_dls:SpatialDataSetIdentifier");
+        Node extended = findNode(parsedXml,"WFS_Capabilities","OperationsMetadata","ExtendedCapabilities","ExtendedCapabilities");
+        //NodeList sdi = xpath_nodeset("//inspire_dls:SpatialDataSetIdentifier");
+
+        if (extended != null) {
+            List<Node> sdi = findAllNodes(extended,"SpatialDataSetIdentifier");
 
 
-        for(int idx=0; idx<sdi.getLength();idx++){
-            Node n = sdi.item(idx);
-            String url =getLayerMetadataURL_inspire(n);
+            for (int idx = 0; idx < sdi.size(); idx++) {
+                Node n = sdi.get(idx);
+                String url = getLayerMetadataURL_inspire(n);
 
-            Node codeNode = xpath_node(n,"./inspire_common:Code");
-            String identity = null;
-            if (codeNode != null)
-                identity = codeNode.getTextContent().trim();
-            if ( (url != null) || (identity !=null)){
-                DatasetLink datasetLink = new DatasetLink(identity,url);
-                datasetLinksList.add(datasetLink);
+                //Node codeNode = xpath_node(n, "./inspire_common:Code");
+                Node codeNode = findNode(n,"Code");
+                String identity = null;
+                if (codeNode != null)
+                    identity = codeNode.getTextContent().trim();
+                if ((url != null) || (identity != null)) {
+                    DatasetLink datasetLink = new DatasetLink(identity, url);
+                    datasetLinksList.add(datasetLink);
+                }
             }
         }
         setup_XmlCapabilitiesWFS_noinspire();

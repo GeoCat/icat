@@ -42,6 +42,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static net.geocat.service.capabilities.WMSCapabilitiesDatasetLinkExtractor.findNodes;
+import static net.geocat.xml.XmlDoc.findNode;
+
 //represents a <gmd:CI_OnlineResource>
 // can also have the operationName if the CI_OnlineResource comes from a containsOperation
 public class OnlineResource {
@@ -83,13 +86,20 @@ public class OnlineResource {
         List<OnlineResource> result = new ArrayList<>();
         if (n.getLocalName().equals("SV_OperationMetadata")) {
             String opName = null;
-            Node nn = XmlDoc.xpath_node(n, "srv:operationName/gco:CharacterString");
+            //Node nn = XmlDoc.xpath_node(n, "srv:operationName/gco:CharacterString");
+          //  Node nn = XmlDoc.xpath_node(n, "*[local-name()='operationName']/*[local-name()='CharacterString']");
+            Node nn = findNode(n, "operationName","CharacterString");
             if (nn != null)
                 opName = nn.getTextContent();
-            NodeList nl = XmlDoc.xpath_nodeset(n, "srv:connectPoint/gmd:CI_OnlineResource");
-            for (int idx = 0; idx < nl.getLength(); idx++) {
-                Node nnn = nl.item(idx);
-                result.add(new OnlineResource(nnn, opName));
+           //NodeList nl = XmlDoc.xpath_nodeset(n, "srv:connectPoint/gmd:CI_OnlineResource");
+           // NodeList nl = XmlDoc.xpath_nodeset(n, "*[local-name()='connectPoint']/*[local-name()='CI_OnlineResource']");
+            //NodeList nl = XmlDoc.xpath_nodeset(n, "*[local-name()='connectPoint']/*[local-name()='CI_OnlineResource']");
+            List<Node> nl = findNodes(n, "connectPoint");
+
+            for (Node _n : nl) {
+                Node nnn = findNode(_n,"CI_OnlineResource");
+                if (nnn != null)
+                    result.add(new OnlineResource(nnn, opName));
             }
             return result;
         }
@@ -98,13 +108,16 @@ public class OnlineResource {
 
     private void parse() throws XPathExpressionException {
         //URL
-        Node urlNode = XmlDoc.xpath_node(CI_OnlineResource, "gmd:linkage/gmd:URL");
+      //  Node urlNode = XmlDoc.xpath_node(CI_OnlineResource, "gmd:linkage/gmd:URL");
+        Node urlNode = XmlDoc.findNode(CI_OnlineResource, "linkage","URL");
+
         if (urlNode != null)
             rawURL = urlNode.getTextContent();
 
 
         //Protocol
-        Node protocolNode = XmlDoc.xpath_node(CI_OnlineResource, "gmd:protocol/gco:CharacterString");
+        //Node protocolNode = XmlDoc.xpath_node(CI_OnlineResource, "gmd:protocol/gco:CharacterString");
+        Node protocolNode = XmlDoc.findNode(CI_OnlineResource, "protocol","CharacterString");
         if ((protocolNode != null)) {
             protocol = protocolNode.getTextContent();
             if (protocol.equals("null"))
@@ -112,7 +125,10 @@ public class OnlineResource {
         }
 
         //function
-        Node functionNode = XmlDoc.xpath_node(CI_OnlineResource, "gmd:function/gmd:CI_OnLineFunctionCode/@codeListValue");
+       // Node functionNode = XmlDoc.xpath_node(CI_OnlineResource, "gmd:function/gmd:CI_OnLineFunctionCode/@codeListValue");
+        Node functionNode = XmlDoc.findNode(CI_OnlineResource, "function","CI_OnLineFunctionCode");
+        if (functionNode != null)
+            functionNode = functionNode.getAttributes().getNamedItem("codeListValue");
         if (functionNode != null)
             function = functionNode.getTextContent();
     }

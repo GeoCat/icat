@@ -60,6 +60,9 @@ public class CapabilitiesLinkFixer   {
         if ( (link == null) || (link.isEmpty()) )
             return null;
 
+        link = link.trim();
+        link = link.replace(" ","%20");
+
         URIBuilder uriBuilder = new URIBuilder(link);
         List<NameValuePair> params =  uriBuilder.getQueryParams();
         params.sort( Comparator.comparing(x->x.getName()));
