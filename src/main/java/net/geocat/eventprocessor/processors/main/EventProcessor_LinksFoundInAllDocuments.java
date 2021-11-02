@@ -37,6 +37,7 @@ import net.geocat.database.linkchecker.entities.LinkCheckJob;
 import net.geocat.database.linkchecker.entities.LinkCheckJobState;
 import net.geocat.database.linkchecker.repos.LinkCheckJobRepo;
 import net.geocat.database.linkchecker.repos.LocalDatasetMetadataRecordRepo;
+import net.geocat.database.linkchecker.repos.LocalNotProcessedMetadataRecordRepo;
 import net.geocat.database.linkchecker.repos.LocalServiceMetadataRecordRepo;
 import net.geocat.database.linkchecker.service.LinkCheckJobService;
 import net.geocat.eventprocessor.BaseEventProcessor;
@@ -69,6 +70,9 @@ public class EventProcessor_LinksFoundInAllDocuments extends BaseEventProcessor<
     LocalServiceMetadataRecordRepo localServiceMetadataRecordRepo;
 
     @Autowired
+    LocalNotProcessedMetadataRecordRepo localNotProcessedMetadataRecordRepo;
+
+    @Autowired
     LinkCheckJobRepo linkCheckJobRepo;
 
 //    @Autowired
@@ -91,9 +95,11 @@ public class EventProcessor_LinksFoundInAllDocuments extends BaseEventProcessor<
 
         long nService = localServiceMetadataRecordRepo.countByLinkCheckJobId(linkCheckJobId);
         long nData = localDatasetMetadataRecordRepo.countByLinkCheckJobId(linkCheckJobId);
+        long nOther = localNotProcessedMetadataRecordRepo.countByLinkCheckJobId(linkCheckJobId);
 
         job.setNumberOfLocalDatasetRecords(nData);
         job.setNumberOfLocalServiceRecords(nService);
+        job.setNumberOfNotProcessedDatasetRecords(nOther);
 
         job = linkCheckJobRepo.save(job);
 
@@ -103,6 +109,8 @@ public class EventProcessor_LinksFoundInAllDocuments extends BaseEventProcessor<
 
     @Override
     public List<Event> newEventProcessing() {
+        logger.debug("LinksFoundInAllDocuments - all documents were parsed and saved, linkcheckjobid="+ getInitiatingEvent().getLinkCheckJobId());
+
         List<Event> result = new ArrayList<>();
         linkCheckJobService.updateLinkCheckJobStateInDB(getInitiatingEvent().getLinkCheckJobId(), LinkCheckJobState.CHECKING_LINKS);
 

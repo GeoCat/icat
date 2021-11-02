@@ -40,14 +40,14 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "logging_event_exception"
-//        ,
-//        indexes= {
-//                @Index(
-//                        name="harvestJobId_idx",
-//                        columnList="harvestJobId",
-//                        unique=false
-//                )
-//        }
+        ,
+        indexes= {
+                @Index(
+                        name="log_ex_eventid",
+                        columnList="event_id",
+                        unique=false
+                )
+        }
 )
 @IdClass(LogbackLoggingEventExceptionCompositeKey.class)
 public class LogbackLoggingEventException {

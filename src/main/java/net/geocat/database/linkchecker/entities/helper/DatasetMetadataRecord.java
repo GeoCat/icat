@@ -51,6 +51,11 @@ import java.util.List;
                         name = "datasetmetadatarecord_linkcheckjobid_idx",
                         columnList = "linkCheckJobId",
                         unique = false
+                ),
+                @Index(
+                        name = "DatasetMetadataRecord_sha2_linkcheckjobid",
+                        columnList = "sha2,linkCheckJobId",
+                        unique = false
                 )
         }
 )

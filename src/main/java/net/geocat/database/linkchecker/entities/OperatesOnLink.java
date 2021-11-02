@@ -44,6 +44,15 @@ import javax.persistence.*;
 
 //represents an OperatesOn Link inside a Service Metadata Document
 @Entity
+@Table(
+        indexes = {
+                @Index(
+                        name = "RSL_serviceMetadataRecord_serviceMetadataDocumentId",
+                        columnList = "serviceMetadataRecord_serviceMetadataDocumentId",
+                        unique = false
+                )
+        }
+)
 public class OperatesOnLink extends RetrievableSimpleLink {
 
     // from the Service document Operates on section
@@ -62,7 +71,7 @@ public class OperatesOnLink extends RetrievableSimpleLink {
     String summary;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long operatesOnLinkId;
 
     //which service metadata record does this link belong to?

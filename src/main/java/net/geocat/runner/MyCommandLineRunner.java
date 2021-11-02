@@ -212,10 +212,17 @@ public class MyCommandLineRunner implements CommandLineRunner {
 
         try {
 
+
+//           CapabilitiesDocument doc =  capabilitiesDocumentRepo.findById(
+//                   new SHA2JobIdCompositeKey(
+//                           "7FEB464512D4054136D1E93B38C0344458807378ADE8278F331D3974C9AB09F0",
+//                           "01e2d820-bb84-4093-bc4f-cc8fe6a31932" ) ).get();
+//            int t=0;
+
 // run_scrape();
 
        // time();
-            time2();
+         //   time2();
 
 //            String url = "https://geoportal.sachsen.de/md/9250fce9-8044-41f4-a884-ae148bfbcf8c";
 //            url = canonicalize(url);
@@ -241,8 +248,8 @@ public class MyCommandLineRunner implements CommandLineRunner {
 //           "3d5749ad-c88d-4e03-bfa6-96f4fc89210a");
 //
 //
-//            run11("0d655c1e-aa9c-473e-a92b-f1c9e340b1ed");
-//            run12("0d655c1e-aa9c-473e-a92b-f1c9e340b1ed");
+//            run11("d1faeb4f-cdae-46b9-b214-faab00e5eb13");
+//            run12("d1faeb4f-cdae-46b9-b214-faab00e5eb13");
 
 
         }
@@ -365,15 +372,15 @@ public class MyCommandLineRunner implements CommandLineRunner {
         update scrap set local_is_download = (select indicator_layer_matches_download = 'PASS' from datasetmetadatarecord where datasetmetadatarecord.fileidentifier = scrap.file_id);
 --delete from scrap where file_id is null;
 
-        select file_id, title, is_view, local_is_view from scrap where is_view !=  local_is_view and is_view order by title;
-        select file_id, title, is_download, local_is_download from scrap where is_download !=  local_is_download and is_download order by title;
+        select file_id, title, is_view, local_is_view from scrap where is_view !=  local_is_view and is_view and title is not null order by title;
+        select file_id, title, is_download, local_is_download from scrap where is_download !=  local_is_download and is_download and title is not null order by title;
 
 
 
      */
     public void run_scrape() throws  Exception {
-        String url = "https://inspire-geoportal.ec.europa.eu/solr/select?wt=json&q=*:*^1.0&sow=false&fq=sourceMetadataResourceLocator:*&fq=resourceType:(dataset%20OR%20series)&fq=memberStateCountryCode:%22MYCOUNTRYCODE%22&fl=id,resourceTitle,resourceTitle_*,providedTranslationLanguage,automatedTranslationLanguage,memberStateCountryCode,metadataLanguage,isDw:query($isDwQ),isVw:query($isVwQ),spatialScope&isDwQ=interoperabilityAspect:(DOWNLOAD_MATCHING_DATA_IS_AVAILABLE%20AND%20DATA_DOWNLOAD_LINK_IS_AVAILABLE)&isVwQ=interoperabilityAspect:(LAYER_MATCHING_DATA_IS_AVAILABLE)&isDwVwQ=interoperabilityAspect:(DOWNLOAD_MATCHING_DATA_IS_AVAILABLE%20AND%20DATA_DOWNLOAD_LINK_IS_AVAILABLE%20AND%20LAYER_MATCHING_DATA_IS_AVAILABLE)&sort=query($isDwVwQ)%20desc,%20query($isDwQ)%20desc,%20query($isVwQ)%20desc,%20resourceTitle%20asc&start=0&rows=10000&callback=?&json.wrf=processData_dtResults&_=1634538073094";
-        url = url.replace("MYCOUNTRYCODE","mt");
+        String url = "https://inspire-geoportal.ec.europa.eu/solr/select?wt=json&q=*:*^1.0&sow=false&fq=sourceMetadataResourceLocator:*&fq=resourceType:(dataset%20OR%20series)&fq=memberStateCountryCode:%22MYCOUNTRYCODE%22&fl=id,resourceTitle,resourceTitle_*,providedTranslationLanguage,automatedTranslationLanguage,memberStateCountryCode,metadataLanguage,isDw:query($isDwQ),isVw:query($isVwQ),spatialScope&isDwQ=interoperabilityAspect:(DOWNLOAD_MATCHING_DATA_IS_AVAILABLE%20AND%20DATA_DOWNLOAD_LINK_IS_AVAILABLE)&isVwQ=interoperabilityAspect:(LAYER_MATCHING_DATA_IS_AVAILABLE)&isDwVwQ=interoperabilityAspect:(DOWNLOAD_MATCHING_DATA_IS_AVAILABLE%20AND%20DATA_DOWNLOAD_LINK_IS_AVAILABLE%20AND%20LAYER_MATCHING_DATA_IS_AVAILABLE)&sort=query($isDwVwQ)%20desc,%20query($isDwQ)%20desc,%20query($isVwQ)%20desc,%20resourceTitle%20asc&start=0&rows=300000&callback=?&json.wrf=processData_dtResults&_=1634538073094";
+        url = url.replace("MYCOUNTRYCODE","de");
 
             HttpResult result = basicHTTPRetriever.retrieveJSON("GET", url, null, null, null);
 
@@ -388,7 +395,7 @@ public class MyCommandLineRunner implements CommandLineRunner {
 
       // executeSQL2("create table delme(i int)");
        for(JsonNode doc : docs) {
-            String title = doc.get("resourceTitle").asText();
+            String title = doc.get("resourceTitle").asText().replace("'","''");
             boolean isView = (doc.get("isVw") != null);
             boolean isDownload = (doc.get("isDw") != null);
             String country = doc.get("memberStateCountryCode").asText();

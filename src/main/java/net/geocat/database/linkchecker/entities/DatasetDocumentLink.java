@@ -64,7 +64,7 @@ public class DatasetDocumentLink extends DocumentLink {
     String summary;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long datasetMetadataLinkId;
 
 //    //if this link resolved to a capabilities document, which one

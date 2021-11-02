@@ -50,6 +50,7 @@ import net.geocat.events.Event;
 import net.geocat.events.EventFactory;
 import net.geocat.events.postprocess.PostProcessDatasetDocumentEvent;
  import net.geocat.service.MetadataService;
+import net.geocat.service.helper.ShouldTransitionOutOfPostProcessing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,6 +89,9 @@ public class EventProcessor_PostProcessDatasetDocumentEvent extends BaseEventPro
     @Autowired
     LocalServiceMetadataRecordRepo localServiceMetadataRecordRepo;
 
+    @Autowired
+    ShouldTransitionOutOfPostProcessing shouldTransitionOutOfPostProcessing;
+
     LocalDatasetMetadataRecord localDatasetMetadataRecord;
 
 
@@ -111,7 +115,7 @@ public class EventProcessor_PostProcessDatasetDocumentEvent extends BaseEventPro
             process();
             localDatasetMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_POSTPROCESSED);
             save();
-            logger.debug("finished postprocessing documentid="+getInitiatingEvent().getDatasetDocumentId()  );
+            logger.debug("finished postprocessing dataset documentid="+getInitiatingEvent().getDatasetDocumentId()  );
 
         }
         catch(Exception e){
@@ -209,7 +213,13 @@ public class EventProcessor_PostProcessDatasetDocumentEvent extends BaseEventPro
         List<Event> result = new ArrayList<>();
 
         String linkCheckJobId = getInitiatingEvent().getLinkCheckJobId();
-        if (metadataService.linkPostProcessingComplete(linkCheckJobId))
+//        if (metadataService.linkPostProcessingComplete(linkCheckJobId))
+//        {
+//            //done
+//            Event e = eventFactory.createAllPostProcessingCompleteEvent(linkCheckJobId);
+//            result.add(e);
+//        }
+        if (shouldTransitionOutOfPostProcessing.shouldSendMessage(linkCheckJobId,getInitiatingEvent().getDatasetDocumentId()))
         {
             //done
             Event e = eventFactory.createAllPostProcessingCompleteEvent(linkCheckJobId);

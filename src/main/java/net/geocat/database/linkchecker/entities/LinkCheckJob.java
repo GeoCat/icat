@@ -72,6 +72,8 @@ public class LinkCheckJob extends UpdateCreateDateTimeEntity  {
     //how many of the harvested documents are dataset records?
     Long numberOfLocalDatasetRecords;
 
+    //how many of the harvested documents are dataset records?
+    Long numberOfNotProcessedDatasetRecords;
 
     //------------------------------------
 
@@ -87,6 +89,14 @@ public class LinkCheckJob extends UpdateCreateDateTimeEntity  {
 
     //------------------------------------
 
+
+    public Long getNumberOfNotProcessedDatasetRecords() {
+        return numberOfNotProcessedDatasetRecords;
+    }
+
+    public void setNumberOfNotProcessedDatasetRecords(Long numberOfNotProcessedDatasetRecords) {
+        this.numberOfNotProcessedDatasetRecords = numberOfNotProcessedDatasetRecords;
+    }
 
     public String getLongTermTag() {
         return longTermTag;

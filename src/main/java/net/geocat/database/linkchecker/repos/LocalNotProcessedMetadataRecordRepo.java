@@ -35,11 +35,14 @@ package net.geocat.database.linkchecker.repos;
 
 import net.geocat.database.linkchecker.entities.LocalDatasetMetadataRecord;
 import net.geocat.database.linkchecker.entities.LocalNotProcessedMetadataRecord;
+import net.geocat.database.linkchecker.entities.helper.ServiceMetadataDocumentState;
 import net.geocat.database.linkchecker.entities.helper.StatusQueryItem;
 import org.springframework.context.annotation.Scope;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -47,10 +50,24 @@ import java.util.List;
 @Component
 @Scope("prototype")
 public interface LocalNotProcessedMetadataRecordRepo extends CrudRepository<LocalNotProcessedMetadataRecord, Long> {
+
+
+    @Transactional
+    @Modifying
+    @Query(value="UPDATE LocalNotProcessedMetadataRecord ldmr SET ldmr.state = :newState WHERE ldmr.localNotProcessedMetadataRecordId = :id ")
+    void updateState(long id, ServiceMetadataDocumentState newState);
+
+
     LocalNotProcessedMetadataRecord findFirstByLinkCheckJobIdAndSha2(String linkCheckJobId, String sha2);
 
 
     long countByLinkCheckJobId(String LinkCheckJobId);
+
+    @Query(value = "Select count(*) from localnotprocessedmetadatarecord   where linkcheckjobid = ?1   and state  in ?2",
+            nativeQuery = true
+    )
+    long countInStates(String LinkCheckJobId, List<String> states);
+
 
     @Query(value = "Select count(*) from localnotprocessedmetadatarecord   where linkcheckjobid = ?1    and state != 'CREATED'",
             nativeQuery = true

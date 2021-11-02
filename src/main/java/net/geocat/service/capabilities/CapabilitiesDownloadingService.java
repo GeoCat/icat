@@ -166,7 +166,7 @@ public class CapabilitiesDownloadingService {
                             .forEach(x -> {
                                 handleLayerDatasetLink(x);
                                 int ndone = counter.incrementAndGet();
-                                logger.debug("processed link cap's DS link " + ndone + " of " + nTotal); // a wee bit of a lie, but will be "accurate"
+                                logger.trace("processed link cap's DS link " + ndone + " of " + nTotal); // a wee bit of a lie, but will be "accurate"
                             })
             ).get();
 
@@ -220,7 +220,7 @@ public class CapabilitiesDownloadingService {
             link.setLinkState(LinkState.Complete);
         }
         catch (Exception e){
-            logger.error("error occurred while downloading capabilities document at url="+link.getFixedURL(),e);
+            logger.warn("error occurred while downloading capabilities document at url="+link.getFixedURL(),e);
             link.setLinkState(LinkState.ERROR);
             link.setErrorMessage(  convertToString(e) );
         }

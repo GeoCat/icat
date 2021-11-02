@@ -48,6 +48,7 @@ import net.geocat.events.processlinks.ProcessServiceDocLinksEvent;
 import net.geocat.service.*;
 import net.geocat.service.capabilities.CapabilitiesDownloadingService;
 import net.geocat.service.capabilities.CapabilitiesLinkFixer;
+import net.geocat.service.helper.ShouldTransitionOutOfLinkProcessing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -133,6 +134,9 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
     @Autowired
     CapabilitiesLinkFixer capabilitiesLinkFixer;
 
+    @Autowired
+    ShouldTransitionOutOfLinkProcessing shouldTransitionOutOfLinkProcessing;
+
     LocalServiceMetadataRecord localServiceMetadataRecord;
 
 
@@ -148,7 +152,7 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
         try {
             int nlinksCap = localServiceMetadataRecord.getServiceDocumentLinks().size();
             int nlinksOperates = localServiceMetadataRecord.getOperatesOnLinks().size();
-            logger.debug("processing SERVICE documentid="+getInitiatingEvent().getServiceMetadataId()+" that has "+nlinksCap+" document links, and "+nlinksOperates+" operates on links");
+            logger.debug("processing links SERVICE documentid="+getInitiatingEvent().getServiceMetadataId()+", with fileID="+ localServiceMetadataRecord.getFileIdentifier() +" that has "+nlinksCap+" document links, and "+nlinksOperates+" operates on links");
 
             processDocumentLinks();
 
@@ -157,7 +161,7 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
           //  localServiceMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_PROCESSED);
 
             save();
-            logger.debug("finished initial processing  documentid="+getInitiatingEvent().getServiceMetadataId()  );
+            logger.trace("finished  processing links for documentid="+getInitiatingEvent().getServiceMetadataId()  );
 
         }
         catch(Exception e){
@@ -190,15 +194,15 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
 
         fixURLs();
         int linkIdx = 0;
-        logger.debug("processing "+nlinks+" service document links for documentid="+getInitiatingEvent().getServiceMetadataId());
+      //  logger.trace("processing "+nlinks+" service document links for documentid="+getInitiatingEvent().getServiceMetadataId());
         List<String> processedURLs = new ArrayList<>();
         for (ServiceDocumentLink link : localServiceMetadataRecord.getServiceDocumentLinks()) {
-            logger.debug("processing service document link "+linkIdx+" of "+nlinks+" links");
+            logger.debug("processing service document link "+linkIdx+" of "+nlinks+" links for  documentid="+getInitiatingEvent().getServiceMetadataId());
             linkIdx++;
             String thisURL = link.getFixedURL();
             if (processedURLs.contains(thisURL))
             {
-                logger.debug("this url has already been processed - no action!");
+               // logger.debug("this url has already been processed - no action!");
                 link.setLinkState(LinkState.Redundant);
             }
             else {
@@ -206,7 +210,7 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
                 capabilitiesDownloadingService.handleLink(link);
             }
         }
-        logger.debug("FINISHED processing "+nlinks+" service document links for documentid="+getInitiatingEvent().getServiceMetadataId());
+        logger.trace("FINISHED processing service document links for documentid="+getInitiatingEvent().getServiceMetadataId());
     }
 
     // get a more cannonical list of URLs -- this way we can tell if they are the same easier...
@@ -279,7 +283,13 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
         List<Event> result = new ArrayList<>();
 
         String linkCheckJobId = getInitiatingEvent().getLinkCheckJobId();
-        if (metadataService.linkProcessingComplete(linkCheckJobId))
+//        if (metadataService.linkProcessingComplete(linkCheckJobId))
+//        {
+//            //done
+//            Event e = eventFactory.createAllLinksCheckedEvent(linkCheckJobId);
+//            result.add(e);
+//        }
+        if (shouldTransitionOutOfLinkProcessing.shouldSendMessage(linkCheckJobId,getInitiatingEvent().getServiceMetadataId()))
         {
             //done
             Event e = eventFactory.createAllLinksCheckedEvent(linkCheckJobId);

@@ -134,7 +134,7 @@ public class EventProcessor_StartProcessDocumentsEvent extends BaseEventProcesso
 //     metadataRecords = metadataRecords.stream().filter(x-> items.contains(x.getRecordIdentifier() )).collect(Collectors.toList());
 //     metadataRecords = metadataRecords.stream().filter(x-> !items.contains(x.getRecordIdentifier() )).collect(Collectors.toList());
 
-       // metadataRecords =    metadataRecords.subList(0,5);
+      //  metadataRecords =    metadataRecords.subList(0,10000);
 
 
 

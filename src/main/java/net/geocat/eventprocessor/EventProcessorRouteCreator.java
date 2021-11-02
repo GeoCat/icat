@@ -37,6 +37,7 @@ package net.geocat.eventprocessor;
 import net.geocat.events.Event;
 import net.geocat.service.camelsupport.StopProcessingMessageService;
 import org.apache.camel.BeanScope;
+import org.apache.camel.LoggingLevel;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.jackson.JacksonDataFormat;
 import org.springframework.context.annotation.Scope;
@@ -76,7 +77,7 @@ public class EventProcessorRouteCreator {
                     .unmarshal(jsonDefHarvesterConfig)
                     .routeId(tag + "_" + eventType.getSimpleName())
                     // .log("processing event of type " + eventType.getSimpleName() + " from " + from)
-                    .log(from + ": event = ${body}")
+                    .log(LoggingLevel.TRACE,from + ": event = ${body}")
                     .bean(StopProcessingMessageService.class, "checkIfShouldBeProcessed", BeanScope.Request)
                     .bean(EventProcessorFactory.class, "create( ${body} )", BeanScope.Request)
                     .transform().simple("${body.externalProcessing()}")
@@ -92,7 +93,7 @@ public class EventProcessorRouteCreator {
                     .transacted("txPolicyName")
                     .routeId(tag + "_" + eventType.getSimpleName())
                     // .log("processing event of type " + eventType.getSimpleName() + " from " + from)
-                    .log(from + ": event = ${body}")
+                    .log(LoggingLevel.TRACE,from + ": event = ${body}")
                     .bean(StopProcessingMessageService.class, "checkIfShouldBeProcessed", BeanScope.Request)
                     .bean(EventProcessorFactory.class, "create( ${body} )", BeanScope.Request)
                     .transform().simple("${body.externalProcessing()}")

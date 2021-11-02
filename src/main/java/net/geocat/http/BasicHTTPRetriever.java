@@ -65,7 +65,7 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
         }
     };
     Logger logger = LoggerFactory.getLogger(BasicHTTPRetriever.class);
-    int TIMEOUT_MS = 2 * 60 * 1000;
+    int TIMEOUT_MS = 1 * 60 * 1000;
     int initialReadSize = 4096;
 
     public boolean shouldReadMore(byte[] tinyBuffer, IContinueReadingPredicate predicate) {

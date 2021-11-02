@@ -88,17 +88,29 @@ public class EventProcessor_StartPostProcessEvent extends BaseEventProcessor<Sta
 
         List<Event> result = new ArrayList<>();
 
-        for(LocalServiceMetadataRecord record : localServiceMetadataRecordRepo.findByLinkCheckJobId(linkCheckJobId)) {
-            long id = record.getServiceMetadataDocumentId();
+        List<Long> serviceIds =  localServiceMetadataRecordRepo.searchAllServiceIds(linkCheckJobId);
+        for(Long id : serviceIds){
             Event e = eventFactory.createPostProcessServiceDocumentEvent(id,linkCheckJobId);
             result.add(e);
         }
 
-        for(LocalDatasetMetadataRecord record : localDatasetMetadataRecordRepo.findByLinkCheckJobId(linkCheckJobId)) {
-            long id = record.getDatasetMetadataDocumentId();
+        List<Long> datasetIds =  localDatasetMetadataRecordRepo.searchAllDatasetIds(linkCheckJobId);
+        for(Long id : datasetIds){
             Event e = eventFactory.createPostProcessDatasetDocumentEvent(id,linkCheckJobId);
             result.add(e);
         }
+
+//        for(LocalServiceMetadataRecord record : localServiceMetadataRecordRepo.findByLinkCheckJobId(linkCheckJobId)) {
+//            long id = record.getServiceMetadataDocumentId();
+//            Event e = eventFactory.createPostProcessServiceDocumentEvent(id,linkCheckJobId);
+//            result.add(e);
+//        }
+//
+//        for(LocalDatasetMetadataRecord record : localDatasetMetadataRecordRepo.findByLinkCheckJobId(linkCheckJobId)) {
+//            long id = record.getDatasetMetadataDocumentId();
+//            Event e = eventFactory.createPostProcessDatasetDocumentEvent(id,linkCheckJobId);
+//            result.add(e);
+//        }
 
         return result;
     }

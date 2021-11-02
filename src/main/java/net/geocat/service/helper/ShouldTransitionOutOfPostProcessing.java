@@ -31,41 +31,43 @@
  *  ==============================================================================
  */
 
-package net.geocat.routes.queuebased;
+package net.geocat.service.helper;
 
-import net.geocat.eventprocessor.MainLoopRouteCreator;
-import net.geocat.eventprocessor.RedirectEvent;
-import net.geocat.events.findlinks.LinksFoundInAllDocuments;
-import net.geocat.events.findlinks.ProcessLocalMetadataDocumentEvent;
-import net.geocat.events.findlinks.StartProcessDocumentsEvent;
-import net.geocat.events.processlinks.ProcessDatasetDocLinksEvent;
-import net.geocat.events.processlinks.ProcessServiceDocLinksEvent;
-import net.geocat.events.processlinks.StartLinkProcessingEvent;
-import org.apache.camel.spring.SpringRouteBuilder;
+import net.geocat.service.MetadataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
-public class FindLinksOrchestrator extends SpringRouteBuilder {
-
-    public static String myJMSQueueName = "linkCheck.FindLinksOrchestrator";
+public class ShouldTransitionOutOfPostProcessing {
 
     @Autowired
-    MainLoopRouteCreator mainLoopRouteCreator;
+    MetadataService metadataService;
 
-    @Override
-    public void configure() throws Exception {
+    static Object lockObject = new Object();
 
-        mainLoopRouteCreator.createEventProcessingLoop(this,
-                "activemq:" + myJMSQueueName,
-                new Class[]{StartProcessDocumentsEvent.class,ProcessLocalMetadataDocumentEvent.class},
-                Arrays.asList(
-                        new RedirectEvent(LinksFoundInAllDocuments.class, "activemq:" + MainOrchestrator.myJMSQueueName)
-                ),
-                Arrays.asList(new Class[0]),
-                10  //todo changeme
-        );
+    // linkCheckJobId ->   serviceMetadataId (or datasetMetadataId)
+    protected static Map<String, Long> completedLinkCheckJobs = new HashMap<>();
+
+
+    // you MUST send the complete message if this returns true.
+    // All future calls will return false.
+    // This prevents the message from being sent twice.
+    public boolean shouldSendMessage(String linkCheckJobId, Long metadataDocumentId) {
+
+        synchronized (lockObject) {
+
+            if (completedLinkCheckJobs.containsKey(linkCheckJobId))
+                return false; // already sent
+            boolean done = metadataService.linkPostProcessingComplete(linkCheckJobId);
+            if (!done)
+                return false;
+            // done - we need to prevent it from happening in the future
+            completedLinkCheckJobs.put(linkCheckJobId,metadataDocumentId);
+            return true;
+
+        }
     }
 }

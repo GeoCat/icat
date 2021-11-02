@@ -61,7 +61,7 @@ public class ServiceDocumentLink extends DocumentLink {
     String summary;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long serviceMetadataLinkId;
 
 

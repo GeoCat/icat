@@ -48,6 +48,20 @@ import java.util.Set;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "service_record_type",
         discriminatorType = DiscriminatorType.STRING)
+@Table(
+        indexes = {
+                @Index(
+                        name = "ServiceMetadataRecord_linkcheckjobid_idx",
+                        columnList = "linkCheckJobId",
+                        unique = false
+                ),
+                @Index(
+                        name = "ServiceMetadataRecord_sha2_linkcheckjobid",
+                        columnList = "sha2,linkCheckJobId",
+                        unique = false
+                )
+        }
+)
 public class ServiceMetadataRecord extends MetadataRecord {
 
     @Id

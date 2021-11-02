@@ -46,6 +46,7 @@ import net.geocat.events.Event;
 import net.geocat.events.EventFactory;
 import net.geocat.events.processlinks.ProcessDatasetDocLinksEvent;
 import net.geocat.service.*;
+import net.geocat.service.helper.ShouldTransitionOutOfLinkProcessing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,6 +93,9 @@ public class EventProcessor_ProcessDatasetDocLinksEvent extends BaseEventProcess
     @Autowired
     DatasetToLayerIndicators datasetToLayerIndicators;
 
+    @Autowired
+    ShouldTransitionOutOfLinkProcessing shouldTransitionOutOfLinkProcessing;
+
     LocalDatasetMetadataRecord localDatasetMetadataRecord;
 
 
@@ -99,9 +103,12 @@ public class EventProcessor_ProcessDatasetDocLinksEvent extends BaseEventProcess
 
     @Override
     public EventProcessor_ProcessDatasetDocLinksEvent internalProcessing() throws Exception {
-        localDatasetMetadataRecord = localDatasetMetadataRecordRepo.findById(getInitiatingEvent().getDatasetDocumentId()).get();// make sure we re-load
-        localDatasetMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_PROCESSED);
-        localDatasetMetadataRecordRepo.save(localDatasetMetadataRecord);
+//        localDatasetMetadataRecord = localDatasetMetadataRecordRepo.findById(getInitiatingEvent().getDatasetDocumentId()).get();// make sure we re-load
+//        localDatasetMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_PROCESSED);
+//        localDatasetMetadataRecordRepo.save(localDatasetMetadataRecord);
+     //   metadataRecord.setState(ServiceMetadataDocumentState.LINKS_EXTRACTED);
+        localDatasetMetadataRecordRepo.updateState(getInitiatingEvent().getDatasetDocumentId(), ServiceMetadataDocumentState.LINKS_PROCESSED);
+
         return this;
     }
 
@@ -118,7 +125,13 @@ public class EventProcessor_ProcessDatasetDocLinksEvent extends BaseEventProcess
         List<Event> result = new ArrayList<>();
         String linkCheckJobId = getInitiatingEvent().getLinkCheckJobId();
 
-        if (metadataService.linkProcessingComplete(linkCheckJobId))
+//        if (metadataService.linkProcessingComplete(linkCheckJobId))
+//        {
+//            //done
+//            Event e = eventFactory.createAllLinksCheckedEvent(linkCheckJobId);
+//            result.add(e);
+//        }
+        if (shouldTransitionOutOfLinkProcessing.shouldSendMessage(linkCheckJobId,getInitiatingEvent().getDatasetDocumentId()))
         {
             //done
             Event e = eventFactory.createAllLinksCheckedEvent(linkCheckJobId);

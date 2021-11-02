@@ -35,11 +35,14 @@ package net.geocat.database.linkchecker.repos;
 
 import net.geocat.database.linkchecker.entities.LocalDatasetMetadataRecord;
 import net.geocat.database.linkchecker.entities.LocalServiceMetadataRecord;
+import net.geocat.database.linkchecker.entities.helper.ServiceMetadataDocumentState;
 import net.geocat.database.linkchecker.entities.helper.StatusQueryItem;
 import org.springframework.context.annotation.Scope;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -49,7 +52,10 @@ import java.util.Optional;
 @Scope("prototype")
 public interface LocalServiceMetadataRecordRepo extends CrudRepository<LocalServiceMetadataRecord, Long> {
 
-
+    @Transactional
+    @Modifying
+    @Query(value="UPDATE LocalServiceMetadataRecord lsmr SET lsmr.state = :newState WHERE lsmr.serviceMetadataDocumentId = :id ")
+    void updateState(long id, ServiceMetadataDocumentState newState);
 
     LocalServiceMetadataRecord findFirstByLinkCheckJobIdAndSha2(String linkCheckJobId, String sha2);
 
@@ -58,6 +64,12 @@ public interface LocalServiceMetadataRecordRepo extends CrudRepository<LocalServ
     LocalServiceMetadataRecord findFirstByFileIdentifierAndLinkCheckJobId(String fileID,String linkCheckJobId);
 
     LocalServiceMetadataRecord findFirstByFileIdentifier(String fileID);
+
+
+    @Query(value = "SELECT servicemetadatadocumentid FROM servicemetadatarecord   WHERE linkcheckjobid = ?1",
+            nativeQuery = true
+    )
+    List<Long> searchAllServiceIds(String linkCheckJobId);
 
 
     long countByLinkCheckJobId(String LinkCheckJobId);

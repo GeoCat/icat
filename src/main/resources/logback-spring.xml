@@ -32,7 +32,7 @@
 
     <!--    <logger name="org.apache" level="ERROR" />-->
 
-    <logger name="net.geocat" level="TRACE"/>
+    <logger name="net.geocat" level="DEBUG"/>
 <!--    <logger name="org.hibernate.type" level="TRACE"/>-->
 
 

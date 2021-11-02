@@ -74,6 +74,9 @@ public class EventProcessor_AllPostProcessingCompleteEvent extends BaseEventProc
 
     @Override
     public List<Event> newEventProcessing() {
+        logger.debug("AllPostProcessingCompleteEvent - all documents were postprocessed, linkcheckjobid="+getInitiatingEvent().getLinkCheckJobId());
+        logger.debug("LinkCheckJob COMPLETE - "+ getInitiatingEvent().getLinkCheckJobId());
+
         List<Event> result = new ArrayList<>();
 
         return result;

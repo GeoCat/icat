@@ -77,6 +77,7 @@ public class EventProcessor_AllLinksCheckedEvent extends BaseEventProcessor<AllL
 
     @Override
     public List<Event> newEventProcessing() {
+        logger.debug("AllLinksCheckedEvent - all  document links were downloaded and processed, linkcheckjobid="+ getInitiatingEvent().getLinkCheckJobId() );
         List<Event> result = new ArrayList<>();
         Event e = eventFactory.createStartPostProcessEvent(this.getInitiatingEvent().getLinkCheckJobId());
         result.add(e);

@@ -98,7 +98,7 @@ public class ServiceDocOperatesOnProcessor {
 
 
 
-        logger.debug("FINISHED processing  "+nlinks+ " operates on links for documentid="+localServiceMetadataRecord.getServiceMetadataDocumentId());
+        logger.trace("FINISHED processing  "+nlinks+ " operates on links for documentid="+localServiceMetadataRecord.getServiceMetadataDocumentId());
     }
 
 

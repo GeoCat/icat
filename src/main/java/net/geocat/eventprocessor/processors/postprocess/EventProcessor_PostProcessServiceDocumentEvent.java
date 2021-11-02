@@ -45,6 +45,7 @@ import net.geocat.events.EventFactory;
 import net.geocat.events.postprocess.PostProcessServiceDocumentEvent;
 import net.geocat.events.processlinks.StartLinkProcessingEvent;
 import net.geocat.service.MetadataService;
+import net.geocat.service.helper.ShouldTransitionOutOfPostProcessing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,14 +72,20 @@ public class EventProcessor_PostProcessServiceDocumentEvent extends BaseEventPro
     @Autowired
     EventFactory eventFactory;
 
+    @Autowired
+    ShouldTransitionOutOfPostProcessing shouldTransitionOutOfPostProcessing;
+
     LocalServiceMetadataRecord localServiceMetadataRecord;
 
 
     @Override
     public EventProcessor_PostProcessServiceDocumentEvent externalProcessing() throws Exception {
-        localServiceMetadataRecord = localServiceMetadataRecordRepo.findById(getInitiatingEvent().getServiceMetadataId()).get();// make sure we re-load
-        localServiceMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_POSTPROCESSED);
-        localServiceMetadataRecordRepo.save(localServiceMetadataRecord);
+//        localServiceMetadataRecord = localServiceMetadataRecordRepo.findById(getInitiatingEvent().getServiceMetadataId()).get();// make sure we re-load
+//        localServiceMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_POSTPROCESSED);
+//        localServiceMetadataRecordRepo.save(localServiceMetadataRecord);
+
+
+        localServiceMetadataRecordRepo.updateState(getInitiatingEvent().getServiceMetadataId(), ServiceMetadataDocumentState.LINKS_POSTPROCESSED);
         return this;
     }
 
@@ -101,8 +108,16 @@ public class EventProcessor_PostProcessServiceDocumentEvent extends BaseEventPro
     public List<Event> newEventProcessing() {
         List<Event> result = new ArrayList<>();
 
+        logger.debug("finished post-processing SERVICE id="+getInitiatingEvent().getServiceMetadataId());
+
         String linkCheckJobId = getInitiatingEvent().getLinkCheckJobId();
-        if (metadataService.linkPostProcessingComplete(linkCheckJobId))
+//        if (metadataService.linkPostProcessingComplete(linkCheckJobId))
+//        {
+//            //done
+//            Event e = eventFactory.createAllPostProcessingCompleteEvent(linkCheckJobId);
+//            result.add(e);
+//        }
+        if (shouldTransitionOutOfPostProcessing.shouldSendMessage(linkCheckJobId,getInitiatingEvent().getServiceMetadataId()))
         {
             //done
             Event e = eventFactory.createAllPostProcessingCompleteEvent(linkCheckJobId);

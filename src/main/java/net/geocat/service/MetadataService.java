@@ -34,8 +34,11 @@
 package net.geocat.service;
 
 
+import net.geocat.database.linkchecker.entities.LinkCheckJob;
 import net.geocat.database.linkchecker.entities.helper.ServiceMetadataDocumentState;
+import net.geocat.database.linkchecker.repos.LinkCheckJobRepo;
 import net.geocat.database.linkchecker.repos.LocalDatasetMetadataRecordRepo;
+import net.geocat.database.linkchecker.repos.LocalNotProcessedMetadataRecordRepo;
 import net.geocat.database.linkchecker.repos.LocalServiceMetadataRecordRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -53,10 +56,21 @@ public class MetadataService {
     @Autowired
     LocalDatasetMetadataRecordRepo localDatasetMetadataRecordRepo;
 
+    @Autowired
+    LocalNotProcessedMetadataRecordRepo localNotProcessedMetadataRecordRepo;
+
+    @Autowired
+    LinkCheckJobRepo linkCheckJobRepo;
 
     public boolean linkProcessingComplete(String linkCheckJobId) {
-        long nService = localServiceMetadataRecordRepo.countByLinkCheckJobId(linkCheckJobId);
-        long nDataset = localDatasetMetadataRecordRepo.countByLinkCheckJobId(linkCheckJobId);
+        LinkCheckJob job  = linkCheckJobRepo.findById(linkCheckJobId).get();
+//        long nService = localServiceMetadataRecordRepo.countByLinkCheckJobId(linkCheckJobId);
+//        long nDataset = localDatasetMetadataRecordRepo.countByLinkCheckJobId(linkCheckJobId);
+
+        Long nService =  job.getNumberOfLocalServiceRecords();
+        Long nDataset = job.getNumberOfLocalDatasetRecords();
+        Long nOther = job.getNumberOfNotProcessedDatasetRecords();
+
 
         long nDataset_complete = localDatasetMetadataRecordRepo.countInStates(linkCheckJobId,
                 Arrays.asList(new String[] {
@@ -65,6 +79,9 @@ public class MetadataService {
                         ServiceMetadataDocumentState.NOT_APPLICABLE.toString(),
                 })  ) ;
 
+        if (nDataset_complete < nDataset.longValue())
+            return false; //short cut - still more to do
+
         long nService_complete = localServiceMetadataRecordRepo.countInStates(linkCheckJobId,
                 Arrays.asList(new String[] {
                         ServiceMetadataDocumentState.ERROR.toString(),
@@ -72,10 +89,26 @@ public class MetadataService {
                         ServiceMetadataDocumentState.NOT_APPLICABLE.toString(),
                 })  ) ;
 
-        long total_records = nDataset+ nService;
-        long total_complete = nDataset_complete+nService_complete;
+        if (nService_complete < nService.longValue())
+            return false; //short cut - still more to do
 
-        return total_records == total_complete;
+
+        long nOther_complete = localNotProcessedMetadataRecordRepo.countInStates(linkCheckJobId,
+                Arrays.asList(new String[] {
+                        ServiceMetadataDocumentState.ERROR.toString(),
+                        ServiceMetadataDocumentState.LINKS_PROCESSED.toString(),
+                        ServiceMetadataDocumentState.NOT_APPLICABLE.toString(),
+                })  ) ;
+
+        if (nOther_complete < nOther.longValue())
+            return false; //short cut - still more to do
+
+//        long total_records = nDataset+ nService;
+//        long total_complete = nDataset_complete+nService_complete;
+//
+//        return total_records == total_complete;
+
+        return true;
     }
 
 

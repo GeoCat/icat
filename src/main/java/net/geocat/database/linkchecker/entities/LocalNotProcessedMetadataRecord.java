@@ -43,6 +43,20 @@ import javax.persistence.*;
 // represents a harvested XML metadata document that we don't process
 @Entity
 @DiscriminatorValue("NoProcessedMetadataRecord")
+@Table(
+        indexes = {
+                @Index(
+                        name = "LocalNotProcessedMetadataRecord_linkcheckjobid_idx",
+                        columnList = "linkCheckJobId",
+                        unique = false
+                ),
+                @Index(
+                        name = "LocalNotProcessedMetadataRecord_sha2_linkcheckjobid",
+                        columnList = "sha2,linkCheckJobId",
+                        unique = false
+                )
+        }
+)
 public class LocalNotProcessedMetadataRecord extends MetadataRecord {
 
     @Id

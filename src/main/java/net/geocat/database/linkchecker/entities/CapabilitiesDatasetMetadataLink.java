@@ -42,6 +42,15 @@ import javax.persistence.*;
 
 // This models all the Dataset links from a capabilities (typically 1 per layer)
 @Entity
+@Table(
+        indexes = {
+                @Index(
+                        name = "CDML_capsha2_capjobid",
+                        columnList = "cap_sha2,cap_jobId",
+                        unique = false
+                )
+        }
+)
 public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
 
 //    // link to the actual Dataset document (if it resolves to one)
@@ -69,7 +78,7 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
     String summary;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long capabilitiesDatasetMetadataLinkId;
 
 

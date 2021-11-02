@@ -40,6 +40,15 @@ import javax.persistence.*;
 
 //represents the link in the xml Capabilities document that refers to the Service metadata document
 @Entity
+//@Table(
+//        indexes = {
+//                @Index(
+//                        name = "ServiceMetadataRecord_sha2_linkcheckjobid",
+//                        columnList = "sha2,linkCheckJobId",
+//                        unique = false
+//                )
+//        }
+//)
 public class RemoteServiceMetadataRecordLink extends RetrievableSimpleLink {
 
 //    //which capabilities document did this link come from?

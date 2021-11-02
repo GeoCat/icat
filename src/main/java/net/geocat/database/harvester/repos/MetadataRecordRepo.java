@@ -53,7 +53,7 @@ public interface MetadataRecordRepo extends CrudRepository<MetadataRecord, Long>
 
     List<MetadataRecord> findByEndpointJobId(long endpointjobId);
 
-    MetadataRecord findByEndpointJobIdAndRecordNumber(long endpointjobId, int recordNumber);
+   // MetadataRecord findByEndpointJobIdAndRecordNumber(long endpointjobId, int recordNumber);
 
     long countByEndpointJobId(long endpointJobId);
 
