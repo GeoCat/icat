@@ -48,6 +48,11 @@ import javax.persistence.*;
                         name = "CDML_capsha2_capjobid",
                         columnList = "cap_sha2,cap_jobId",
                         unique = false
+                ),
+                @Index(
+                        name = "CDML_jobid_fileid",
+                        columnList = "linkCheckJobId,fileIdentifier",
+                        unique = false
                 )
         }
 )

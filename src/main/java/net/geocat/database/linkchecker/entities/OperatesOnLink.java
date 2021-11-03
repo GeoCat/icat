@@ -50,6 +50,11 @@ import javax.persistence.*;
                         name = "RSL_serviceMetadataRecord_serviceMetadataDocumentId",
                         columnList = "serviceMetadataRecord_serviceMetadataDocumentId",
                         unique = false
+                ),
+                @Index(
+                        name = "Opon_linkcheckjob_fileid",
+                        columnList = "linkCheckJobId,fileIdentifier",
+                        unique = false
                 )
         }
 )

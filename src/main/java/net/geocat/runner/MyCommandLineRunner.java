@@ -43,6 +43,8 @@ import net.geocat.database.linkchecker.entities.helper.*;
 import net.geocat.database.linkchecker.repos.*;
 import net.geocat.database.linkchecker.service.*;
 import net.geocat.eventprocessor.processors.processlinks.postprocessing.*;
+import net.geocat.events.Event;
+import net.geocat.events.EventFactory;
 import net.geocat.http.BasicHTTPRetriever;
 import net.geocat.http.IHTTPRetriever;
 import net.geocat.service.*;
@@ -207,10 +209,22 @@ public class MyCommandLineRunner implements CommandLineRunner {
     @Autowired
     LazyLocalServiceMetadataRecordRepo lazyLocalServiceMetadataRecordRepo;
 
+    @Autowired
+    LazyLocalDatsetMetadataRecordRepo lazyLocalDatsetMetadataRecordRepo;
+
+    @Autowired
+    EventFactory eventFactory;
+
     @Override
     public void run(String... args) throws Exception {
 
         try {
+
+//            Event e = eventFactory.createStartPostProcessEvent("e21f60c6-98fb-40e6-bca3-832e8970ff3e");
+//            ObjectMapper m = new ObjectMapper();
+//            String s = m.writeValueAsString(e);
+//            int t=0;
+
 
 
 //           CapabilitiesDocument doc =  capabilitiesDocumentRepo.findById(
@@ -243,13 +257,13 @@ public class MyCommandLineRunner implements CommandLineRunner {
 //
 //            int tt=0;
 
-//   run_3("18526751-44f8-4caf-9fe1-dd1a2111ef03",
-//           "37569840-7c18-49da-bac5-f730491591e4\n",
-//           "3d5749ad-c88d-4e03-bfa6-96f4fc89210a");
+//   run_3("731b7cd8-3c57-9b8c-a3c5-ba1c733a8e10\n",
+//           "77c103b5-a571-0002-a3c5-ba1c733a8e10",
+//           "");
+
 //
-//
-//            run11("d1faeb4f-cdae-46b9-b214-faab00e5eb13");
-//            run12("d1faeb4f-cdae-46b9-b214-faab00e5eb13");
+//            run11("4f3f6f36-9e03-415b-ad2e-3582954444f1");
+//            run12("4f3f6f36-9e03-415b-ad2e-3582954444f1");
 
 
         }
@@ -260,86 +274,6 @@ public class MyCommandLineRunner implements CommandLineRunner {
         logger.debug("DONE!");
     }
 
-    public void time2() {
-        List<String> sha2s = new ArrayList();
-        capabilitiesDocumentRepo.findAll().iterator().forEachRemaining(x->sha2s.add(x.getSha2()));
-
-
-        List<String> xmls = sha2s.stream()
-                .map(x-> linkCheckBlobStorageRepo.findById(x).get().getTextValue())
-                .collect(Collectors.toList());
-
-        for(int t=0;t<20; t++){
-            xmls.stream()
-                    .map(x-> {
-                        try {
-                            return xmlDocumentFactory.create(x);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            return null;
-                        }
-                    })
-                    .collect(Collectors.toList());
-        }
-
-        long startTime = System.currentTimeMillis();
-        for(int t=0;t<20; t++){
-            xmls.stream()
-                    .map(x-> {
-                        try {
-                            return xmlDocumentFactory.create(x);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            return null;
-                        }
-                    })
-                    .collect(Collectors.toList());
-        }
-        long endTime = System.currentTimeMillis();
-        logger.debug("Total execution time: " + (endTime - startTime));
-
-    }
-
-    public void time() {
-        List<net.geocat.database.linkchecker.entities.helper.MetadataRecord> records = new ArrayList();
-        localServiceMetadataRecordRepo.findAll().iterator().forEachRemaining(records::add);
-        localDatasetMetadataRecordRepo.findAll().iterator().forEachRemaining(records::add);
-
-        List<String> xmls = records.stream()
-                .map(x->x.getSha2())
-                .map(x-> blobStorageService.findXML((String)x))
-                .collect(Collectors.toList());
-
-        for(int t=0;t<20; t++){
-            xmls.stream()
-                    .map(x-> {
-                        try {
-                            return xmlDocumentFactory.create(x);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            return null;
-                        }
-                    })
-            .collect(Collectors.toList());
-        }
-
-        long startTime = System.currentTimeMillis();
-        for(int t=0;t<20; t++){
-            xmls.stream()
-                    .map(x-> {
-                        try {
-                            return xmlDocumentFactory.create(x);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            return null;
-                        }
-                    })
-                    .collect(Collectors.toList());
-        }
-        long endTime = System.currentTimeMillis();
-       logger.debug("Total execution time: " + (endTime - startTime));
-
-    }
 
 
     @Autowired
@@ -408,20 +342,6 @@ public class MyCommandLineRunner implements CommandLineRunner {
         int t=0;
     }
 
-    public void run33() throws Exception {
-        String linkCheckJobId = "782a4b94-3f73-4d0b-9c89-866e8d0aa4ec";
-             LinkCheckJob job = linkCheckJobService.find(linkCheckJobId);
-
-
-            long nRecords = job.getNumberOfDocumentsInBatch();
-
-            long nrecordsServiceComplete = localServiceMetadataRecordRepo.countCompletedState(linkCheckJobId);
-            long nrecordsDatasetComplete = localDatasetMetadataRecordRepo.countCompletedState(linkCheckJobId);
-            long nrecordWillNotProcess = localNotProcessedMetadataRecordRepo.countCompletedState(linkCheckJobId);
-
-            boolean result=  (nRecords ) == (nrecordsServiceComplete+nrecordsDatasetComplete+nrecordWillNotProcess);
-
-    }
 
     public void run_3(String dsId, String serviceId, String linkCheckJobId) throws Exception {
 
@@ -517,183 +437,8 @@ public class MyCommandLineRunner implements CommandLineRunner {
 
     }
 
-    public void run_2(String... args) throws Exception {
-
-        LocalServiceMetadataRecord serviceRecord = localServiceMetadataRecordRepo.findById(3156L).get();
-        LocalServiceMetadataRecord serviceRecord2 = localServiceMetadataRecordRepo.findById(3156L).get();
-
-        List<CapabilitiesDocument> capdocs = serviceRecord.getServiceDocumentLinks().stream()
-            .filter(x->x.getSha2() !=null)
-            .map(x-> capabilitiesDocumentRepo.findById(new SHA2JobIdCompositeKey(x.getSha2(),x.getLinkCheckJobId())).get())
-            .collect(Collectors.toList());
-
-        List<String> capdocs_xml = serviceRecord.getServiceDocumentLinks().stream()
-                .filter(x->x.getSha2() !=null)
-                .map(x-> linkCheckBlobStorageRepo.findById(x.getSha2()).get().getTextValue())
-                .collect(Collectors.toList());
-
-        List<XmlCapabilitiesDocument> capdocs_xml_parsed = capdocs_xml.stream()
-                .map(x-> {
-                    try {
-                        return (XmlCapabilitiesDocument) xmlDocumentFactory.create(x);
-                    } catch (Exception e) {   }
-                    return null;
-                })
-                .collect(Collectors.toList());
-
-        List<CapabilitiesDocument> capdocs2 = serviceRecord2.getServiceDocumentLinks().stream()
-                .filter(x->x.getSha2() !=null)
-                .map(x-> capabilitiesDocumentRepo.findById(new SHA2JobIdCompositeKey(x.getSha2(),x.getLinkCheckJobId())).get())
-                .collect(Collectors.toList());
-
-        List<String> capdocs2_xml = serviceRecord2.getServiceDocumentLinks().stream()
-                .filter(x->x.getSha2() !=null)
-                .map(x-> linkCheckBlobStorageRepo.findById(x.getSha2()).get().getTextValue())
-                .collect(Collectors.toList());
-
-        List<XmlCapabilitiesDocument> capdocs2_xml_parsed = capdocs2_xml.stream()
-                .map(x-> {
-                    try {
-                        return (XmlCapabilitiesDocument) xmlDocumentFactory.create(x);
-                    } catch (Exception e) {   }
-                    return null;
-                })
-                .collect(Collectors.toList());
 
 
-        //     LocalServiceMetadataRecord serviceRecord2 = localServiceMetadataRecordRepo.fullId(298852L);
-        int t=0;
-    }
-
-
-        private  Node  findNode (Node n,String localName) {
-
-        NodeList nl = n.getChildNodes();
-        List<Node> result = new ArrayList<>();
-        for (int idx=0; idx <nl.getLength();idx++) {
-            Node nn = nl.item(idx);
-            if (nn.getNodeName().equals(localName)) {
-               return nn;
-            }
-        }
-        return null;
-    }
-
-
-    private List<Node> findNodes(Node n,String localName) {
-
-        NodeList nl = n.getChildNodes();
-        List<Node> result = new ArrayList<>();
-        for (int idx=0; idx <nl.getLength();idx++) {
-            Node nn = nl.item(idx);
-            if (nn.getNodeName().equals(localName)) {
-                result.add(nn);
-                result.addAll(findNodes(nn,localName)); // recurse
-            }
-        }
-        return result;
-    }
-
-
-    public void run_1(String... args) throws Exception {
-        long startTime;
-        long endTime;
-
-        LocalServiceMetadataRecord serviceRecord = localServiceMetadataRecordRepo.findById(161990L).get();
-        String serviceXML = blobStorageService.findXML(serviceRecord.getSha2());
-        String capXML = linkCheckBlobStorageRepo.findById("D4A9F85CF61F688ABF6545C818B19A348ED382CDA9CBDDF6444B20A0965C7CCE").get().getTextValue();
-
-            startTime = System.currentTimeMillis();
-
-         //   XmlDoc xdoc = new XmlDoc(capXML);
-
-//                List<DatasetLink> result = new ArrayList<>();
-//                NodeList layers = xdoc.xpath_nodeset("//"+"wms"+":Layer");
-//                for (int idx = 0; idx < layers.getLength(); idx++) {
-//                    logger.debug("doing layer "+idx+" of "+layers.getLength());
-//                    Node layer = layers.item(idx);
-//                    NodeList children = layer.getChildNodes();
-//                    boolean removable = true;
-//                    for (int idx2 = 0; idx2<children.getLength(); idx2++) {
-//                        Node child = children.item(idx2);
-//                        if (child.getNodeName().equals("Layer"))
-//                            removable = false;
-//                    }
-//                    if (removable )
-//                        layer.getParentNode().removeChild(layer);
-//                    //DatasetLink link = processLayer(doc, layer);
-//
-//                }
-
-
-//        WMSCapabilitiesDatasetLinkExtractor extractor2 = new WMSCapabilitiesDatasetLinkExtractor();
-//        List<DatasetLink> ds = extractor2.findLinks(xdoc);
-
-       // List<Node> ns = findNodes(findNode(xdoc.getFirstNode(),"Capability"),"Layer");
-
-//
-//        CachedXPathAPI cachedXPathAPI = new CachedXPathAPI();
-//        NodeIterator xObject = cachedXPathAPI.selectNodeIterator(xdoc.getParsedXml(), "//*[local-name()='Layer']");
-//        boolean keep_going = true;
-//        int idx =0;
-//        while (keep_going) {
-//            Node n = xObject.nextNode();
-//            keep_going = n != null;
-//            if (n != null) {
-//                logger.debug("indx = "+idx);
-//                int t=0;
-//            }
-//            idx++;
-//        }
-
-
-             XmlCapabilitiesWMS wms = (XmlCapabilitiesWMS) xmlDocumentFactory.create(capXML);
-
-            endTime = System.currentTimeMillis();
-            System.out.println("WMS parse total execution time: " + (endTime - startTime));
-
-        startTime = System.currentTimeMillis();
-
-          XmlServiceRecordDoc service = (XmlServiceRecordDoc) xmlDocumentFactory.create(serviceXML);
-        endTime = System.currentTimeMillis();
-        System.out.println("service parse total execution time: " + (endTime - startTime));
-
-      //  serviceRecord = localServiceMetadataRecordRepo.fullId(161990L) ;
-
-        int t=0;
-    }
-
-    public CapabilitiesDocument createCap(XmlCapabilitiesDocument xml) throws Exception {
-        String sha2 ="test case";
-        CapabilitiesDocument doc = new CapabilitiesDocument();
-        doc.setSha2(sha2);
-
-       // doc.setParent(link);
-        doc.setCapabilitiesDocumentType(xml.getCapabilitiesType());
-
-
-        if (xml.isHasExtendedCapabilities()) {
-            doc.setIndicator_HasExtendedCapabilities(IndicatorStatus.PASS);
-        } else {
-            doc.setIndicator_HasExtendedCapabilities(IndicatorStatus.FAIL);
-            return doc;
-        }
-
-        String metadataUrl = xml.getMetadataUrlRaw();
-        if ((metadataUrl == null) || (metadataUrl.isEmpty())) {
-            doc.setIndicator_HasServiceMetadataLink(IndicatorStatus.FAIL);
-            return doc;
-        }
-
-        doc.setIndicator_HasServiceMetadataLink(IndicatorStatus.PASS);
-
-
-
-        List<CapabilitiesDatasetMetadataLink> dslinks = capabilitiesDatasetMetadataLinkService.createCapabilitiesDatasetMetadataLinks(doc, xml);
-        doc.setCapabilitiesDatasetMetadataLinkList(dslinks);
-
-        return doc;
-    }
 
 
     public void run12(String... args) throws Exception {
@@ -705,7 +450,7 @@ public class MyCommandLineRunner implements CommandLineRunner {
         if ( (args !=null) && (args.length==1) )
             jobid = args[0];
 
-        List<LocalDatasetMetadataRecord> records =   localDatasetMetadataRecordRepo.findByLinkCheckJobId(jobid);
+        List<LocalDatasetMetadataRecord> records =   lazyLocalDatsetMetadataRecordRepo.searchByLinkCheckJobId(jobid);
 
 
         endTime = System.currentTimeMillis();
@@ -771,7 +516,7 @@ public class MyCommandLineRunner implements CommandLineRunner {
     }
     public void run11(String... args) throws Exception {
     //   List<LocalServiceMetadataRecord> records =   localServiceMetadataRecordRepo.findByLinkCheckJobId("b7ee7707-698f-41ac-8dcf-ab0c43ab297a");
-        List<LocalServiceMetadataRecord> records =   localServiceMetadataRecordRepo.findByLinkCheckJobId(args[0]);
+       List<LocalServiceMetadataRecord> records =   lazyLocalServiceMetadataRecordRepo.searchByLinkCheckJobId(args[0]);
 
 
        int total =records.size();
@@ -1028,216 +773,7 @@ public class MyCommandLineRunner implements CommandLineRunner {
 
 
 
-        public void run8(String... args) throws Exception {
-        Iterable<LocalDatasetMetadataRecord> records =  localDatasetMetadataRecordRepo.findAll();
-
-        for (LocalDatasetMetadataRecord r:records){
-            //String xml = linkCheckBlobStorageRepo.findById(r.getSha2()).get().getTextValue();
-
-            String xml = blobStorageService.findXML(r.getSha2());
-            XmlDoc xmlDoc = xmlDocumentFactory.create(xml);
-
-            int t=0;
-        }
-    }
 
 
-    public void run6(String... args) throws Exception {
-        List<StatusQueryItem> items = localServiceMetadataRecordRepo.getStatus("6da77404-7427-4c88-80a3-0e8eb83966ea");
-        int t=0;
-    }
-        public void run5(String... args) throws Exception {
-        List<LocalServiceMetadataRecord> localServiceMetadataRecords = localServiceMetadataRecordRepo.findByLinkCheckJobId("6fa41298-a2c7-44c6-b1b1-55d04064144d");
-        for(LocalServiceMetadataRecord record : localServiceMetadataRecords){
-            String human = record.getHumanReadable();
-            String id = record.getFileIdentifier();
-            try (PrintStream out = new PrintStream(new FileOutputStream(id+".txt"))) {
-                out.print(human);
-            }
-        }
-    }
-
-        public void run4(String... args) throws Exception {
-        LocalServiceMetadataRecord localServiceMetadataRecord = localServiceMetadataRecordRepo.findById(1132L).get();
-        LocalServiceMetadataRecord smr = localServiceMetadataRecordRepo.save(localServiceMetadataRecord);
-
-        List<LocalServiceMetadataRecord> list = Arrays.asList(new LocalServiceMetadataRecord[]{smr});
-
-    }
-
-
-        public void run3(String... args) throws Exception {
-        String sha2_wmts = "49D36EFBA4B7A2541D31E44FC9557A8BEB0A7E275F1F22AAA00EEE953C41FF70";
-
-        String sha2_atom = "76ABB39998E3EF07307059CC3B703A3959A48447DB98203FBF686856E0C6D4E3";
-
-        String sha2_wms = "CB17C3851790A134F62C391DD9FFCC51052BF3451ADDE1ED07CA79430E4C1281";
-        String sha2_wfs = "9ADC3010703B006F47870F7572D4C796DDF5542ADB3B4DF923015E1095FA3A89";
-
-        String sha2_wms2 = "5E189A51157C500E3D870653B976706D7B97EF23B9220DF2DC99B8592693845E";
-        String sha2_wms3 = "F42EA03157107422350861C3EECC260BF7CF06A01D206113F85D2298BC24123F";
-
-        String sha2 = "0E75379A7CA9984B6AEFDEBCFA5AC92A0FE1D3BB47F2D1919BC318F49A7AB91C";
-
-        MetadataRecord metadataRecord = metadataRecordRepo.findBySha2(sha2).get(0);
-        String xml = blobStorageService.findXML(sha2);
-
-
-        XmlServiceRecordDoc doc = (XmlServiceRecordDoc) xmlDocumentFactory.create(xml);
-
-        LocalServiceMetadataRecord localServiceMetadataRecord =
-                metadataDocumentFactory.createLocalServiceMetadataRecord(doc, metadataRecord.getMetadataRecordId(), "TESTCASE", sha2);
-
-//        List<OnlineResource> links = serviceDocLinkExtractor.extractOnlineResource(doc);
-//
-//        List<ServiceDocumentLink> links2 = links.stream().map(x->serviceDocumentLinkService.create(localServiceMetadataRecord,x)).collect(Collectors.toList());
-//        localServiceMetadataRecord.setServiceDocumentLinks(links2);
-//
-//        List<OperatesOnLink> operatesOnLinks = doc.getOperatesOns().stream()
-//                                .map(x->operatesOnLinkService.create(localServiceMetadataRecord,x))
-//                .collect(Collectors.toList());
-//
-        //    localServiceMetadataRecord.setOperatesOnLinks(operatesOnLinks);
-
-        LocalServiceMetadataRecord sm11 = localServiceMetadataRecordRepo.findById(1L).get();
-        CapabilitiesDocument cd = sm11.getServiceDocumentLinks().stream().findFirst().get().getCapabilitiesDocument();
-        RemoteServiceMetadataRecordLink cd_rsmrl = cd.getRemoteServiceMetadataRecordLink();
-        String ss = cd_rsmrl.toString();
-        Set<OperatesOnLink> ll = sm11.getOperatesOnLinks();
-        int t6t = ll.size();
-        String human = humanReadableServiceMetadata.getHumanReadable(sm11);
-
-        LocalServiceMetadataRecord smr = localServiceMetadataRecordRepo.save(localServiceMetadataRecord);
-
-        List<LocalServiceMetadataRecord> list = Arrays.asList(new LocalServiceMetadataRecord[]{smr});
-            process(list);
-
-            int t = 0;
-    }
-
-    private void process(List<LocalServiceMetadataRecord> list) throws Exception {
-        for (LocalServiceMetadataRecord record : list) {
-
-            List<RemoteServiceMetadataRecordLink> remoteLinks = new ArrayList<>();
-            List<CapabilitiesDatasetMetadataLink> capabilitiesDatasetMetadataLinkList = new ArrayList<>();
-
-            //process servicedocumentlinks
-            for (ServiceDocumentLink link : record.getServiceDocumentLinks()) {
-                link = serviceDocumentLinkRepo.findById(link.getServiceMetadataLinkId()).get();// make sure we re-load
-                ServiceDocumentLink link2 = (ServiceDocumentLink) retrieveServiceDocumentLink.process(link);
-                link2 = serviceDocumentLinkRepo.save(link2); //re-save
-                if (link2.getCapabilitiesDocument() != null) {
-                    CapabilitiesDocument capabilitiesDocument = link2.getCapabilitiesDocument();
-                    RemoteServiceMetadataRecordLink rsmrl = capabilitiesDocument.getRemoteServiceMetadataRecordLink();
-                    if (rsmrl != null) {
-                        remoteLinks.add(rsmrl);
-                    }
-                    for (CapabilitiesDatasetMetadataLink capabilitiesDatasetMetadataLink : capabilitiesDocument.getCapabilitiesDatasetMetadataLinkList()) {
-                        capabilitiesDatasetMetadataLinkList.add(capabilitiesDatasetMetadataLink);
-                    }
-                }
-
-            }
-
-            //process resulting remoteMetadataRecordLinks
-            for (RemoteServiceMetadataRecordLink link : remoteLinks) {
-                RemoteServiceMetadataRecordLink link2 = remoteServiceMetadataRecordLinkRepo.findById(link.getRemoteServiceMetadataRecordLinkId()).get();
-                //   CapabilitiesDocument cd = link2.getCapabilitiesDocument();
-                RemoteServiceMetadataRecordLink rsmrl = remoteServiceMetadataRecordLinkRetriever.process(link2);
-                RemoteServiceMetadataRecordLink rsmrl2 = remoteServiceMetadataRecordLinkRepo.save(rsmrl);
-                int t = 0;
-            }
-
-            //process resulting capabilities doc dataset links
-            for (CapabilitiesDatasetMetadataLink link : capabilitiesDatasetMetadataLinkList) {
-                CapabilitiesDatasetMetadataLink link2 = capabilitiesDatasetMetadataLinkRepo.findById(link.getCapabilitiesDatasetMetadataLinkId()).get();
-                //   CapabilitiesDocument cd = link2.getCapabilitiesDocument();
-                CapabilitiesDatasetMetadataLink cdml = retrieveCapabilitiesDatasetMetadataLink.process(link2,"testcase");
-                CapabilitiesDatasetMetadataLink cdml2 = capabilitiesDatasetMetadataLinkRepo.save(cdml);
-                int t = 0;
-            }
-
-
-            for (OperatesOnLink operatesOnLink : record.getOperatesOnLinks()) {
-                operatesOnLink = operatesOnLinkRepo.findById(operatesOnLink.getOperatesOnLinkId()).get(); //reload
-                OperatesOnLink operatesOnLink2 = retrieveOperatesOnLink.process(operatesOnLink,"testcase");
-                operatesOnLink2 = operatesOnLinkRepo.save(operatesOnLink2);
-                int tt = 0;
-            }
-        }
-    }
-
-    public void run2(String... args) throws Exception {
-
-        logger.debug("hi there");
-//       HttpResult r= retriever.retrieveXML("GET","https://google.com/badurl", null, null,null);
-//    int ut=0;
-
-        //Optional<Link> l = linkRepo.findById(1L);
-//
-//        String sha2_wms = "65B3FFA90B5B277B34C7206D0283B7CD1FE89AE473998A566239992C4A59A417";
-//        String sha2_wfs = "8759C3E02840BC5DE3F81B23F4AF1D124821384252AC018A0BDEB0386B76E663";
-//        String sha2_atom = "546108E2F8D91EEE3E0684736F1469953EF8F71A73A63849E19B84D027704857";
-//        String sha2_wmts = "49D36EFBA4B7A2541D31E44FC9557A8BEB0A7E275F1F22AAA00EEE953C41FF70";
-//
-//        String sha2 = sha2_wms;
-//
-//        MetadataRecord metadataRecord = metadataRecordRepo.findBySha2(sha2).get(0);
-//        EndpointJob endpointJob = endpointJobRepo.findById(metadataRecord.getEndpointJobId()).get();
-//        String xml = blobStorageService.findXML(sha2);
-
-//        EndpointJob endpointJob = endpointJobRepo.findById(40L).get();
-//        List<MetadataRecord> records = metadataRecordRepo.findByEndpointJobId(endpointJob.getEndpointJobId());
-
-        // records = records.subList(34,40);
-        //  records = Arrays.asList( new MetadataRecord[]{records.get(66)});
-        //records = Arrays.asList( new MetadataRecord[]{records.get(424),records.get(501),records.get(446),records.get(448)});
-        //  records = Arrays.asList( new MetadataRecord[]{records.get(446),records.get(448)});
-        // records = Arrays.asList( new MetadataRecord[]{records.get(33),records.get(37)});
-
-        // MetadataRecord record = records.get(6);
-
-//        for(MetadataRecord record : records) {
-//            try {
-//                String sha2 = record.getSha2();
-//                String xml = blobStorageService.findXML(sha2);
-//
-//                List<Link> links = serviceDocLinkExtractor.extractLinks(
-//                        xml, sha2, endpointJob.getHarvestJobId(), endpointJob.getEndpointJobId(),"testcase");
-//                for (Link ll : links) {
-//                    try {
-//                        ll = linkProcessor_simpleLinkRequest.process(ll);
-//
-//                        ll = linkProcessor_processCapDoc.process(ll);
-//
-//                        ll = linkProcessor_getCapLinkedMetadata.process(ll);
-//                     //   linkRepo.save(ll);
-//                        int t = 0;
-//                    }
-//                    catch(Exception e)
-//                    {
-//                        int tt=0;
-//                    }
-//                }
-//            }
-//            catch(NotServiceRecordException notServiceRecordException){
-//                int utt=0;
-//            }
-//            catch(Exception e){
-//                int t=0;
-//            }
-//        }
-//        XmlDoc xmlDoc = xmlDocumentFactory.create(xml);
-//
-//        if (xmlDoc instanceof XmlServiceRecordDoc)
-//        {
-//            XmlServiceRecordDoc xmlServiceRecord = (XmlServiceRecordDoc) xmlDoc;
-//            String capURL = xmlServiceRecord.getConnectPoints().get(0).getRawURL();
-//            String capXML = new String(retriever.retrieveXML("GET",capURL,null,null,null));
-//            XmlDoc capXMLDoc = xmlDocumentFactory.create(capXML);
-//            int t=0;
-//        }
-
-    }
 }
 

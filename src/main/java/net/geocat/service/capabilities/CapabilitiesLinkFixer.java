@@ -82,6 +82,9 @@ public class CapabilitiesLinkFixer   {
             if (link.endsWith("?"))
                 link += "request=GetCapabilities";
 
+            if (link.contains("mod_inspireDownloadFeed.php"))
+                return canonicalize(link);
+
             String requestParam = findQueryParmName(link, "request");
             if (requestParam ==null)
                 requestParam ="request";

@@ -114,4 +114,18 @@ public class MetadataDocumentService {
 
         return (nRecords ) == (nrecordsServiceComplete+nrecordsDatasetComplete+nrecordWillNotProcess);
      }
+
+    public long numberRemainingLinkExtract(String linkCheckJobId) {
+        LinkCheckJob job = linkCheckJobService.find(linkCheckJobId);
+        if (job.getNumberOfDocumentsInBatch() ==null)
+            return 1;
+
+        long nRecords = job.getNumberOfDocumentsInBatch();
+
+        long nrecordsServiceComplete = localServiceMetadataRecordRepo.countCompletedState(linkCheckJobId);
+        long nrecordsDatasetComplete = localDatasetMetadataRecordRepo.countCompletedState(linkCheckJobId);
+        long nrecordWillNotProcess = localNotProcessedMetadataRecordRepo.countCompletedState(linkCheckJobId);
+
+        return (nRecords ) - (nrecordsServiceComplete+nrecordsDatasetComplete+nrecordWillNotProcess);
+    }
 }

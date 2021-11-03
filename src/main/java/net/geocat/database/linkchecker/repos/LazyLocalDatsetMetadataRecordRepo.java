@@ -44,6 +44,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import javax.persistence.EntityGraph;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -93,5 +94,24 @@ public class LazyLocalDatsetMetadataRecordRepo {
         }
     }
 
+    public synchronized List<LocalDatasetMetadataRecord> searchByLinkCheckJobId(  String linkCheckJobId){
+        EntityManager entityManager =  localContainerEntityManagerFactoryBean.createNativeEntityManager(null);
+        try {
 
+            EntityGraph entityGraph = entityManager.getEntityGraph("LocalDatasetMetadataRecord-lazy-graph");
+
+
+            Query query = entityManager.createQuery("SELECT lsmr FROM LocalDatasetMetadataRecord lsmr WHERE lsmr.linkCheckJobId = :linkCheckJobId  ")
+                    .setHint("javax.persistence.fetchgraph", entityGraph)
+                    .setParameter("linkCheckJobId", linkCheckJobId)
+;
+                  //  .setMaxResults(1);
+          //  List<LocalDatasetMetadataRecord> results = new ArrayList<LocalDatasetMetadataRecord>(query.getResultList());
+
+            return query.getResultList();
+        }
+        finally {
+            entityManager.close();
+        }
+    }
 }

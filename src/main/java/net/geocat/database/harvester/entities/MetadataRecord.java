@@ -72,8 +72,8 @@ public class MetadataRecord {
     @Column(columnDefinition = "varchar(64)")
     private String sha2;
 
-//    @Column(columnDefinition = "text", name = "record_identifier")
-//    public String recordIdentifier;
+    @Column(columnDefinition = "text", name = "record_identifier")
+    public String recordIdentifier;
 
 //    @PrePersist
 //    private void onInsert() {
@@ -86,13 +86,13 @@ public class MetadataRecord {
 //    }
 
 
-//    public String getRecordIdentifier() {
-//        return recordIdentifier;
-//    }
-//
-//    public void setRecordIdentifier(String recordIdentifier) {
-//        this.recordIdentifier = recordIdentifier;
-//    }
+    public String getRecordIdentifier() {
+        return recordIdentifier;
+    }
+
+    public void setRecordIdentifier(String recordIdentifier) {
+        this.recordIdentifier = recordIdentifier;
+    }
 
 
     public long getMetadataRecordId() {

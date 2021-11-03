@@ -95,6 +95,27 @@ public class LazyLocalServiceMetadataRecordRepo {
             entityManager.close();
         }
     }
+    public synchronized   List<LocalServiceMetadataRecord>  searchByLinkCheckJobId(String linkCheckJobId){
 
+
+        EntityManager  entityManager =  localContainerEntityManagerFactoryBean.createNativeEntityManager(null);
+        try {
+
+            EntityGraph entityGraph = entityManager.getEntityGraph("LocalServiceMetadataRecord-lazy-graph");
+
+
+            Query query = entityManager.createQuery("SELECT lsmr FROM LocalServiceMetadataRecord lsmr WHERE lsmr.linkCheckJobId = :linkCheckJobId  ")
+                    .setHint("javax.persistence.fetchgraph", entityGraph)
+                    .setParameter("linkCheckJobId", linkCheckJobId)
+;
+                   // .setMaxResults(1);
+            List<LocalServiceMetadataRecord> results = query.getResultList();
+
+            return results;
+        }
+        finally {
+            entityManager.close();
+        }
+    }
 
 }

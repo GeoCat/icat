@@ -50,7 +50,8 @@ public class ShouldTransitionOutOfPostProcessing {
 
     // linkCheckJobId ->   serviceMetadataId (or datasetMetadataId)
     protected static Map<String, Long> completedLinkCheckJobs = new HashMap<>();
-
+    // linkCheckJobId ->   number items remaining
+    protected static Map<String, Long> numberItemsRemaining = new HashMap<>();
 
     // you MUST send the complete message if this returns true.
     // All future calls will return false.
@@ -61,7 +62,7 @@ public class ShouldTransitionOutOfPostProcessing {
 
             if (completedLinkCheckJobs.containsKey(linkCheckJobId))
                 return false; // already sent
-            boolean done = metadataService.linkPostProcessingComplete(linkCheckJobId);
+            boolean done = isDone(linkCheckJobId);
             if (!done)
                 return false;
             // done - we need to prevent it from happening in the future
@@ -69,5 +70,24 @@ public class ShouldTransitionOutOfPostProcessing {
             return true;
 
         }
+    }
+
+
+    public boolean isDone(String linkCheckJob){
+        Long nremaining = numberItemsRemaining.get(linkCheckJob);
+        if (nremaining == null) {
+            nremaining =metadataService.numberRemainingLinkPostProcessing(linkCheckJob);
+            numberItemsRemaining.put(linkCheckJob,nremaining );
+        }
+        // more than 20 remaining - we're good.
+        if (nremaining > 20) {
+            numberItemsRemaining.put(linkCheckJob,  nremaining -1 );
+            return false;
+        }
+
+        //less than 20 remaining, we check
+        nremaining= metadataService.numberRemainingLinkPostProcessing(linkCheckJob);
+        numberItemsRemaining.put(linkCheckJob,nremaining);
+        return nremaining==0;
     }
 }

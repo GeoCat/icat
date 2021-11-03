@@ -128,8 +128,8 @@ public class EventProcessor_StartProcessDocumentsEvent extends BaseEventProcesso
 //        List<String> items = Arrays.asList(new String[] {"eab36660-76ec-11e0-994d-0002a5d5c51b"});
 //
         //todo - remove
-//     List<String> items = Arrays.asList(new String[] { "f74372bd-0571-421e-9681-e70a5c8f331a",
-//              "37569840-7c18-49da-bac5-f730491591e4"
+//     List<String> items = Arrays.asList(new String[] { "7c2d4e17-608b-aa17-c9db-951db60ff22b",
+//              "19705c73-3409-0002-c9db-951db60ff22b"
 //     });
 //     metadataRecords = metadataRecords.stream().filter(x-> items.contains(x.getRecordIdentifier() )).collect(Collectors.toList());
 //     metadataRecords = metadataRecords.stream().filter(x-> !items.contains(x.getRecordIdentifier() )).collect(Collectors.toList());
@@ -179,7 +179,8 @@ public class EventProcessor_StartProcessDocumentsEvent extends BaseEventProcesso
         }
 
      //   result = result.subList(0,180000);
-        logger.debug("Finished sending to-process-document messages for "+metadataRecords.size()+" records.");
+        logger.debug("Finished generating to-process-document messages for "+metadataRecords.size()+" records. (camel will send all in one tx)");
+
 
         return result;
     }

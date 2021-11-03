@@ -111,6 +111,49 @@ public class MetadataService {
         return true;
     }
 
+    public long numberRemaininglinkProcessing(String linkCheckJobId) {
+        LinkCheckJob job  = linkCheckJobRepo.findById(linkCheckJobId).get();
+
+
+        Long nService =  job.getNumberOfLocalServiceRecords();
+        Long nDataset = job.getNumberOfLocalDatasetRecords();
+        Long nOther = job.getNumberOfNotProcessedDatasetRecords();
+
+
+        long nDataset_complete = localDatasetMetadataRecordRepo.countInStates(linkCheckJobId,
+                Arrays.asList(new String[] {
+                        ServiceMetadataDocumentState.ERROR.toString(),
+                        ServiceMetadataDocumentState.LINKS_PROCESSED.toString(),
+                        ServiceMetadataDocumentState.NOT_APPLICABLE.toString(),
+                })  ) ;
+
+
+
+        long nService_complete = localServiceMetadataRecordRepo.countInStates(linkCheckJobId,
+                Arrays.asList(new String[] {
+                        ServiceMetadataDocumentState.ERROR.toString(),
+                        ServiceMetadataDocumentState.LINKS_PROCESSED.toString(),
+                        ServiceMetadataDocumentState.NOT_APPLICABLE.toString(),
+                })  ) ;
+
+
+
+
+        long nOther_complete = localNotProcessedMetadataRecordRepo.countInStates(linkCheckJobId,
+                Arrays.asList(new String[] {
+                        ServiceMetadataDocumentState.ERROR.toString(),
+                        ServiceMetadataDocumentState.LINKS_PROCESSED.toString(),
+                        ServiceMetadataDocumentState.NOT_APPLICABLE.toString(),
+                })  ) ;
+
+
+
+        long total_records = nDataset+ nService +nOther;
+        long total_complete = nDataset_complete+nService_complete +nOther_complete;
+        return total_records - total_complete;
+
+     }
+
 
     public boolean linkPostProcessingComplete(String linkCheckJobId) {
         long nService = localServiceMetadataRecordRepo.countByLinkCheckJobId(linkCheckJobId);
@@ -135,5 +178,30 @@ public class MetadataService {
 
         return total_records == total_complete;
     }
+
+    public long numberRemainingLinkPostProcessing(String linkCheckJobId) {
+        long nService = localServiceMetadataRecordRepo.countByLinkCheckJobId(linkCheckJobId);
+        long nDataset = localDatasetMetadataRecordRepo.countByLinkCheckJobId(linkCheckJobId);
+
+        long nDataset_complete = localDatasetMetadataRecordRepo.countInStates(linkCheckJobId,
+                Arrays.asList(new String[] {
+                        ServiceMetadataDocumentState.ERROR.toString(),
+                        ServiceMetadataDocumentState.LINKS_POSTPROCESSED.toString(),
+                        ServiceMetadataDocumentState.NOT_APPLICABLE.toString(),
+                })  ) ;
+
+        long nService_complete = localServiceMetadataRecordRepo.countInStates(linkCheckJobId,
+                Arrays.asList(new String[] {
+                        ServiceMetadataDocumentState.ERROR.toString(),
+                        ServiceMetadataDocumentState.LINKS_POSTPROCESSED.toString(),
+                        ServiceMetadataDocumentState.NOT_APPLICABLE.toString(),
+                })  ) ;
+
+        long total_records = nDataset+ nService;
+        long total_complete = nDataset_complete+nService_complete;
+
+        return total_records - total_complete;
+    }
+
 
 }
