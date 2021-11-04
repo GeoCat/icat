@@ -85,7 +85,7 @@ public class EventProcessor_PostProcessServiceDocumentEvent extends BaseEventPro
 //        localServiceMetadataRecordRepo.save(localServiceMetadataRecord);
 
 
-        localServiceMetadataRecordRepo.updateState(getInitiatingEvent().getServiceMetadataId(), ServiceMetadataDocumentState.LINKS_POSTPROCESSED);
+        localServiceMetadataRecordRepo.updateStateNotApplicable(getInitiatingEvent().getServiceMetadataId(), ServiceMetadataDocumentState.LINKS_POSTPROCESSED);
         return this;
     }
 

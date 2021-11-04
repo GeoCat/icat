@@ -67,6 +67,12 @@ public class RetrieveOperatesOnLink {
         if ( (link.getFixedURL() == null) || link.getFixedURL().isEmpty())
             link.setFixedURL(link.getRawURL());
 
+        if (link.getFixedURL() != null) {
+            link.setFixedURL(link.getFixedURL().replace("&amp;", "&"));
+            link.setFixedURL(link.getFixedURL().replace("{", "%7B"));
+            link.setFixedURL(link.getFixedURL().replace("}", "%7D"));// this seems to happen a lot
+
+        }
         link.setFixedURL( canonicalize(link.getFixedURL()));
 
 

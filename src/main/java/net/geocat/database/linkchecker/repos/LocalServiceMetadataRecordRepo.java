@@ -57,6 +57,12 @@ public interface LocalServiceMetadataRecordRepo extends CrudRepository<LocalServ
     @Query(value="UPDATE LocalServiceMetadataRecord lsmr SET lsmr.state = :newState WHERE lsmr.serviceMetadataDocumentId = :id ")
     void updateState(long id, ServiceMetadataDocumentState newState);
 
+    @Transactional
+    @Modifying
+    @Query(value="UPDATE LocalServiceMetadataRecord lsmr SET lsmr.state = :newState WHERE lsmr.serviceMetadataDocumentId = :id and (lsmr.state <> 'NOT_APPLICABLE')")
+    void updateStateNotApplicable(long id, ServiceMetadataDocumentState newState);
+
+
     LocalServiceMetadataRecord findFirstByLinkCheckJobIdAndSha2(String linkCheckJobId, String sha2);
 
     List<LocalServiceMetadataRecord> findByLinkCheckJobId(String linkCheckJobId);

@@ -58,6 +58,11 @@ public interface LocalDatasetMetadataRecordRepo extends CrudRepository<LocalData
     @Query(value="UPDATE LocalDatasetMetadataRecord ldmr SET ldmr.state = :newState WHERE ldmr.datasetMetadataDocumentId = :id ")
     void updateState(long id, ServiceMetadataDocumentState newState);
 
+    @Transactional
+    @Modifying
+    @Query(value="UPDATE LocalDatasetMetadataRecord ldmr SET ldmr.state = :newState WHERE ldmr.datasetMetadataDocumentId = :id and (ldmr.state <> 'NOT_APPLICABLE')")
+    void updateStateNotNotApplicatable(long id, ServiceMetadataDocumentState newState);
+
     LocalDatasetMetadataRecord findFirstByFileIdentifierAndLinkCheckJobId(String fileID,String linkCheckJobId);
 
     LocalDatasetMetadataRecord findFirstByFileIdentifier(String fileID);

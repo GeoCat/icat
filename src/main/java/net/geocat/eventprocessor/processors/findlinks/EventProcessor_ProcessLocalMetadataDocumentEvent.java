@@ -241,7 +241,10 @@ public class EventProcessor_ProcessLocalMetadataDocumentEvent extends BaseEventP
     @Override
     public List<Event> newEventProcessing() {
         List<Event> result = new ArrayList<>();
-        logger.debug("Parsed Metadata Record with fileIdentifier:"+doc.getFileIdentifier() +", title="+doc.getTitle());
+        if (doc instanceof XmlServiceRecordDoc)
+            logger.debug("Parsed SERVICE Metadata Record with fileIdentifier:"+doc.getFileIdentifier() +", title="+doc.getTitle());
+        else
+            logger.debug("Parsed DATASET Metadata Record with fileIdentifier:"+doc.getFileIdentifier() +", title="+doc.getTitle());
 
         String linkCheckJob = getInitiatingEvent().getLinkCheckJobId();
 

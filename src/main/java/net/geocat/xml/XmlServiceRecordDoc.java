@@ -77,6 +77,20 @@ public class XmlServiceRecordDoc extends XmlMetadataDocument {
         operatesOns = OperatesOn.create(nl);
     }
 
+    public String translateServiceType(String xmlServiceType){
+        if (xmlServiceType == null)
+            return null;
+        if (xmlServiceType.equalsIgnoreCase("ogc:wms"))
+            return "view";
+        else if (xmlServiceType.equalsIgnoreCase("ogc:wmts"))
+            return "view";
+        else if (xmlServiceType.equalsIgnoreCase("ogc:wfs"))
+            return "download";
+
+
+        return xmlServiceType;
+    }
+
     public void populateServiceType() throws Exception {
        // Node n = xpath_node("//srv:serviceType/gco:LocalName");
        // Node n = xpath_node("//*[local-name()='serviceType']/*[local-name()='LocalName']");
@@ -85,7 +99,7 @@ public class XmlServiceRecordDoc extends XmlMetadataDocument {
             return;
         Node n = XmlDoc.findNode(serviceId,"serviceType","LocalName");
         if (n != null) {
-            serviceType = n.getTextContent();
+            serviceType = translateServiceType(n.getTextContent());
         }
        // n = xpath_node("//srv:serviceTypeVersion/gco:CharacterString");
     //    n = xpath_node("//*[local-name()='serviceTypeVersion']/*[local-name()='CharacterString']");

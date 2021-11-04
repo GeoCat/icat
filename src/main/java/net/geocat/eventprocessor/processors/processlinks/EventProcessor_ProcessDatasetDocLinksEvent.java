@@ -107,7 +107,7 @@ public class EventProcessor_ProcessDatasetDocLinksEvent extends BaseEventProcess
 //        localDatasetMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_PROCESSED);
 //        localDatasetMetadataRecordRepo.save(localDatasetMetadataRecord);
      //   metadataRecord.setState(ServiceMetadataDocumentState.LINKS_EXTRACTED);
-        localDatasetMetadataRecordRepo.updateState(getInitiatingEvent().getDatasetDocumentId(), ServiceMetadataDocumentState.LINKS_PROCESSED);
+        localDatasetMetadataRecordRepo.updateStateNotNotApplicatable(getInitiatingEvent().getDatasetDocumentId(), ServiceMetadataDocumentState.LINKS_PROCESSED);
 
         return this;
     }

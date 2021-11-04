@@ -132,11 +132,11 @@ public class MetadataRecord {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MetadataRecord that = (MetadataRecord) o;
-        return Objects.equals(metadataRecordId, that.metadataRecordId);
+        return Objects.equals(recordIdentifier, that.recordIdentifier);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(metadataRecordId);
+        return Objects.hash(recordIdentifier);
     }
 }

@@ -78,6 +78,8 @@ public class CapabilitiesLinkFixer   {
                 return link;
 
             link = link.replace("&amp;","&"); // this seems to happen a lot
+            link = link.replace("{","%7B");
+            link = link.replace("}","%7D");
 
             if (link.endsWith("?"))
                 link += "request=GetCapabilities";

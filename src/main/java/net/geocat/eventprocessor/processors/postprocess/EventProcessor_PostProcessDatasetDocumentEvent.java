@@ -110,7 +110,9 @@ public class EventProcessor_PostProcessDatasetDocumentEvent extends BaseEventPro
     @Override
     public EventProcessor_PostProcessDatasetDocumentEvent internalProcessing() throws Exception {
         localDatasetMetadataRecord = localDatasetMetadataRecordRepo.findById(getInitiatingEvent().getDatasetDocumentId()).get();// make sure we re-load
-
+        if (localDatasetMetadataRecord.getState() == ServiceMetadataDocumentState.NOT_APPLICABLE)
+            return this; //nothing to do
+        
         try{
             process();
             localDatasetMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_POSTPROCESSED);

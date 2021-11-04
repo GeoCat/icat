@@ -60,7 +60,8 @@ public class DatasetLinkFixer implements ILinkFixer {
                 return link;
 
             link = link.replace("&amp;","&"); // this seems to happen a lot
-
+            link = link.replace("{","%7B");
+            link = link.replace("}","%7D");
 
             String requestParam = CapabilitiesLinkFixer.findQueryParmName(link, "request");
             if (requestParam == null)

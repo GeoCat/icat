@@ -144,7 +144,11 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
 
     @Override
     public EventProcessor_ProcessServiceDocLinksEvent externalProcessing() throws Exception {
-         localServiceMetadataRecord = localServiceMetadataRecordRepo.findById(getInitiatingEvent().getServiceMetadataId()).get();// make sure we re-load
+        localServiceMetadataRecord = localServiceMetadataRecordRepo.findById(getInitiatingEvent().getServiceMetadataId()).get();// make sure we re-load
+        if (localServiceMetadataRecord.getState() == ServiceMetadataDocumentState.NOT_APPLICABLE)
+            return this; //nothing to do
+
+
      //   localServiceMetadataRecord = localServiceMetadataRecordRepo.fullId(getInitiatingEvent().getServiceMetadataId());// make sure we re-load
 
        // prune(); // remove any previous work (if this is being re-run)
@@ -249,7 +253,9 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
     public EventProcessor_ProcessServiceDocLinksEvent internalProcessing() throws Exception {
         //handle post-procssing
         //reload for any outstanding transactions
-          localServiceMetadataRecord = localServiceMetadataRecordRepo.findById(getInitiatingEvent().getServiceMetadataId()).get();// make sure we re-load
+        localServiceMetadataRecord = localServiceMetadataRecordRepo.findById(getInitiatingEvent().getServiceMetadataId()).get();// make sure we re-load
+        if (localServiceMetadataRecord.getState() == ServiceMetadataDocumentState.NOT_APPLICABLE)
+            return this; //nothing to do
 
         try {
 

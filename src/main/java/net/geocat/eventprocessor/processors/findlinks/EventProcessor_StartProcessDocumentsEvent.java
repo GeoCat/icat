@@ -119,7 +119,7 @@ public class EventProcessor_StartProcessDocumentsEvent extends BaseEventProcesso
     //   metadataRecords = metadataRecords.stream().filter(x-> x.getMetadataRecordId() == 7661).collect(Collectors.toList());//todo - remove
 
     //  metadataRecords = metadataRecords.stream().filter(x-> x.getMetadataRecordId() == 2691).collect(Collectors.toList());
-//           List<Long> items = Arrays.asList(new Long[] {12743L,9058L} );
+//           List<Long> items = Arrays.asList(new Long[] {4937L} );
 //        metadataRecords = metadataRecords.stream().filter(x-> items.contains(x.getMetadataRecordId() )).collect(Collectors.toList());
 
         //metadataRecords = metadataRecords.stream().filter(x-> items.contains(x.getMetadataRecordId() )).collect(Collectors.toList());
@@ -142,9 +142,15 @@ public class EventProcessor_StartProcessDocumentsEvent extends BaseEventProcesso
 
         //--------------------------------------------------------------------------------------------------------
 
-
+        int nTotal= metadataRecords.size();
         //remove duplicates
         metadataRecords = metadataRecords.stream().distinct().collect(Collectors.toList());
+        int nDistinct = metadataRecords.size();
+
+        if (nTotal != nDistinct){
+            logger.warn("DUPLICATE RECORDS REMOVED - linkcheckjob:"+linkCheckJobId+", nRecords="+nTotal+", nDistinct="+nDistinct);
+        }
+
 
         LinkCheckJob job = linkCheckJobService.updateNumberofDocumentsInBatch(linkCheckJobId, (long) metadataRecords.size());
 
