@@ -73,14 +73,16 @@ public class GetStatusService {
     @Autowired
     LogbackLoggingEventExceptionRepo logbackLoggingEventExceptionRepo;
 
-    public LinkCheckStatus getStatus(String processID) {
+    public LinkCheckStatus getStatus(String processID, Boolean showErrors) {
+        showErrors = showErrors == null? false : showErrors;
         LinkCheckJob job = linkCheckJobRepo.findById(processID).get();
 
         LinkCheckStatus result = new LinkCheckStatus(processID, job.getState());
         result.setServiceRecordStatus( computeServiceRecords(processID));
         result.setDatasetRecordStatus( computeDatasetRecords(processID));
 
-        setupErrorMessages(result);
+        if (showErrors)
+                setupErrorMessages(result);
         return result;
     }
 
