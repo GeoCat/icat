@@ -1,12 +1,10 @@
 FROM --platform=$BUILDPLATFORM maven:3-eclipse-temurin-8 as builder
 
-COPY ./pom.xml ./pom.xml
+WORKDIR /sources
+COPY ./ /sources
 # store maven dependencies so next build doesn't have to download them again
 RUN --mount=type=cache,target=/root/.m2/repository \
-    mvn dependency:go-offline -B
-
-COPY ./src ./src
-
+    mvn -B dependency:go-offline
 
 RUN --mount=type=cache,target=/root/.m2/repository \
     mvn -B package -DskipTests

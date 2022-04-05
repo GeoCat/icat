@@ -69,7 +69,7 @@
             <Layer queryable="1" cascaded="0" opaque="0" noSubsets="0" fixedWidth="0" fixedHeight="0">
                 <Name>layer2name</Name>
                 <Title>layer2title</Title>
-                <Abstract>layer2abstractt</Abstract>
+                <Abstract>layer2abstract</Abstract>
 
 
                 <Identifier authority="authority">layer2identifier</Identifier>

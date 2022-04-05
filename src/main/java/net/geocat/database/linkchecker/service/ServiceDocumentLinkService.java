@@ -74,6 +74,8 @@ public class ServiceDocumentLinkService {
         result.setRawURL(onlineResource.getRawURL());
         result.setProtocol(onlineResource.getProtocol());
 
+        result.setLinkCheckJobId(datasetMetadataRecord.getLinkCheckJobId());
+
         return result;
     }
 }

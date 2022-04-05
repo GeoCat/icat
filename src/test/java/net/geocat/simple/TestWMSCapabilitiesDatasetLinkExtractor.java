@@ -66,14 +66,20 @@ public class TestWMSCapabilitiesDatasetLinkExtractor {
         List<DatasetLink> links = wmsCapabilitiesDatasetLinkExtractor.findLinks(xmlCapabilitiesDocument);
         assertEquals(2,links.size());
 
-        assertEquals("authority", links.get(0).getAuthority());
+        assertEquals("http://www.authority", links.get(0).getAuthority());
+        assertEquals("authority", links.get(0).getAuthorityName());
+
         assertEquals("layer2identifierDSURL", links.get(0).getRawUrl());
         assertEquals("layer2identifier", links.get(0).getIdentifier());
+        assertEquals("layer2name", links.get(0).getOgcLayerName());
 
 
-        assertEquals("authority", links.get(1).getAuthority());
+        assertEquals("http://www.authority", links.get(1).getAuthority());
+        assertEquals("authority", links.get(1).getAuthorityName());
+
         assertEquals("layer2identifierDSURL2", links.get(1).getRawUrl());
         assertEquals("layer2identifier", links.get(1).getIdentifier());
+        assertEquals("layer2name", links.get(1).getOgcLayerName());
 
     }
 
@@ -83,7 +89,7 @@ public class TestWMSCapabilitiesDatasetLinkExtractor {
         List<DatasetLink> links = wmsCapabilitiesDatasetLinkExtractor.findLinks(xmlCapabilitiesDocument);
         assertEquals(1,links.size());
 
-        assertEquals("authority", links.get(0).getAuthority());
+        assertEquals("http://www.authority", links.get(0).getAuthority());
         assertEquals("layer2identifierDSURL", links.get(0).getRawUrl());
         assertEquals("layer2identifier", links.get(0).getIdentifier());
 
@@ -94,11 +100,17 @@ public class TestWMSCapabilitiesDatasetLinkExtractor {
         XmlCapabilitiesWMS xmlCapabilitiesDocument = read("wms_cap_full_nested_in_parent.xml");
         List<DatasetLink> links = wmsCapabilitiesDatasetLinkExtractor.findLinks(xmlCapabilitiesDocument);
 
-        assertEquals(1,links.size()); // 1 because the will both be the same
+        assertEquals(2,links.size()); // 1 because the will both be the same
 
-        assertEquals("authority", links.get(0).getAuthority());
-        assertEquals("layer2identifierDSURL", links.get(0).getRawUrl());
-        assertEquals("layer2identifier", links.get(0).getIdentifier());
+        assertEquals("http://www.authority", links.get(0).getAuthority());
+        assertEquals("layer1identifierDSURL", links.get(0).getRawUrl());
+        assertEquals("layer1identifier", links.get(0).getIdentifier());
+        assertEquals("layer1name", links.get(0).getOgcLayerName());
+
+        assertEquals("http://www.authority", links.get(1).getAuthority());
+        assertEquals("layer1identifierDSURL", links.get(1).getRawUrl());
+        assertEquals("layer1identifier", links.get(1).getIdentifier());
+        assertEquals("layer2name", links.get(1).getOgcLayerName());
 
     }
 

@@ -44,25 +44,22 @@
         </inspire_vs:ExtendedCapabilities>
 
         <Layer queryable="0" cascaded="0" opaque="0" noSubsets="0" fixedWidth="0" fixedHeight="0">
+            <Name>layer1name</Name>
             <Title>layer1Title</Title>
             <Abstract>layer1Abstract</Abstract>
 
             <AuthorityURL name="authority">
                 <OnlineResource xlink:type="simple" xlink:href="http://www.authority"/>
             </AuthorityURL>
-            <Identifier authority="authority">layer2identifier</Identifier>
+            <Identifier authority="authority">layer1identifier</Identifier>
             <MetadataURL type="ISO19115:2003">
                 <Format>text/xml</Format>
-                <OnlineResource xlink:type="simple" xlink:href="layer2identifierDSURL"/>
+                <OnlineResource xlink:type="simple" xlink:href="layer1identifierDSURL"/>
             </MetadataURL>
             <Layer queryable="1" cascaded="0" opaque="0" noSubsets="0" fixedWidth="0" fixedHeight="0">
                 <Name>layer2name</Name>
                 <Title>layer2title</Title>
                 <Abstract>layer2abstractt</Abstract>
-
-
-
-
             </Layer>
         </Layer>
     </Capability>

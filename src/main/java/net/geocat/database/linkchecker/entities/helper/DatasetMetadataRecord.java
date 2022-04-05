@@ -40,7 +40,10 @@ import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 // Represents a Dataset Metadata Record
@@ -68,8 +71,10 @@ public class DatasetMetadataRecord extends MetadataRecord {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long datasetMetadataDocumentId;
 
-    // INSPIRE dataset identifier (from document)
-    private String datasetIdentifier;
+    @OneToMany(mappedBy = "datasetMetadataRecord",
+            cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
+    @Fetch(value = FetchMode.JOIN)
+    Set<DatasetMetadataRecordDatasetIdentifier> datasetIdentifiers;
 
     // number of links found in the document
     //  i.e. documentLinks.size()
@@ -127,11 +132,36 @@ public class DatasetMetadataRecord extends MetadataRecord {
     IndicatorStatus INDICATOR_SERVICE_MATCHES_VIEW;
 
 
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "varchar(5)")
+    IndicatorStatus INDICATOR_VIEW_LINK_TO_DATA;
+
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "varchar(5)")
+    IndicatorStatus INDICATOR_DOWNLOAD_LINK_TO_DATA;
+
     //---------------------------------------------------------------------------
 
     public DatasetMetadataRecord() {
         super();
         documentLinks = new ArrayList<>();
+        datasetIdentifiers = new HashSet<>();
+    }
+
+    public IndicatorStatus getINDICATOR_VIEW_LINK_TO_DATA() {
+        return INDICATOR_VIEW_LINK_TO_DATA;
+    }
+
+    public void setINDICATOR_VIEW_LINK_TO_DATA(IndicatorStatus INDICATOR_VIEW_LINK_TO_DATA) {
+        this.INDICATOR_VIEW_LINK_TO_DATA = INDICATOR_VIEW_LINK_TO_DATA;
+    }
+
+    public IndicatorStatus getINDICATOR_DOWNLOAD_LINK_TO_DATA() {
+        return INDICATOR_DOWNLOAD_LINK_TO_DATA;
+    }
+
+    public void setINDICATOR_DOWNLOAD_LINK_TO_DATA(IndicatorStatus INDICATOR_DOWNLOAD_LINK_TO_DATA) {
+        this.INDICATOR_DOWNLOAD_LINK_TO_DATA = INDICATOR_DOWNLOAD_LINK_TO_DATA;
     }
 
     public String getLinksToViewCapabilities() {
@@ -222,14 +252,18 @@ public class DatasetMetadataRecord extends MetadataRecord {
         this.datasetMetadataDocumentId = datasetMetadataDocumentId;
     }
 
-    public String getDatasetIdentifier() {
-        return datasetIdentifier;
+    public List<DatasetMetadataRecordDatasetIdentifier> getDatasetIdentifiers() {
+        return datasetIdentifiers.stream().collect(Collectors.toList());
     }
 
-    public void setDatasetIdentifier(String datasetIdentifier) {
-        this.datasetIdentifier = datasetIdentifier;
-    }
+//    public void setDatasetIdentifiers(List<DatasetMetadataRecordDatasetIdentifier> datasetIdentifiers) {
+//        this.datasetIdentifiers = datasetIdentifiers;
+//    }
 
+    public void setDatasetIdentifiers(List<DatasetIdentifier> datasetIdentifiers) {
+        this.datasetIdentifiers = datasetIdentifiers.stream().map(x->new DatasetMetadataRecordDatasetIdentifier(x,this)).collect(Collectors.toSet());
+       // this.datasetIdentifiers = datasetIdentifiers;
+    }
 
     //---------------------------------------------------------------------------
 
@@ -255,7 +289,8 @@ public class DatasetMetadataRecord extends MetadataRecord {
     public String toString() {
         String result = super.toString();
 
-        result += "     dataset Identifier: " + datasetIdentifier + "\n";
+       // result += "     dataset Identifier: " + datasetIdentifier + "\n";
+      //  result += "     dataset Identifier codespace: " + datasetIdentifierCodeSpace + "\n";
         if (numberOfLinksFound != null)
             result += "     number of links found: "+ numberOfLinksFound+"\n";
 

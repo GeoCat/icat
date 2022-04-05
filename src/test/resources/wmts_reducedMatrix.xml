@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~  =============================================================================
+  ~  ===  Copyright (C) 2021 Food and Agriculture Organization of the
+  ~  ===  United Nations (FAO-UN), United Nations World Food Programme (WFP)
+  ~  ===  and United Nations Environment Programme (UNEP)
+  ~  ===
+  ~  ===  This program is free software; you can redistribute it and/or modify
+  ~  ===  it under the terms of the GNU General Public License as published by
+  ~  ===  the Free Software Foundation; either version 2 of the License, or (at
+  ~  ===  your option) any later version.
+  ~  ===
+  ~  ===  This program is distributed in the hope that it will be useful, but
+  ~  ===  WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~  ===  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~  ===  General Public License for more details.
+  ~  ===
+  ~  ===  You should have received a copy of the GNU General Public License
+  ~  ===  along with this program; if not, write to the Free Software
+  ~  ===  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+  ~  ===
+  ~  ===  Contact: Jeroen Ticheler - FAO - Viale delle Terme di Caracalla 2,
+  ~  ===  Rome - Italy. email: geonetwork@osgeo.org
+  ~  ===
+  ~  ===  Development of this program was financed by the European Union within
+  ~  ===  Service Contract NUMBER – 941143 – IPR – 2021 with subject matter
+  ~  ===  "Facilitating a sustainable evolution and maintenance of the INSPIRE
+  ~  ===  Geoportal", performed in the period 2021-2023.
+  ~  ===
+  ~  ===  Contact: JRC Unit B.6 Digital Economy, Via Enrico Fermi 2749,
+  ~  ===  21027 Ispra, Italy. email: JRC-INSPIRE-SUPPORT@ec.europa.eu
+  ~  ==============================================================================
+  -->
+
+<Capabilities xmlns="http://www.opengis.net/wmts/1.0"
+              xmlns:ows="http://www.opengis.net/ows/1.1"
+              xmlns:inspire_vs="http://inspire.ec.europa.eu/schemas/inspire_vs_ows11/1.0"
+              xmlns:xlink="http://www.w3.org/1999/xlink">
+
+    <ows:ServiceIdentification>
+
+    </ows:ServiceIdentification>
+    <ows:ServiceProvider>
+
+    </ows:ServiceProvider>
+    <ows:OperationsMetadata>
+        <ows:Operation name="GetTile">
+            <ows:DCP>
+                <ows:HTTP>
+                    <ows:Get xlink:href="http://localhost:8080/geoserver">
+                        <ows:Constraint name="GetEncoding">
+                            <ows:AllowedValues>
+                                <ows:Value>KVP</ows:Value>
+                            </ows:AllowedValues>
+                        </ows:Constraint>
+                    </ows:Get>
+                </ows:HTTP>
+            </ows:DCP>
+        </ows:Operation>
+    </ows:OperationsMetadata>
+    <Contents>
+        <Layer>
+
+            <Title>title</Title>
+            <ows:Abstract>abstract</ows:Abstract>
+            <ows:Identifier>layer1ID</ows:Identifier>
+            <ows:Keywords>
+                <ows:Keyword>keyword</ows:Keyword>
+            </ows:Keywords>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>-180 -90</ows:LowerCorner>
+                <ows:UpperCorner>180 90</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+            <ows:Metadata  xlink:href="layerMetadataURL"/>
+            <Format>image/png</Format>
+
+            <TileMatrixSetLink>
+                <TileMatrixSet>MATRIXNAME</TileMatrixSet>
+                    <TileMatrixSetLimits>
+                    <TileMatrixLimits>
+                        <TileMatrix>MATRIXNAME:0</TileMatrix>
+                        <MinTileRow>0</MinTileRow>
+                        <MaxTileRow>0</MaxTileRow>
+                        <MinTileCol>0</MinTileCol>
+                        <MaxTileCol>0</MaxTileCol>
+                    </TileMatrixLimits>
+                    <TileMatrixLimits>
+                        <TileMatrix>MATRIXNAME:1</TileMatrix>
+                        <MinTileRow>1</MinTileRow>
+                        <MaxTileRow>1</MaxTileRow>
+                        <MinTileCol>0</MinTileCol>
+                        <MaxTileCol>1</MaxTileCol>
+                    </TileMatrixLimits>
+                    <TileMatrixLimits>
+                        <TileMatrix>MATRIXNAME:2</TileMatrix>
+                        <MinTileRow>3</MinTileRow>
+                        <MaxTileRow>3</MaxTileRow>
+                        <MinTileCol>1</MinTileCol>
+                        <MaxTileCol>2</MaxTileCol>
+                    </TileMatrixLimits>
+                    <TileMatrixLimits>
+                        <TileMatrix>MATRIXNAME:3</TileMatrix>
+                        <MinTileRow>5</MinTileRow>
+                        <MaxTileRow>6</MaxTileRow>
+                        <MinTileCol>3</MinTileCol>
+                        <MaxTileCol>4</MaxTileCol>
+                    </TileMatrixLimits>
+                </TileMatrixSetLimits>
+            </TileMatrixSetLink>
+
+        </Layer>
+    <TileMatrixSet>
+        <ows:Identifier>MATRIXNAME</ows:Identifier>
+        <ows:SupportedCRS>urn:ogc:def:crs:EPSG::1234</ows:SupportedCRS>
+        <TileMatrix>
+            <ows:Identifier>MATRIXNAME:0</ows:Identifier>
+            <ScaleDenominator>2.9E7</ScaleDenominator>
+            <TopLeftCorner>8388000.0 2.4451000E7</TopLeftCorner>
+            <TileWidth>256</TileWidth>
+            <TileHeight>256</TileHeight>
+            <MatrixWidth>1</MatrixWidth>
+            <MatrixHeight>1</MatrixHeight>
+        </TileMatrix>
+        <TileMatrix>
+            <ows:Identifier>MATRIXNAME:1</ows:Identifier>
+            <ScaleDenominator>1.4E7</ScaleDenominator>
+            <TopLeftCorner>8388000.0 2.4451000E7</TopLeftCorner>
+            <TileWidth>256</TileWidth>
+            <TileHeight>256</TileHeight>
+            <MatrixWidth>2</MatrixWidth>
+            <MatrixHeight>2</MatrixHeight>
+        </TileMatrix>
+        <TileMatrix>
+            <ows:Identifier>MATRIXNAME:2</ows:Identifier>
+            <ScaleDenominator>7314285.7</ScaleDenominator>
+            <TopLeftCorner>8388000.0 2.4451000E7</TopLeftCorner>
+            <TileWidth>256</TileWidth>
+            <TileHeight>256</TileHeight>
+            <MatrixWidth>4</MatrixWidth>
+            <MatrixHeight>4</MatrixHeight>
+        </TileMatrix>
+        <TileMatrix>
+            <ows:Identifier>MATRIXNAME:3</ows:Identifier>
+            <ScaleDenominator>3657142.8</ScaleDenominator>
+            <TopLeftCorner>8388000.0 2.4451000E7</TopLeftCorner>
+            <TileWidth>256</TileWidth>
+            <TileHeight>256</TileHeight>
+            <MatrixWidth>8</MatrixWidth>
+            <MatrixHeight>8</MatrixHeight>
+        </TileMatrix>
+        <TileMatrix>
+            <ows:Identifier>MATRIXNAME:4</ows:Identifier>
+            <ScaleDenominator>1828571.4</ScaleDenominator>
+            <TopLeftCorner>8388000.0 2.4451000E7</TopLeftCorner>
+            <TileWidth>256</TileWidth>
+            <TileHeight>256</TileHeight>
+            <MatrixWidth>16</MatrixWidth>
+            <MatrixHeight>16</MatrixHeight>
+        </TileMatrix>
+    </TileMatrixSet>
+
+    </Contents>
+    <Themes>
+
+    </Themes>
+    <ServiceMetadataURL xlink:href="serviceMetadataURL"/>
+</Capabilities>

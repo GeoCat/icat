@@ -43,14 +43,20 @@ public class CapabilityDeterminer {
 
         String tag = doc.getRootTagName();
         String ns = doc.getRootNS();
+        if (ns ==null)
+            ns = "";
         return determineType(ns.toLowerCase(), tag);
     }
 
     public CapabilitiesType determineType(String ns, String rootTagName) throws Exception {
+        if (ns ==null)
+            ns = "";
         if (rootTagName.equals("WMS_Capabilities") && (ns.equalsIgnoreCase("http://www.opengis.net/wms")))
             return CapabilitiesType.WMS;
         if (rootTagName.equals("Capabilities") && (ns.equalsIgnoreCase("http://www.opengis.net/wmts/1.0")))
             return CapabilitiesType.WMTS;
+        if (rootTagName.equals("WMT_MS_Capabilities")) // EE examples dont have a namespace
+            return CapabilitiesType.WMS;
         if (rootTagName.equals("WFS_Capabilities") && (ns.equalsIgnoreCase("http://www.opengis.net/wfs/2.0")))
             return CapabilitiesType.WFS;
         if (rootTagName.equals("WFS_Capabilities") && (ns.equalsIgnoreCase("http://www.opengis.net/wfs")))

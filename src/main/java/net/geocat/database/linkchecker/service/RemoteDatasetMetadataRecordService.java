@@ -65,6 +65,7 @@ public class RemoteDatasetMetadataRecordService {
         //metadataDocumentFactory.augment(result,doc);
 
         result.setFileIdentifier(doc.getFileIdentifier());
+        result.setParentIdentifier(doc.getParentIdentifier());
         result.setMetadataRecordType(doc.getMetadataDocumentType()); // ds
 
         result.setState(ServiceMetadataDocumentState.CREATED);

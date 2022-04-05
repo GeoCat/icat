@@ -36,28 +36,35 @@ package net.geocat.runner;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import net.geocat.database.harvester.entities.MetadataRecord;
 import net.geocat.database.harvester.repos.MetadataRecordRepo;
 import net.geocat.database.linkchecker.entities.*;
 import net.geocat.database.linkchecker.entities.helper.*;
 import net.geocat.database.linkchecker.repos.*;
 import net.geocat.database.linkchecker.service.*;
+import net.geocat.eventprocessor.processors.datadownload.downloaders.AtomDownloadProcessor;
+import net.geocat.eventprocessor.processors.datadownload.downloaders.AtomLayerDownloader;
+import net.geocat.eventprocessor.processors.datadownload.downloaders.OGCRequestGenerator;
+import net.geocat.eventprocessor.processors.datadownload.downloaders.OGCRequestResolver;
+import net.geocat.eventprocessor.processors.datadownload.downloaders.WFSLayerDownloader;
+import net.geocat.eventprocessor.processors.datadownload.downloaders.WFSStoredQueryDownloader;
+import net.geocat.eventprocessor.processors.datadownload.downloaders.WMSLayerDownloader;
+import net.geocat.eventprocessor.processors.datadownload.downloaders.WMTSLayerDownloader;
 import net.geocat.eventprocessor.processors.processlinks.postprocessing.*;
-import net.geocat.events.Event;
 import net.geocat.events.EventFactory;
 import net.geocat.http.BasicHTTPRetriever;
 import net.geocat.http.IHTTPRetriever;
+import net.geocat.http.SmartHTTPRetriever;
 import net.geocat.service.*;
 
 import net.geocat.service.capabilities.*;
 import net.geocat.service.downloadhelpers.PartialDownloadPredicateFactory;
 import net.geocat.xml.*;
 
-import net.geocat.xml.XmlCapabilitiesDocument;
 import net.geocat.xml.XmlDoc;
 import net.geocat.xml.XmlDocumentFactory;
-import net.geocat.xml.XmlServiceRecordDoc;
 
+import net.geocat.xml.helpers.CapabilitiesType;
+import net.geocat.xml.helpers.WMSLayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,19 +73,19 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import javax.persistence.EntityManager;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.groupingBy;
 
 @Component
 public class MyCommandLineRunner implements CommandLineRunner {
     private static final Logger logger = LoggerFactory.getLogger(MyCommandLineRunner.class);
 
+    @Autowired
+    CapabilitiesDatasetMetadataLinkRepo capabilitiesDatasetMetadataLinkRepo;
 
     @Autowired
     BlobStorageService blobStorageService;
@@ -87,11 +94,14 @@ public class MyCommandLineRunner implements CommandLineRunner {
     XmlDocumentFactory xmlDocumentFactory;
 
     @Autowired
-    LinkCheckBlobStorageRepo linkCheckBlobStorageRepo;
+    OGCRequestGenerator ogcRequestGenerator;
 
     @Autowired
-    @Qualifier("cookieAttachingRetriever")
-    IHTTPRetriever retriever;
+    LinkCheckBlobStorageRepo linkCheckBlobStorageRepo;
+
+//    @Autowired
+//    @Qualifier("cookieAttachingRetriever")
+//    IHTTPRetriever retriever;
 
 //    @Autowired
 //    LinkRepo linkRepo;
@@ -147,8 +157,7 @@ public class MyCommandLineRunner implements CommandLineRunner {
     @Autowired
     OperatesOnLinkRepo operatesOnLinkRepo;
 
-    @Autowired
-    CapabilitiesDatasetMetadataLinkRepo capabilitiesDatasetMetadataLinkRepo;
+
 
     @Autowired
     RetrieveCapabilitiesDatasetMetadataLink retrieveCapabilitiesDatasetMetadataLink;
@@ -162,6 +171,10 @@ public class MyCommandLineRunner implements CommandLineRunner {
 
     @Autowired
     LocalDatasetMetadataRecordRepo localDatasetMetadataRecordRepo;
+
+    @Autowired
+    DatasetMetadataRecordRepo datasetMetadataRecordRepo;
+
 
     @Autowired
     CapabilitiesResolvesIndicators capabilitiesResolvesIndicators;
@@ -197,6 +210,10 @@ public class MyCommandLineRunner implements CommandLineRunner {
     LinkCheckJobService linkCheckJobService;
 
     @Autowired
+    LinkCheckJobRepo linkCheckJobRepo;
+
+
+    @Autowired
     CapabilitiesDownloadingService capabilitiesDownloadingService;
 
     @Autowired
@@ -215,10 +232,176 @@ public class MyCommandLineRunner implements CommandLineRunner {
     @Autowired
     EventFactory eventFactory;
 
+    @Autowired
+    @Qualifier("cachingHttpRetriever")
+    IHTTPRetriever retriever_cachingHttpRetriever;
+
+    @Autowired
+    WFSLayerDownloader wfsLayerDownloader;
+
+    @Autowired
+    WMSLayerDownloader wmsLayerDownloader;
+
+    @Autowired
+    WMTSLayerDownloader wmtsLayerDownloader;
+
+    @Autowired
+    WFSStoredQueryDownloader wfsStoredQueryDownloader;
+
+    @Autowired
+    LinkToDataRepo linkToDataRepo;
+
+    @Autowired
+    OGCRequestResolver ogcRequestResolver;
+
+    @Autowired
+    SmartHTTPRetriever smartHTTPRetriever;
+
+    @Autowired
+    AtomLayerDownloader atomLayerDownloader;
+
+    @Autowired
+    AtomDownloadProcessor atomDownloadProcessor;
+
+    @Autowired
+    AtomActualDataEntryRepo atomActualDataEntryRepo;
+
+
     @Override
     public void run(String... args) throws Exception {
 
         try {
+
+
+//        CapabilitiesDocument cap = capabilitiesDocumentRepo.findById( new SHA2JobIdCompositeKey(
+//                                   "6A98AEF11BB3619425EC88C49A3FD78AC184618C7DD548DA3BA8607C95192560",
+//                           "0ae3d6d6-1cbf-436f-8ea8-fc98ceda6f7a") ).get();
+//
+//        String xmlCap = linkCheckBlobStorageRepo.findById(cap.getSha2()).get().getTextValue();
+//        XmlCapabilitiesWMS _cap = (XmlCapabilitiesWMS)xmlDocumentFactory.create(xmlCap);
+//
+//          WMSLayer layer =  _cap.findWMSLayer("TN.CableTransportNetwork.CablewayLink");
+            int ttt=0;
+
+//            LocalDatasetMetadataRecord localDatasetMetadataRecord = localDatasetMetadataRecordRepo.findById(2121154L).get();
+//
+//
+//            OGCInfoCacheItem ogcInfoCacheItem = ogcRequestGenerator.prep("94b0cb06-5a04-4474-b35c-efe157f9786f", "CC22E03D1E13717C5C06D1E3EA179A8EC7774B75504A5C34416A3ADF9A557339");
+//
+//           // SimpleAtomLinkToData link = (SimpleAtomLinkToData)  linkToDataRepo.findById(2121265L).get();
+//            SimpleAtomLinkToData link =(SimpleAtomLinkToData) localDatasetMetadataRecord.getDataLinks().stream()
+//                            .filter(x->x instanceof SimpleAtomLinkToData)
+//                                    .findFirst().get();
+//            atomDownloadProcessor.process(link,ogcInfoCacheItem);
+//            int tt=0;
+//            if (tt==0) {
+//                AtomActualDataEntry atomActualDataEntry= atomActualDataEntryRepo.save(link.getAtomActualDataEntryList().get(0));
+//                int uu=0;
+//            }
+//            localDatasetMetadataRecord = localDatasetMetadataRecordRepo.save(localDatasetMetadataRecord);
+
+//            String uuu = "https://msdi.data.gov.mt/data/INSPIRE_Dataset/Annex_III/Environmental_Monitoring_Facilities/BentixCarlitPrei/D1_6_BENTIX_CARLIT_PREI.zip";
+//            HTTPRequest request = HTTPRequest.createGET(uuu);
+//            request.setLinkCheckJobId("TESTCASE");
+//            request.setAcceptsHeader("*/*");
+//            HttpResult r = smartHTTPRetriever.retrieve(request);
+//        int tt=0;
+
+//        SimpleLayerMetadataUrlDataLink link = (SimpleLayerMetadataUrlDataLink) linkToDataRepo.findById(1416565L).get();
+//
+//        CapabilitiesDocument cap = capabilitiesDocumentRepo.findById( new SHA2JobIdCompositeKey(
+//                link.getCapabilitiesSha2(),
+//                           link.getLinkCheckJobId() ) ).get();
+//
+//        String xmlCap = linkCheckBlobStorageRepo.findById(cap.getSha2()).get().getTextValue();
+//        XmlCapabilitiesAtom atomCap = (XmlCapabilitiesAtom)xmlDocumentFactory.create(xmlCap);
+//        AtomSubFeedRequest atomSubFeedRequest = atomLayerDownloader.createSubFeedRequest(atomCap, link.getOgcLayerName());
+//
+//        atomSubFeedRequest =  atomLayerDownloader.resolve(atomSubFeedRequest);
+//        String xmlSub = new String(atomSubFeedRequest.getFullData());
+//        XmlCapabilitiesAtom atomCapSub = (XmlCapabilitiesAtom)xmlDocumentFactory.create(xmlSub);
+//
+//        List<List<AtomDataRequest>> requests = atomLayerDownloader.createDataRequests(atomCapSub);
+    int t=0;
+
+
+     //  test_linkstodata2(   "d3e1c48a-05a1-433d-b269-577c452d9a0d" );
+      //   test_linkstodata( lastLinkCheckJob("fi"));
+        //    single("9356591E2A5DDDE87E8323C0309986CDC594397B9EC929696409B7B61C5F36DE");
+
+            //  allAtom();
+         //  allWMS();
+          // allWMTS();
+        //allDataset();
+
+//            HttpResult r = retriever_cachingHttpRetriever.retrieveXML("GET",
+//                  "https://geodata.nationaalgeoregister.nl/wko/wfs?&request=GetCapabilities&service=WFS&language=dut",
+//                  null,
+//                  null,
+//                  partialDownloadPredicateFactory.create(PartialDownloadHint.CAPABILITIES_ONLY));
+//            String s = new String(r.getData());
+//            XmlDoc d = xmlDocumentFactory.create(s);
+
+           // String url = wfsLayerDownloader.createURL( (XmlCapabilitiesWFS) d, "wko:os_koud_warm");
+//            OGCRequest ogcRequest = wfsLayerDownloader.downloads((XmlCapabilitiesWFS) d, "wko:os_koud_warm2");
+
+
+//            HttpResult r = retriever_cachingHttpRetriever.retrieveXML("GET",
+//                  "https://gis.cenia.cz/geoserver/corine_land_cover_2018/ows?SERVICE=WMS&version=1.3.0&request=getcapabilities",
+//                  null,
+//                  null,
+//                  partialDownloadPredicateFactory.create(PartialDownloadHint.CAPABILITIES_ONLY));
+//            String s = new String(r.getData());
+//            XmlDoc d = xmlDocumentFactory.create(s);
+//
+//            String url = wmsLayerDownloader.createURL( (XmlCapabilitiesWMS) d, "corine_cha18_CZ");
+//            OGCRequest ogcRequest = wmsLayerDownloader.downloads((XmlCapabilitiesWMS) d, "corine_cha18_CZ");
+
+//            HttpResult r = retriever_cachingHttpRetriever.retrieveXML("GET",
+//                    "https://kartta.hel.fi/ws/geoserver/avoindata/gwc/service/wmts?request=GetCapabilities",
+//                  null,
+//                  null,
+//                  partialDownloadPredicateFactory.create(PartialDownloadHint.CAPABILITIES_ONLY));
+//            String s = new String(r.getData());
+//            XmlDoc d = xmlDocumentFactory.create(s);
+//
+//            String url = wmtsLayerDownloader.createURL( (XmlCapabilitiesWMTS) d, "Ortoilmakuva_2020","ETRS-GK25:7");
+//            OGCRequest ogcRequest = wmtsLayerDownloader.downloads((XmlCapabilitiesWMTS) d, "Ortoilmakuva_2020");
+
+//            String url = wmsLayerDownloader.createURL( (XmlCapabilitiesWMS) d, "corine_cha18_CZ");
+//            OGCRequest ogcRequest = wmsLayerDownloader.downloads((XmlCapabilitiesWMS) d, "corine_cha18_CZ");
+//
+//            HttpResult r = retriever_cachingHttpRetriever.retrieveXML("GET",
+//                    "https://geodata.nationaalgeoregister.nl/vogelrichtlijnverspreidingsgebiedsoorten/wfs?request=GetCapabilities&service=WFS",
+//                  null,
+//                  null,
+//                  partialDownloadPredicateFactory.create(PartialDownloadHint.CAPABILITIES_ONLY));
+//            String s = new String(r.getData());
+//            XmlDoc d = xmlDocumentFactory.create(s);
+//
+//            String url = wfsStoredQueryDownloader.createURL( (XmlCapabilitiesWFS) d,
+//                    "fff0273c-ebf2-4a09-be2f-4d69f6f549f3",
+//                    null,
+//                    "http://inspire.ec.europa.eu/operation/download/GetSpatialDataSet");
+//            OGCRequest ogcRequest = wfsStoredQueryDownloader.downloads((XmlCapabilitiesWFS) d,
+//                    "fff0273c-ebf2-4a09-be2f-4d69f6f549f3",
+//                    null,
+//                    "http://inspire.ec.europa.eu/operation/download/GetSpatialDataSet");
+//            int t=0;
+
+//            run12("1bfeaf7b-28b7-430f-87c2-12e3bfb2d3f8");
+//            run11("1bfeaf7b-28b7-430f-87c2-12e3bfb2d3f8");
+
+          String country = "nl";
+//         String lastLinkCheckJob = lastLinkCheckJob(country);
+           // allWFS();
+           // all_();
+
+ // run_scrape(country,lastLinkCheckJob(country));
+//            run_3("25a379b1-33db-450a-a9f4-4c396a29a02a\n",
+//                    "5d0e1408-2409-4c19-a037-10764523379b\n",
+//                    lastLinkCheckJob);
+            //series();
 
 //            Event e = eventFactory.createStartPostProcessEvent("e21f60c6-98fb-40e6-bca3-832e8970ff3e");
 //            ObjectMapper m = new ObjectMapper();
@@ -274,6 +457,270 @@ public class MyCommandLineRunner implements CommandLineRunner {
         logger.debug("DONE!");
     }
 
+    private void test_linkstodata2(String linkcheckjob) throws Exception {
+        for (LocalDatasetMetadataRecord record: localDatasetMetadataRecordRepo.findAll() ){
+            String xml = blobStorageService.findXML(record.getSha2());
+            XmlDoc doc = xmlDocumentFactory.create(xml);
+            List<LinkToData> links = new ArrayList<LinkToData>(record.getDataLinks());
+            List<LinkToData> links_view =  links.stream()
+                    .filter(x->x.getCapabilitiesDocumentType() == CapabilitiesType.WMS || x.getCapabilitiesDocumentType() == CapabilitiesType.WMS)
+                    .collect(Collectors.toList());
+            List<LinkToData> links_download =  links.stream()
+                    .filter(x->x.getCapabilitiesDocumentType() == CapabilitiesType.WFS || x.getCapabilitiesDocumentType() == CapabilitiesType.Atom)
+                    .collect(Collectors.toList());
+            int t=0;
+        }
+    }
+
+
+        private void test_linkstodata(String linkcheckjob) throws Exception {
+        List<LinkToData> links = linkToDataRepo.findByLinkCheckJobId(linkcheckjob);
+        List<LinkToData> links_wfs = links.stream()
+                .filter(x->x.getCapabilitiesDocumentType() == CapabilitiesType.WFS).collect(Collectors.toList());
+        List<LinkToData> links_wms = links.stream()
+                .filter(x->x.getCapabilitiesDocumentType() == CapabilitiesType.WMS).collect(Collectors.toList());
+        List<LinkToData> links_wmts = links.stream()
+                .filter(x->x.getCapabilitiesDocumentType() == CapabilitiesType.WMTS).collect(Collectors.toList());
+
+        List<OGCRequest> requests_wfs = new ArrayList<>();
+        List<OGCRequest> requests_wms = new ArrayList<>();
+        List<OGCRequest> requests_wmts = new ArrayList<>();
+
+//        for (LinkToData link : links_wfs) {
+//            OGCRequest request= ogcRequestGenerator.prepareToDownload(link);
+//            requests_wfs.add(request);
+//        }
+
+        List<OGCRequest> bad_wfs = requests_wfs.stream().filter(x->x!=null && !x.isSuccessfulOGCRequest()).collect(Collectors.toList());
+//124,285
+     //   links_wms = Arrays.asList(new LinkToData[]{links_wms.subList(124, 125).get(0), links_wms.subList(285, 286).get(0)});
+
+//        for (LinkToData link : links_wms) {
+//            OGCRequest request= ogcRequestGenerator.prepareToDownload(link);
+//            requests_wms.add(request);
+//        }
+
+        List<OGCRequest> bad_wms = requests_wms.stream().filter(x->x!=null && !x.isSuccessfulOGCRequest()).collect(Collectors.toList());
+
+//       // links_wmts = links_wmts.subList(52,53);
+//        for (LinkToData link : links_wmts) {
+//            try {
+//
+//                OGCRequest request = ogcRequestGenerator.prepareToDownload(link);
+//                requests_wmts.add(request);
+//                ogcRequestResolver.resolve(request);
+//            }
+//            catch (Exception e){
+//                int tt=0;
+//            }
+//        }
+
+        List<OGCRequest> bad_wmts = requests_wmts.stream().filter(x->x!=null && !x.isSuccessfulOGCRequest()).collect(Collectors.toList());
+
+        int t=0;
+    }
+
+    public String lastLinkCheckJob(String country){
+        if (country ==null)
+            return lastLinkCheckJob();
+
+        LinkCheckJob lastJob = null;
+        for(LinkCheckJob job : linkCheckJobRepo.findAll()){
+            if (!job.getLongTermTag().toLowerCase().startsWith(country.toLowerCase()))
+                continue;
+            if (lastJob == null)
+                lastJob = job;
+            if (lastJob.getCreateTimeUTC().compareTo(job.getCreateTimeUTC()) <1)
+                lastJob = job;
+        }
+        return lastJob.getJobId();
+    }
+
+
+    public String lastLinkCheckJob(){
+        LinkCheckJob lastJob = null;
+        for(LinkCheckJob job : linkCheckJobRepo.findAll()){
+            if (lastJob == null)
+                lastJob = job;
+            if (lastJob.getCreateTimeUTC().compareTo(job.getCreateTimeUTC()) <1)
+                lastJob = job;
+        }
+        return lastJob.getJobId();
+    }
+
+    public void allLocalDataset() throws Exception {
+        List<LocalDatasetMetadataRecord> datasets = new ArrayList();
+        Iterable<LocalDatasetMetadataRecord> datasetsIterator = localDatasetMetadataRecordRepo.findAll();
+        datasetsIterator.forEach(datasets::add);
+        for (LocalDatasetMetadataRecord record: datasetsIterator ){
+            String xml = blobStorageService.findXML(record.getSha2());
+            XmlDatasetMetadataDocument doc = (XmlDatasetMetadataDocument) xmlDocumentFactory.create(xml);
+            if (doc.getDatasetIdentifiers().size()>1) {
+                int tt=0;
+            }
+            int t=0;
+        }
+
+
+        int t = 0;
+    }
+
+    public void allDataset() throws Exception {
+//        for (LocalDatasetMetadataRecord record: localDatasetMetadataRecordRepo.findAll() ){
+//            String xml = blobStorageService.findXML(record.getSha2());
+//            XmlDoc doc = xmlDocumentFactory.create(xml);
+//            int t=0;
+//        }
+
+        List<DatasetMetadataRecord> datasets = new ArrayList();
+        Iterable<DatasetMetadataRecord> datasetsIterator = datasetMetadataRecordRepo.findAll();
+        datasetsIterator.forEach(datasets::add);
+
+        logger.debug("finished reading local xml");
+        List<XmlDatasetMetadataDocument> docs = new ArrayList<>();
+        for (DatasetMetadataRecord record: datasets ){
+            String xml = blobStorageService.findXML(record.getSha2());
+            XmlDatasetMetadataDocument doc = (XmlDatasetMetadataDocument) xmlDocumentFactory.create(xml);
+            docs.add(doc);
+            int t=0;
+        }
+
+        logger.debug("finished parsing local xml "+ docs.size());
+        datasets.clear();
+        List<CapabilitiesDatasetMetadataLink> datasets2 = new ArrayList();
+        Iterable<CapabilitiesDatasetMetadataLink> linksIterator = capabilitiesDatasetMetadataLinkRepo.findBySha2NotNull();
+        linksIterator.forEach(datasets2::add);
+        logger.debug("finished reading external xml links ");
+
+        for (CapabilitiesDatasetMetadataLink link: datasets2 ){
+            if (link.getSha2() == null)
+                continue;
+            String xml = linkCheckBlobStorageRepo.findById(link.getSha2()).get().getTextValue();
+            XmlDatasetMetadataDocument doc = (XmlDatasetMetadataDocument) xmlDocumentFactory.create(xml);
+            docs.add(doc);
+            int t=0;
+        }
+
+        logger.debug("finished parsing external xml links" + datasets2.size());
+        datasets2.clear();
+
+        Map<String, List<XmlDatasetMetadataDocument>> groups =  docs.stream()
+                .collect(groupingBy(XmlDatasetMetadataDocument::getFileIdentifier));
+
+        List<Map.Entry<String, List<XmlDatasetMetadataDocument>>> result = groups.entrySet().stream()
+                .filter(x -> !x.getValue().isEmpty())
+                .collect(Collectors.toList());
+        int t = 0;
+    }
+
+    public void allWFS() throws Exception {
+
+        List wfs = executeSQL3("SELECT text_value FROM blob_storage WHERE text_value like '%WFS_Capabilities%'");
+        for (Object v: wfs) {
+            String xml = (String) v;
+            XmlCapabilitiesWFS doc = (XmlCapabilitiesWFS) xmlDocumentFactory.create(xml);
+            System.out.println(doc.getGetFeatureEndpoint());
+            if (doc.getGetFeatureEndpoint() == null) {
+                int yt=0;
+                XmlCapabilitiesWFS doc2 = (XmlCapabilitiesWFS) xmlDocumentFactory.create(xml);
+            }
+            if (doc.getVersionNumber() == null) {
+                int ttt =0;
+            }
+            int t=0;
+        }
+    }
+
+    public void allAtom() throws Exception {
+        int tt=0;
+
+        List wfs = executeSQL3("SELECT data FROM httpresultcache WHERE data  like '%spatial_dataset_identifier_%'");
+        for (Object v: wfs) {
+            String xml = new String((byte[]) v);
+            try {
+                XmlDoc doc = xmlDocumentFactory.create(xml);
+            }
+            catch(Exception e) {
+                tt++;
+                String xml2 = new String((byte[]) v);
+            }
+            int t=0;
+        }
+    }
+
+    public void allWMS() throws Exception {
+
+        List wfs = executeSQL3("SELECT text_value FROM blob_storage WHERE text_value like '%WMS_Capabilities%' ");
+        for (Object v: wfs) {
+            String xml = (String) v;
+            XmlDoc _doc =   xmlDocumentFactory.create(xml);
+            if (!(_doc instanceof XmlCapabilitiesWMS))
+                continue;
+            XmlCapabilitiesWMS doc = (XmlCapabilitiesWMS) _doc;
+           // System.out.println(doc.getGetMapEndpoint());
+            if (doc.getGetMapEndpoint() == null) {
+                int yt=0;
+                XmlCapabilitiesWMS doc2 = (XmlCapabilitiesWMS) xmlDocumentFactory.create(xml);
+            }
+            if (doc.getSupportedImageFormats().isEmpty())
+            {
+                int ttt =0;
+            }
+            if (doc.getVersionNumber() == null) {
+                int ttt =0;
+            }
+            if (!doc.getVersionNumber().equals("1.3.0")) {
+                int ttt =0;
+            }
+        }
+    }
+
+    public void allWMTS2() throws Exception {
+
+        List wfs = executeSQL3("SELECT text_value FROM blob_storage WHERE    text_value like '%:Capabilities%'OR text_value like '%<Capabilities%'");
+        for (Object v: wfs) {
+            String xml = (String) v;
+            XmlDoc _doc = xmlDocumentFactory.create(xml);
+            if (!(_doc instanceof XmlCapabilitiesWMTS))
+                continue;
+            XmlCapabilitiesWMTS doc = (XmlCapabilitiesWMTS) _doc;
+             System.out.println(doc.getGetTileEndpoint());
+
+        //    String url = wmtsLayerDownloader.createURL( (XmlCapabilitiesWMTS) d, "Ortoilmakuva_2020","ETRS-GK25:7");
+            OGCRequest ogcRequest = wmtsLayerDownloader.setupRequest(doc, "Ortoilmakuva_2020");
+
+             int t=0;
+        }
+    }
+
+    public void single(String sha2) throws Exception {
+        String xml = linkCheckBlobStorageRepo.findById(sha2).get().getTextValue();
+        XmlDoc doc = xmlDocumentFactory.create(xml);
+        int t=0;
+    }
+
+    public void all_() throws Exception {
+
+        List wfs = executeSQL3("SELECT text_value FROM blob_storage WHERE  text_value  ilike '%codeListValue=\"dataset\"%' ");
+      // List wfs = executeSQL3("SELECT text_value FROM blob_storage WHERE  text_value  ilike '%9a21b8e2-1b28-43ee-91e9-241357add698%' ");
+
+        for (Object v: wfs) {
+            String xml = (String) v;
+            XmlDoc doc = xmlDocumentFactory.create(xml);
+            int t=0;
+        }
+    }
+
+
+    private void series() throws Exception {
+        for (LocalNotProcessedMetadataRecord record : localNotProcessedMetadataRecordRepo.findAll()) {
+            if (record.getMetadataRecordType() !=  MetadataDocumentType.Series)
+                continue;
+            String xmlSeries =   blobStorageService.findXML(record.getSha2());
+            XmlDoc doc = xmlDocumentFactory.create(xmlSeries);
+            int t=0;
+        }
+    }
 
 
     @Autowired
@@ -291,8 +738,17 @@ public class MyCommandLineRunner implements CommandLineRunner {
         if (entityManager == null)
             entityManager =  localContainerEntityManagerFactoryBean.createNativeEntityManager(null);
        entityManager.getTransaction().begin();
-        entityManager.createNativeQuery(sql).executeUpdate();
+        int n = entityManager.createNativeQuery(sql).executeUpdate();
        entityManager.getTransaction().commit();
+    }
+
+    public List executeSQL3(String sql) {
+        if (entityManager == null)
+            entityManager =  localContainerEntityManagerFactoryBean.createNativeEntityManager(null);
+        entityManager.getTransaction().begin();
+        List result =  entityManager.createNativeQuery(sql).getResultList();
+        entityManager.getTransaction().commit();
+        return result;
     }
 
     /*
@@ -302,9 +758,12 @@ public class MyCommandLineRunner implements CommandLineRunner {
                 file_id text, local_is_view boolean , local_is_download boolean);
 
         update scrap set file_id = (select fileidentifier from datasetmetadatarecord where datasetmetadatarecord.title = scrap.title limit 1);
-        update scrap set local_is_view = (select indicator_layer_matches_view = 'PASS' from datasetmetadatarecord where datasetmetadatarecord.fileidentifier = scrap.file_id);
-        update scrap set local_is_download = (select indicator_layer_matches_download = 'PASS' from datasetmetadatarecord where datasetmetadatarecord.fileidentifier = scrap.file_id);
+        update scrap set local_is_view = (select indicator_layer_matches_view = 'PASS' from datasetmetadatarecord where datasetmetadatarecord.fileidentifier = scrap.file_id and linkcheckjobid='54a30bc1-3900-48d6-8cd3-c9d3609ee0a9');
+        update scrap set local_is_download = (select indicator_layer_matches_download = 'PASS' from datasetmetadatarecord where datasetmetadatarecord.fileidentifier = scrap.file_id and linkcheckjobid='54a30bc1-3900-48d6-8cd3-c9d3609ee0a9') ;
 --delete from scrap where file_id is null;
+
+
+
 
         select file_id, title, is_view, local_is_view from scrap where is_view !=  local_is_view and is_view and title is not null order by title;
         select file_id, title, is_download, local_is_download from scrap where is_download !=  local_is_download and is_download and title is not null order by title;
@@ -312,11 +771,24 @@ public class MyCommandLineRunner implements CommandLineRunner {
 
 
      */
-    public void run_scrape() throws  Exception {
-        String url = "https://inspire-geoportal.ec.europa.eu/solr/select?wt=json&q=*:*^1.0&sow=false&fq=sourceMetadataResourceLocator:*&fq=resourceType:(dataset%20OR%20series)&fq=memberStateCountryCode:%22MYCOUNTRYCODE%22&fl=id,resourceTitle,resourceTitle_*,providedTranslationLanguage,automatedTranslationLanguage,memberStateCountryCode,metadataLanguage,isDw:query($isDwQ),isVw:query($isVwQ),spatialScope&isDwQ=interoperabilityAspect:(DOWNLOAD_MATCHING_DATA_IS_AVAILABLE%20AND%20DATA_DOWNLOAD_LINK_IS_AVAILABLE)&isVwQ=interoperabilityAspect:(LAYER_MATCHING_DATA_IS_AVAILABLE)&isDwVwQ=interoperabilityAspect:(DOWNLOAD_MATCHING_DATA_IS_AVAILABLE%20AND%20DATA_DOWNLOAD_LINK_IS_AVAILABLE%20AND%20LAYER_MATCHING_DATA_IS_AVAILABLE)&sort=query($isDwVwQ)%20desc,%20query($isDwQ)%20desc,%20query($isVwQ)%20desc,%20resourceTitle%20asc&start=0&rows=300000&callback=?&json.wrf=processData_dtResults&_=1634538073094";
-        url = url.replace("MYCOUNTRYCODE","de");
+    public void run_scrape(String countryCode, String jobid) throws  Exception {
+        try{
+            String sql =  "drop table if exists scrap;";
+            executeSQL2(sql);
+        }
+        catch (Exception e){}
 
-            HttpResult result = basicHTTPRetriever.retrieveJSON("GET", url, null, null, null);
+        try{
+            String sql =  "CREATE TABLE scrap (title text, is_view boolean, is_download boolean, country_code text,\n" +
+                    "                file_id text, local_is_view boolean , local_is_download boolean);";
+            executeSQL2(sql);
+        }
+        catch (Exception e){}
+
+        String url = "https://inspire-geoportal.ec.europa.eu/solr/select?wt=json&q=*:*^1.0&sow=false&fq=sourceMetadataResourceLocator:*&fq=resourceType:(dataset%20OR%20series)&fq=memberStateCountryCode:%22MYCOUNTRYCODE%22&fl=id,resourceTitle,resourceTitle_*,providedTranslationLanguage,automatedTranslationLanguage,memberStateCountryCode,metadataLanguage,isDw:query($isDwQ),isVw:query($isVwQ),spatialScope&isDwQ=interoperabilityAspect:(DOWNLOAD_MATCHING_DATA_IS_AVAILABLE%20AND%20DATA_DOWNLOAD_LINK_IS_AVAILABLE)&isVwQ=interoperabilityAspect:(LAYER_MATCHING_DATA_IS_AVAILABLE)&isDwVwQ=interoperabilityAspect:(DOWNLOAD_MATCHING_DATA_IS_AVAILABLE%20AND%20DATA_DOWNLOAD_LINK_IS_AVAILABLE%20AND%20LAYER_MATCHING_DATA_IS_AVAILABLE)&sort=query($isDwVwQ)%20desc,%20query($isDwQ)%20desc,%20query($isVwQ)%20desc,%20resourceTitle%20asc&start=0&rows=300000&callback=?&json.wrf=processData_dtResults&_=1634538073094";
+        url = url.replace("MYCOUNTRYCODE",countryCode.toLowerCase());
+
+            HttpResult result = basicHTTPRetriever.retrieveJSON("GET", url, null, null, null,20);
 
             String json = new String(result.getData());
             json = json.replace("processData_dtResults(","");
@@ -340,6 +812,16 @@ public class MyCommandLineRunner implements CommandLineRunner {
 
        }
         int t=0;
+
+        String sql =  "update scrap set file_id = (select fileidentifier from datasetmetadatarecord where datasetmetadatarecord.title = scrap.title limit 1);";
+        executeSQL2(sql);
+
+
+        sql =  " update scrap set local_is_view = (select indicator_layer_matches_view = 'PASS' from datasetmetadatarecord where datasetmetadatarecord.fileidentifier = scrap.file_id and linkcheckjobid='"+jobid+"');";
+        executeSQL2(sql);
+
+        sql =  " update scrap set local_is_download = (select indicator_layer_matches_download = 'PASS' from datasetmetadatarecord where datasetmetadatarecord.fileidentifier = scrap.file_id and linkcheckjobid='"+jobid+"') ";
+        executeSQL2(sql);
     }
 
 
@@ -355,22 +837,22 @@ public class MyCommandLineRunner implements CommandLineRunner {
         else
             dsRecord = localDatasetMetadataRecordRepo.findFirstByFileIdentifierAndLinkCheckJobId(dsId,linkCheckJobId);
 
-        String capabilities_layer_matches_download = dsRecord.getINDICATOR_LAYER_MATCHES_DOWNLOAD().toString();
-        String capabilities_layer_matches_view = dsRecord.getINDICATOR_LAYER_MATCHES_VIEW().toString();
+      //  String capabilities_layer_matches_download = dsRecord.getINDICATOR_LAYER_MATCHES_DOWNLOAD().toString();
+      //  String capabilities_layer_matches_view = dsRecord.getINDICATOR_LAYER_MATCHES_VIEW().toString();
 
 
         String ds_xml = blobStorageService.findXML(dsRecord.getSha2());
 
-        List<ServiceDocSearchResult> serviceLinks =  operatesOnLinkRepo.linkToService(dsRecord.getFileIdentifier(), dsRecord.getDatasetIdentifier(),   dsRecord.getLinkCheckJobId());
-        List<CapabilitiesLinkResult> capLinks =  capabilitiesDatasetMetadataLinkRepo.linkToCapabilities(dsRecord.getFileIdentifier(),dsRecord.getDatasetIdentifier(), dsRecord.getLinkCheckJobId());
+       // List<ServiceDocSearchResult> serviceLinks =  operatesOnLinkRepo.linkToService(dsRecord.getFileIdentifier(), dsRecord.getDatasetIdentifier(),   dsRecord.getLinkCheckJobId());
+      //  List<CapabilitiesLinkResult> capLinks =  capabilitiesDatasetMetadataLinkRepo.linkToCapabilities(dsRecord.getFileIdentifier(),dsRecord.getDatasetIdentifier(), dsRecord.getLinkCheckJobId());
 
-        List<LocalServiceMetadataRecord> serviceDocs = serviceLinks.stream()
-                .map(x-> localServiceMetadataRecordRepo.findById(x.getServiceid()).get())
-                .collect(Collectors.toList());
-
-        List<CapabilitiesDocument> capDocs = capLinks.stream()
-                .map(x-> capabilitiesDocumentRepo.findById( new SHA2JobIdCompositeKey(x.getSha2(),x.getLinkcheckjobid())).get())
-                .collect(Collectors.toList());
+//        List<LocalServiceMetadataRecord> serviceDocs = serviceLinks.stream()
+//                .map(x-> localServiceMetadataRecordRepo.findById(x.getServiceid()).get())
+//                .collect(Collectors.toList());
+//
+//        List<CapabilitiesDocument> capDocs = capLinks.stream()
+//                .map(x-> capabilitiesDocumentRepo.findById( new SHA2JobIdCompositeKey(x.getSha2(),x.getLinkcheckjobid())).get())
+//                .collect(Collectors.toList());
 
         LocalServiceMetadataRecord missing;
         if  ( (linkCheckJobId == null) || (linkCheckJobId.isEmpty()) )
@@ -381,7 +863,7 @@ public class MyCommandLineRunner implements CommandLineRunner {
         List<String> urls = missing.getServiceDocumentLinks().stream()
                 .map(x-> {
                     try {
-                        return capabilitiesLinkFixer.fix(x.getRawURL(), missing.getMetadataServiceType());
+                        return capabilitiesLinkFixer.fix(x.getRawURL(), missing.getMetadataServiceType(),x);
                     } catch (Exception e) {
                        return null;
                     }
@@ -528,6 +1010,9 @@ public class MyCommandLineRunner implements CommandLineRunner {
         int all_opson_match = 0;
 
         for(LocalServiceMetadataRecord r:records){
+
+            if (r.getState() == ServiceMetadataDocumentState.NOT_APPLICABLE)
+                continue; // not processed
 
 //            String xml = blobStorageService.findXML(r.getSha2());
 //            XmlDoc xmlDoc = xmlDocumentFactory.create(xml);

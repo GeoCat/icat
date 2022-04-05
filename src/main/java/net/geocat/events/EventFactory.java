@@ -35,6 +35,9 @@ package net.geocat.events;
 
 import net.geocat.database.linkchecker.entities.LinkCheckJob;
 import net.geocat.database.linkchecker.repos.LinkCheckJobRepo;
+import net.geocat.events.datadownload.AllDataDownloadedEvent;
+import net.geocat.events.datadownload.DataDownloadDatasetDocumentEvent;
+import net.geocat.events.datadownload.StartDataDownloadEvent;
 import net.geocat.events.findlinks.LinksFoundInAllDocuments;
 import net.geocat.events.findlinks.ProcessLocalMetadataDocumentEvent;
 import net.geocat.events.findlinks.StartProcessDocumentsEvent;
@@ -59,11 +62,24 @@ public class EventFactory {
     @Autowired
     LinkCheckJobRepo linkCheckJobRepo;
 
+    public DataDownloadDatasetDocumentEvent createDataDownloadDatasetDocumentEvent( Long id,String linkCheckJobId) {
+        DataDownloadDatasetDocumentEvent result = new DataDownloadDatasetDocumentEvent(id,linkCheckJobId);
+        return result;
+    }
+
+    public StartDataDownloadEvent createStartDataDownloadEvent(String linkCheckJobId) {
+        StartDataDownloadEvent result = new StartDataDownloadEvent(linkCheckJobId);
+        return result;
+    }
+
+    public AllDataDownloadedEvent createAllDataDownloadedEvent(String linkCheckJobId) {
+        AllDataDownloadedEvent result = new AllDataDownloadedEvent(linkCheckJobId);
+        return result;
+    }
 
     public AllPostProcessingCompleteEvent createAllPostProcessingCompleteEvent(String linkCheckJobId) {
         AllPostProcessingCompleteEvent result = new AllPostProcessingCompleteEvent(linkCheckJobId);
         return result;
-
     }
 
     public StartPostProcessEvent createStartPostProcessEvent(String linkCheckJobId) {

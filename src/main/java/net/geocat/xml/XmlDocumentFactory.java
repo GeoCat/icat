@@ -63,7 +63,7 @@ public class XmlDocumentFactory {
         if (isCSWMetadataDocument(doc)) {
             doc = new XmlMetadataDocument(doc);
             XmlMetadataDocument xmlMetadataDocument = (XmlMetadataDocument) doc;
-            if (xmlMetadataDocument.getMetadataDocumentType() == MetadataDocumentType.Dataset) {
+            if ( (xmlMetadataDocument.getMetadataDocumentType() == MetadataDocumentType.Dataset) || (xmlMetadataDocument.getMetadataDocumentType() == MetadataDocumentType.Series) ) {
                 XmlDatasetMetadataDocument xmlDatasetMetadataDocument = new XmlDatasetMetadataDocument(xmlMetadataDocument);
                 return xmlDatasetMetadataDocument;
             }
@@ -89,6 +89,17 @@ public class XmlDocumentFactory {
             d.appendChild(nn);
             return new XmlDoc(doc.getOriginalXmlString(), d);
         }
+        if (doc.getRootTagName().equals("GetRecordsResponse")) {
+            Node n = XmlDoc.findNode(doc.getParsedXml(),"GetRecordsResponse","SearchResults","MD_Metadata");
+            if (n == null) // likely an empty response...
+                return doc;
+            Document d = DocumentBuilderFactory.newInstance()
+                    .newDocumentBuilder().newDocument();
+            Node nn = d.importNode(n, true);
+            d.appendChild(nn);
+            return new XmlDoc(doc.getOriginalXmlString(), d);
+        }
+
         return doc;
     }
 

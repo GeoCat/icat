@@ -64,7 +64,8 @@ public class EventProcessor_ProcessDatasetDocLinksEvent extends BaseEventProcess
 
     Logger logger = LoggerFactory.getLogger(EventProcessor_ProcessServiceDocLinksEvent.class);
 
-
+    @Autowired
+    DocumentLinkToCapabilitiesProcessor documentLinkToCapabilitiesProcessor;
 
     @Autowired
     LocalDatasetMetadataRecordRepo localDatasetMetadataRecordRepo;
@@ -103,13 +104,36 @@ public class EventProcessor_ProcessDatasetDocLinksEvent extends BaseEventProcess
 
     @Override
     public EventProcessor_ProcessDatasetDocLinksEvent internalProcessing() throws Exception {
-//        localDatasetMetadataRecord = localDatasetMetadataRecordRepo.findById(getInitiatingEvent().getDatasetDocumentId()).get();// make sure we re-load
-//        localDatasetMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_PROCESSED);
-//        localDatasetMetadataRecordRepo.save(localDatasetMetadataRecord);
-     //   metadataRecord.setState(ServiceMetadataDocumentState.LINKS_EXTRACTED);
-        localDatasetMetadataRecordRepo.updateStateNotNotApplicatable(getInitiatingEvent().getDatasetDocumentId(), ServiceMetadataDocumentState.LINKS_PROCESSED);
+
+        localDatasetMetadataRecord = localDatasetMetadataRecordRepo.findById(getInitiatingEvent().getDatasetDocumentId()).get();// make sure we re-load
+        if (localDatasetMetadataRecord.getState() == ServiceMetadataDocumentState.NOT_APPLICABLE)
+            return this; //nothing to do
+
+        try {
+            int nlinksCap = localDatasetMetadataRecord.getDocumentLinks().size();
+            logger.debug("processing links DATASET documentid="+getInitiatingEvent().getDatasetDocumentId()+", with fileID="+ localDatasetMetadataRecord.getFileIdentifier() +" that has "+nlinksCap+" document links");
+
+            documentLinkToCapabilitiesProcessor.processDocumentLinks(localDatasetMetadataRecord);
+            localDatasetMetadataRecord.setState(ServiceMetadataDocumentState.LINKS_PROCESSED);
+
+            save();
+            logger.trace("finished  processing links for dataset documentid="+getInitiatingEvent().getDatasetDocumentId()  );
+
+        }
+        catch(Exception e){
+            logger.error("exception for datasetMetadataRecordId="+getInitiatingEvent().getDatasetDocumentId(),e);
+            localDatasetMetadataRecord.setState(ServiceMetadataDocumentState.ERROR);
+            localDatasetMetadataRecord.setErrorMessage(  convertToString(e) );
+            save();
+        }
+
 
         return this;
+    }
+
+
+    public void save( ){
+        localDatasetMetadataRecord = localDatasetMetadataRecordRepo.save(localDatasetMetadataRecord);
     }
 
 
@@ -125,12 +149,6 @@ public class EventProcessor_ProcessDatasetDocLinksEvent extends BaseEventProcess
         List<Event> result = new ArrayList<>();
         String linkCheckJobId = getInitiatingEvent().getLinkCheckJobId();
 
-//        if (metadataService.linkProcessingComplete(linkCheckJobId))
-//        {
-//            //done
-//            Event e = eventFactory.createAllLinksCheckedEvent(linkCheckJobId);
-//            result.add(e);
-//        }
         if (shouldTransitionOutOfLinkProcessing.shouldSendMessage(linkCheckJobId,getInitiatingEvent().getDatasetDocumentId()))
         {
             //done

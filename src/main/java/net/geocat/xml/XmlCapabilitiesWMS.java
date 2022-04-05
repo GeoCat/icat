@@ -33,24 +33,161 @@
 
 package net.geocat.xml;
 
-import net.geocat.service.capabilities.DatasetLink;
 import net.geocat.service.capabilities.WMSCapabilitiesDatasetLinkExtractor;
 import net.geocat.xml.helpers.CapabilitiesType;
+import net.geocat.xml.helpers.WMSLayer;
+import net.geocat.xml.helpers.WMSLayerBBox;
+import org.w3c.dom.Node;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+
+import static net.geocat.service.capabilities.WMSCapabilitiesDatasetLinkExtractor.findNodes;
+import static net.geocat.xml.XmlCapabilitiesAtom.attribute;
 
 public class XmlCapabilitiesWMS extends XmlCapabilitiesDocument {
 
     static WMSCapabilitiesDatasetLinkExtractor wmsCapabilitiesDatasetLinkExtractor = new WMSCapabilitiesDatasetLinkExtractor();
-
+    String getMapEndpoint;
+    String versionNumber;
+    List<String> supportedImageFormats;
+    List<WMSLayer> wmsLayers;
 
     public XmlCapabilitiesWMS(XmlDoc doc) throws Exception {
         super(doc, CapabilitiesType.WMS);
         setup_XmlCapabilitiesWMS();
+        setup_getversion();
+        setup_getmapEndpoint();
+        setup_supportedImageFormats();
+        setup_layers();
+    }
+
+    public List<Node> findbboxes(Node layer){
+        List<Node> bboxs = findNodes(layer,"BoundingBox");
+
+            Node parentLayer = layer.getParentNode();
+            if (parentLayer.getLocalName().equals("Layer")) {
+                bboxs.addAll(findbboxes(parentLayer));
+                return bboxs;
+            }
+            else {
+                return bboxs;
+            }
+
+
+    }
+
+    private void setup_layers() throws Exception {
+        wmsLayers = new ArrayList<>();
+        Node main = getFirstNode();
+        Node cap = findNode(main, "Capability");
+        List<Node> layers = findNodes_recurse(cap,"Layer");
+        for(Node layer: layers) {
+
+            Node nameNode = findNode(layer,"Name");
+            if ( (nameNode == null) || (nameNode.getTextContent() ==null) || (nameNode.getTextContent().trim().isEmpty()))
+                continue;
+            String name = nameNode.getTextContent().trim();
+            WMSLayer wmsLayer = new WMSLayer(name);
+            wmsLayers.add(wmsLayer);
+//            List<Node> bboxs = findNodes(layer,"BoundingBox");
+//            if (bboxs.isEmpty()) {
+//                Node parentLayer = layer.getParentNode();
+//                if (parentLayer.getLocalName().equals("Layer")) {
+//                    bboxs = findNodes(parentLayer,"BoundingBox");
+//                }
+//            }
+            List<Node> bboxs = findbboxes(layer );
+            for(Node bbox:bboxs) {
+                //        <BoundingBox CRS="CRS:84" maxx="18.95663115922459" maxy="51.305916291382516" minx="12.024498725444078" miny="48.25578803534065"/>
+                String crs = attribute(bbox,"CRS") ;
+                if (crs == null)
+                    crs = attribute(bbox,"SRS") ;
+                String xmin = attribute(bbox,"minx") ;
+                String ymin = attribute(bbox,"miny") ;
+                String xmax = attribute(bbox,"maxx") ;
+                String ymax = attribute(bbox,"maxy") ;
+                WMSLayerBBox wmsLayerBBox = new WMSLayerBBox(crs, Double.valueOf(xmin),Double.valueOf(ymin),Double.valueOf(xmax),Double.valueOf(ymax));
+                wmsLayer.getWmsLayerBBoxList().add(wmsLayerBBox);
+            }
+            int t=0;
+        }
+    }
+
+    private void setup_supportedImageFormats() throws Exception {
+        supportedImageFormats = new ArrayList<>();
+        Node main = getFirstNode();
+        Node getMap = findNode(main, Arrays.asList(new String[]{"Capability", "Request", "GetMap"}));
+        if (getMap ==null)
+            return;
+        List<Node> formats = findNodes(getMap,"Format");
+        for(Node format : formats) {
+            String mime = format.getTextContent();
+            if ( (mime!=null) && (!mime.trim().isEmpty()))
+                supportedImageFormats.add(mime.trim());
+        }
+    }
+
+    private void setup_getmapEndpoint() throws Exception {
+        Node main = getFirstNode();
+        Node op = findNode(main, Arrays.asList(new String[]{"Capability", "Request", "GetMap", "DCPType", "HTTP", "Get","OnlineResource"}));
+        if (op == null)
+            return;
+        String url = attribute(op,"xlink:href");
+        this.getMapEndpoint=url;
+    }
+
+    private void setup_getversion() throws Exception {
+        Node main = getFirstNode();
+        versionNumber = attribute(main,"version");
     }
 
     private void setup_XmlCapabilitiesWMS() throws Exception {
         datasetLinksList = wmsCapabilitiesDatasetLinkExtractor.findLinks(this);
+    }
+
+    //===
+
+    public boolean supportsFormat(String format){
+        return supportedImageFormats.stream()
+                .anyMatch(x->x.equalsIgnoreCase(format));
+    }
+
+    public WMSLayer findWMSLayer(String layername) {
+        Optional<WMSLayer> result = wmsLayers.stream()
+                .filter(x->x.getName().equals(layername))
+                .findFirst();
+        if (result.isPresent())
+            return result.get();
+        return null;
+    }
+
+    //===
+
+    public String getGetMapEndpoint() {
+        return getMapEndpoint;
+    }
+
+    public void setGetMapEndpoint(String getMapEndpoint) {
+        this.getMapEndpoint = getMapEndpoint;
+    }
+
+    public String getVersionNumber() {
+        return versionNumber;
+    }
+
+    public void setVersionNumber(String versionNumber) {
+        this.versionNumber = versionNumber;
+    }
+
+    public List<String> getSupportedImageFormats() {
+        return supportedImageFormats;
+    }
+
+    public void setSupportedImageFormats(List<String> supportedImageFormats) {
+        this.supportedImageFormats = supportedImageFormats;
     }
 
     @Override

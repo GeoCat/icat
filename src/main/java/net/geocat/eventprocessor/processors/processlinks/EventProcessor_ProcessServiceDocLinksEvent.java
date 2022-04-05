@@ -132,6 +132,10 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
     CapabilitiesDownloadingService capabilitiesDownloadingService;
 
     @Autowired
+    DocumentLinkToCapabilitiesProcessor documentLinkToCapabilitiesProcessor;
+
+
+    @Autowired
     CapabilitiesLinkFixer capabilitiesLinkFixer;
 
     @Autowired
@@ -158,7 +162,8 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
             int nlinksOperates = localServiceMetadataRecord.getOperatesOnLinks().size();
             logger.debug("processing links SERVICE documentid="+getInitiatingEvent().getServiceMetadataId()+", with fileID="+ localServiceMetadataRecord.getFileIdentifier() +" that has "+nlinksCap+" document links, and "+nlinksOperates+" operates on links");
 
-            processDocumentLinks();
+            documentLinkToCapabilitiesProcessor.processDocumentLinks(localServiceMetadataRecord);
+
 
             processOperatesOnLinks(localServiceMetadataRecord);
 
@@ -193,45 +198,45 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
 
 
 
-    private void processDocumentLinks() throws Exception {
-        int nlinks = localServiceMetadataRecord.getServiceDocumentLinks().size();
+//    private void processDocumentLinks() throws Exception {
+//        int nlinks = localServiceMetadataRecord.getServiceDocumentLinks().size();
+//
+//        fixURLs();
+//        int linkIdx = 0;
+//      //  logger.trace("processing "+nlinks+" service document links for documentid="+getInitiatingEvent().getServiceMetadataId());
+//        List<String> processedURLs = new ArrayList<>();
+//        for (ServiceDocumentLink link : localServiceMetadataRecord.getServiceDocumentLinks()) {
+//            logger.debug("processing service document link "+linkIdx+" of "+nlinks+" links for  documentid="+getInitiatingEvent().getServiceMetadataId());
+//            linkIdx++;
+//            String thisURL = link.getFixedURL();
+//            if (processedURLs.contains(thisURL))
+//            {
+//               // logger.debug("this url has already been processed - no action!");
+//                link.setLinkState(LinkState.Redundant);
+//            }
+//            else {
+//                processedURLs.add(link.getFixedURL());
+//                capabilitiesDownloadingService.handleLink(link);
+//            }
+//        }
+//        logger.trace("FINISHED processing service document links for documentid="+getInitiatingEvent().getServiceMetadataId());
+//    }
 
-        fixURLs();
-        int linkIdx = 0;
-      //  logger.trace("processing "+nlinks+" service document links for documentid="+getInitiatingEvent().getServiceMetadataId());
-        List<String> processedURLs = new ArrayList<>();
-        for (ServiceDocumentLink link : localServiceMetadataRecord.getServiceDocumentLinks()) {
-            logger.debug("processing service document link "+linkIdx+" of "+nlinks+" links for  documentid="+getInitiatingEvent().getServiceMetadataId());
-            linkIdx++;
-            String thisURL = link.getFixedURL();
-            if (processedURLs.contains(thisURL))
-            {
-               // logger.debug("this url has already been processed - no action!");
-                link.setLinkState(LinkState.Redundant);
-            }
-            else {
-                processedURLs.add(link.getFixedURL());
-                capabilitiesDownloadingService.handleLink(link);
-            }
-        }
-        logger.trace("FINISHED processing service document links for documentid="+getInitiatingEvent().getServiceMetadataId());
-    }
-
-    // get a more cannonical list of URLs -- this way we can tell if they are the same easier...
-    private List<String> fixURLs() {
-        return localServiceMetadataRecord.getServiceDocumentLinks().stream()
-                .map(x-> {
-                    try {
-                          x.setFixedURL(capabilitiesLinkFixer.fix(x.getRawURL(),localServiceMetadataRecord.getMetadataServiceType()));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        x.setFixedURL(x.getRawURL());
-                    }
-                    return x;
-                })
-                .map(x->x.getFixedURL())
-                .collect(Collectors.toList());
-    }
+//    // get a more cannonical list of URLs -- this way we can tell if they are the same easier...
+//    private List<String> fixURLs() {
+//        return localServiceMetadataRecord.getServiceDocumentLinks().stream()
+//                .map(x-> {
+//                    try {
+//                          x.setFixedURL(capabilitiesLinkFixer.fix(x.getRawURL(),localServiceMetadataRecord.getMetadataServiceType()));
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                        x.setFixedURL(x.getRawURL());
+//                    }
+//                    return x;
+//                })
+//                .map(x->x.getFixedURL())
+//                .collect(Collectors.toList());
+//    }
 
     //optimize - don't keep loading it
     List<CapabilitiesDocument> getCapabilities(LocalServiceMetadataRecord record) {

@@ -55,9 +55,9 @@ import org.springframework.stereotype.Component;
 @Scope("prototype")
 public class RetrieveServiceDocumentLink {
 
-    @Autowired
-    @Qualifier("cookieAttachingRetriever")
-    IHTTPRetriever retriever;
+//    @Autowired
+//    @Qualifier("cookieAttachingRetriever")
+//    IHTTPRetriever retriever;
 
     @Autowired
     CapabilitiesContinueReadingPredicate capabilitiesContinueReadingPredicate;
@@ -78,9 +78,13 @@ public class RetrieveServiceDocumentLink {
     RetrievableSimpleLinkDownloader retrievableSimpleLinkDownloader;
 
 
-    public DocumentLink process(ServiceDocumentLink link) throws Exception {
+    public DocumentLink process(DocumentLink link) throws Exception {
 
-        link.setFixedURL(capabilitiesLinkFixer.fix(link.getRawURL(), link.getLocalServiceMetadataRecord().getMetadataServiceType()));
+        String serviceType = null;
+        if (link instanceof ServiceDocumentLink)
+            serviceType = ((ServiceDocumentLink)link).getLocalServiceMetadataRecord().getMetadataServiceType();
+
+        link.setFixedURL(capabilitiesLinkFixer.fix(link.getRawURL(), serviceType,link));
 
          retrievableSimpleLinkDownloader.process(link);
 

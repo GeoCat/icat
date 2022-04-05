@@ -39,6 +39,11 @@ import net.geocat.xml.helpers.CapabilityDeterminer;
 import org.junit.Test;
 
 import static junit.framework.TestCase.*;
+import static net.geocat.xml.XmlStringTools.getNS;
+import static net.geocat.xml.XmlStringTools.getPrefix;
+import static net.geocat.xml.XmlStringTools.getRootTag;
+import static net.geocat.xml.XmlStringTools.getTagName;
+import static net.geocat.xml.XmlStringTools.replaceXMLDecl;
 
 public class TestCapabilitiesContinueReadingPredicate {
 
@@ -56,14 +61,14 @@ public class TestCapabilitiesContinueReadingPredicate {
 
        assertTrue(XmlStringTools.isXML(s));
 
-       assertEquals(s_nodecl,pred.replaceXMLDecl(s));
+       assertEquals(s_nodecl,replaceXMLDecl(s));
 
-       assertEquals(s_rootOnly,pred.getRootTag(s_nodecl));
+       assertEquals(s_rootOnly,getRootTag(s_nodecl));
 
-       assertEquals("MD_Metadata",pred.getTagName(s_nodecl));
-        assertEquals("gmd",pred.getPrefix(s_nodecl));
+       assertEquals("MD_Metadata",getTagName(s_nodecl));
+        assertEquals("gmd",getPrefix(s_nodecl));
 
-        assertEquals("http://www.isotc211.org/2005/gmd", pred.getNS("gmd",s_rootOnly));
+        assertEquals("http://www.isotc211.org/2005/gmd", getNS("gmd",s_rootOnly));
     }
 
     @Test
@@ -80,14 +85,14 @@ public class TestCapabilitiesContinueReadingPredicate {
 
         assertTrue(XmlStringTools.isXML(s));
 
-        assertEquals(s_nodecl,pred.replaceXMLDecl(s));
+        assertEquals(s_nodecl,replaceXMLDecl(s));
 
-        assertEquals(s_rootOnly,pred.getRootTag(s_nodecl));
+        assertEquals(s_rootOnly,getRootTag(s_nodecl));
 
-        assertEquals("MD_Metadata",pred.getTagName(s_nodecl));
-        assertEquals(null,pred.getPrefix(s_nodecl));
+        assertEquals("MD_Metadata",getTagName(s_nodecl));
+        assertEquals(null,getPrefix(s_nodecl));
 
-        assertEquals("http://www.isotc211.org/2005/gmd", pred.getNS(null,s_rootOnly));
+        assertEquals("http://www.isotc211.org/2005/gmd", getNS(null,s_rootOnly));
 
     }
 }

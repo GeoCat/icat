@@ -33,10 +33,14 @@
 
 package net.geocat.xml;
 
+import net.geocat.xml.helpers.XmlTagInfo;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.w3c.dom.Node;
 
 import java.nio.charset.Charset;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 @Scope("singleton")
@@ -44,6 +48,86 @@ public class XmlStringTools {
 
     public final static String UTF8_BOM = "\uFEFF";
     private final static Charset UTF8_CHARSET = Charset.forName("UTF-8");
+
+    static Pattern tagWithNS = Pattern.compile("^<([^ :<>]+):([^ >]+)[^>]+>");
+    static Pattern tagWithoutNS = Pattern.compile("^<([^ >]+)[^>]+>");
+
+
+    public static String getNodeTextValue(org.w3c.dom.Node n) {
+        if ( (n == null) || (n.getTextContent() == null) || (n.getTextContent().trim().isEmpty()) )
+            return null;
+        return n.getTextContent().trim();
+    }
+
+    public static XmlTagInfo determineRootTagInfo(String doc){
+        if (!isXML(doc))
+            return null; //not XML
+
+        doc = replaceXMLDecl(doc).trim();
+        doc = getRootTag(doc).trim();
+
+        String prefix = getPrefix(doc);
+        String tag = getTagName(doc);
+        String ns = getNS(prefix, doc);
+
+        return new XmlTagInfo(tag,prefix,ns);
+    }
+
+    public static String replaceXMLDecl(String doc) {
+        doc = doc.replaceFirst("<\\?xml[^\\?>]+\\?>", "");
+        doc = doc.replaceFirst("<\\?xml[^\\?>]+\\?>", "");
+        return doc.trim();
+    }
+
+
+    public static String getRootTag(String doc) {
+        Matcher matcher = tagWithNS.matcher(doc);
+        boolean find = matcher.find();
+        if (find)
+            return matcher.group(0);
+        matcher = tagWithoutNS.matcher(doc);
+        find = matcher.find();
+        if (find)
+            return matcher.group(0);
+        return null;
+    }
+
+    public static String getPrefix(String doc) {
+        Matcher matcher = tagWithNS.matcher(doc);
+        boolean find = matcher.find();
+        if (!find)
+            return null;
+        return matcher.group(1).trim();
+    }
+
+    public static String getTagName(String doc) {
+        Matcher matcher = tagWithNS.matcher(doc);
+        boolean find = matcher.find();
+        if (find)
+            return matcher.group(2).trim();
+        matcher = tagWithoutNS.matcher(doc);
+        find = matcher.find();
+        if (find)
+            return matcher.group(1).trim();
+        return null;
+    }
+
+    public static String getNS(String prefix, String tag) {
+        String pattern = "xmlns=[\"']([^\"']+)[\"']";
+        if (prefix != null)
+            pattern = "xmlns:" + prefix + "=[\"']([^\"']+)[\"']";
+        Pattern ns = Pattern.compile(pattern, Pattern.MULTILINE);
+        Matcher matcher = ns.matcher(tag);
+        boolean find = matcher.find();
+        if (find)
+            return matcher.group(1);
+        return null;
+    }
+
+    public static String removeComment(String doc) {
+        return doc.replaceAll("<!--[\\s\\S]*?-->","").trim();
+    }
+
 
 
     public static String trim(String s){
@@ -57,6 +141,8 @@ public class XmlStringTools {
     }
 
     public static String bytea2String(byte[] bytes) {
+        if (bytes == null)
+            return "";
         return trim(new String(bytes, UTF8_CHARSET));
     }
 

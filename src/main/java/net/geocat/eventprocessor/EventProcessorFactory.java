@@ -43,7 +43,7 @@ import org.springframework.stereotype.Component;
 @Scope("prototype")
 public class EventProcessorFactory {
 
-    static String[] subpackages = new String[]{"main", "findlinks", "processlinks","postprocess"};
+    static String[] subpackages = new String[]{"main", "findlinks", "processlinks","postprocess","datadownload"};
 
     @Autowired
     BeanFactory beanFactory;

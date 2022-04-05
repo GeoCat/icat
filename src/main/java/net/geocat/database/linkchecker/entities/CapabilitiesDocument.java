@@ -95,22 +95,66 @@ public class CapabilitiesDocument extends UpdateCreateDateTimeEntity {
     private List<CapabilitiesDatasetMetadataLink> capabilitiesDatasetMetadataLinkList;
 
 
+    @OneToMany(
+            cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
+    @Fetch(value = FetchMode.SUBSELECT)
+    @JoinColumns(
+            {
+                    @JoinColumn(name="cap_sha2",referencedColumnName = "sha2"),
+                    @JoinColumn(name="cap_jobId",referencedColumnName = "linkcheckjobid")
+            }
+    )
+    private List<InspireSpatialDatasetIdentifier> inspireSpatialDatasetIdentifiers;
+
+
+
     //number of layers (CapabilitiesDatasetMetadataLink) in this document -- saved for easy access
     // i.e. capabilitiesDatasetMetadataLinkList.size()
     private Integer numberOfDatasetLinks;
+
+
+    @Column(columnDefinition = "text")
+    private String procGetSpatialDataSetName;
+
 
     // summary for display
     @Column(columnDefinition = "text")
     private String summary;
 
 
+
     public CapabilitiesDocument(){
         this.capabilitiesDatasetMetadataLinkList = new ArrayList<>();
         this.state = CapabilitiesDocumentState.CREATED;
+        this.inspireSpatialDatasetIdentifiers = new ArrayList<>();
     }
 
     //---------------------------------------------------------------------------
 
+
+    public String getProcGetSpatialDataSetName() {
+        return procGetSpatialDataSetName;
+    }
+
+    public void setProcGetSpatialDataSetName(String procGetSpatialDataSetName) {
+        this.procGetSpatialDataSetName = procGetSpatialDataSetName;
+    }
+
+    public Integer getNumberOfDatasetLinks() {
+        return numberOfDatasetLinks;
+    }
+
+    public void setNumberOfDatasetLinks(Integer numberOfDatasetLinks) {
+        this.numberOfDatasetLinks = numberOfDatasetLinks;
+    }
+
+    public List<InspireSpatialDatasetIdentifier> getInspireSpatialDatasetIdentifiers() {
+        return inspireSpatialDatasetIdentifiers;
+    }
+
+    public void setInspireSpatialDatasetIdentifiers(List<InspireSpatialDatasetIdentifier> inspireSpatialDatasetIdentifiers) {
+        this.inspireSpatialDatasetIdentifiers = inspireSpatialDatasetIdentifiers;
+    }
 
     public CapabilitiesDocumentState getState() {
         return state;
@@ -226,6 +270,10 @@ public class CapabilitiesDocument extends UpdateCreateDateTimeEntity {
             result += indent + "      has Remote Service Metadata link: true\n";
             result += indent + "      Remote Service Metadata URL: " + remoteServiceMetadataRecordLink.getRawURL() + "\n";
         }
+
+        result += indent + "      procGetSpatialDataSetName: "+procGetSpatialDataSetName+"\n";
+        result += indent + "      numberOfDatasetLinks: "+numberOfDatasetLinks+"\n";
+
 
         result += indent + "  }";
         return result;

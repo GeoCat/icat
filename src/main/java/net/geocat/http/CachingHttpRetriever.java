@@ -79,13 +79,13 @@ import java.util.concurrent.locks.Lock;
     }
 
     @Override
-    public HttpResult retrieveXML(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate) throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
+    public HttpResult retrieve(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,int timeoutSeconds,String acceptsHeader) throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
 
         Lock lock = processLockingService.getLock(location); // don't want to have two processes downloading at the same time...
         lock.lock();
         try {
             if ((linkCheckJobId == null) || (linkCheckJobId.isEmpty()))
-                return retriever.retrieveXML(verb, location, body, cookie, predicate);
+                return retriever.retrieve(verb, location, body, cookie, predicate,timeoutSeconds,acceptsHeader);
 
             HttpResult result = getCached(location);
             if (result != null) {
@@ -93,7 +93,7 @@ import java.util.concurrent.locks.Lock;
                 return result;
             }
 
-            result = retriever.retrieveXML(verb, location, body, cookie, predicate);
+            result = retriever.retrieve(verb, location, body, cookie, predicate,timeoutSeconds,acceptsHeader);
             result.setURL(location); // in a re-direct, this can get changed -- use the finalURL()
             result.setLinkCheckJobId(linkCheckJobId);
             result = saveResult(result,location);

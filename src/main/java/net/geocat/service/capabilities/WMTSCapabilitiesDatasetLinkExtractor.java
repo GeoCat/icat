@@ -48,6 +48,9 @@ public class WMTSCapabilitiesDatasetLinkExtractor extends WMSCapabilitiesDataset
 
     @Override
     protected List<String> findMetadataURLs(Node layer) throws Exception {
+        Node nn = findNode(layer,"MetadataURL");
+        if (nn != null)
+            return findMetadataURLs_11(nn);
         Node n = findNode(layer, "Metadata");
 
         List<String> result = new ArrayList<>();
@@ -58,6 +61,19 @@ public class WMTSCapabilitiesDatasetLinkExtractor extends WMSCapabilitiesDataset
         Node att = n.getAttributes().getNamedItem("xlink:href");
         if (att == null)
             return null;
+        result.add(att.getTextContent().trim());
+        return result;
+    }
+
+    private List<String> findMetadataURLs_11(Node metadataURL) {
+        Node online = findNode(metadataURL,"OnlineResource");
+        if (online == null)
+            return null;
+        Node att = online.getAttributes().getNamedItem("xlink:href");
+        if (att == null)
+            return null;
+        List<String> result = new ArrayList<>();
+
         result.add(att.getTextContent().trim());
         return result;
     }

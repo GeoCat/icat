@@ -58,11 +58,15 @@ public class CapabilitiesDatasetMetadataLinkService {
         for (DatasetLink link : doc.getDatasetLinksList()) {
 
             CapabilitiesDatasetMetadataLink item = new CapabilitiesDatasetMetadataLink();
+            item.setOgcLayerName(link.getOgcLayerName());
             item.setLinkState(LinkState.Created);
             item.setRawURL(link.getRawUrl());
             item.setLinkCheckJobId(cap.getLinkCheckJobId());
             item.setFixedURL(datasetLinkFixer.fix(link.getRawUrl()));
             item.setIdentity(link.getIdentifier());
+            item.setAuthority(link.getAuthority());
+            item.setAuthorityName(link.getAuthorityName());
+            item.setCapabilitiesDocument(cap);
 
          //   item.setCapabilitiesDocument(cap);
             result.add(item);

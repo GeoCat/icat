@@ -203,5 +203,29 @@ public class MetadataService {
         return total_records - total_complete;
     }
 
+    public long numberRemainingDataDownload(String linkCheckJobId) {
+       // long nService = localServiceMetadataRecordRepo.countByLinkCheckJobId(linkCheckJobId);
+        long nDataset = localDatasetMetadataRecordRepo.countByLinkCheckJobId(linkCheckJobId);
+
+        long nDataset_complete = localDatasetMetadataRecordRepo.countInStates(linkCheckJobId,
+                Arrays.asList(new String[] {
+                        ServiceMetadataDocumentState.ERROR.toString(),
+                        ServiceMetadataDocumentState.DATADOWNLOADED.toString(),
+                        ServiceMetadataDocumentState.NOT_APPLICABLE.toString(),
+                })  ) ;
+
+//        long nService_complete = localServiceMetadataRecordRepo.countInStates(linkCheckJobId,
+//                Arrays.asList(new String[] {
+//                        ServiceMetadataDocumentState.ERROR.toString(),
+//                        ServiceMetadataDocumentState.LINKS_POSTPROCESSED.toString(),
+//                        ServiceMetadataDocumentState.NOT_APPLICABLE.toString(),
+//                })  ) ;
+
+        long total_records = nDataset;//+ nService;
+        long total_complete = nDataset_complete;//+nService_complete;
+
+        return total_records - total_complete;
+    }
+
 
 }

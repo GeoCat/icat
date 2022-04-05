@@ -33,23 +33,96 @@
 
 package net.geocat.xml;
 
-import com.sun.org.apache.xpath.internal.NodeSet;
 import net.geocat.service.capabilities.DatasetLink;
+import net.geocat.xml.helpers.AtomEntry;
+import net.geocat.xml.helpers.AtomLink;
 import net.geocat.xml.helpers.CapabilitiesType;
-import org.springframework.data.annotation.Persistent;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
-import javax.xml.xpath.XPathExpressionException;
+import java.util.ArrayList;
 import java.util.List;
 
 import static net.geocat.service.capabilities.WMSCapabilitiesDatasetLinkExtractor.findNodes;
 
 public class XmlCapabilitiesAtom extends XmlCapabilitiesDocument {
 
+    List<AtomEntry> entries = new ArrayList<>();
+
     public XmlCapabilitiesAtom(XmlDoc doc) throws Exception {
         super(doc, CapabilitiesType.Atom);
         setup_XmlCapabilitiesAtom();
+        setup_entries();
+    }
+
+    public AtomEntry findEntry(String id) {
+        if ( (entries ==null) || (entries.isEmpty()))
+            return null;
+
+        for (AtomEntry entry: entries) {
+            if ((entry.getId() !=null ) && (entry.getId().equals(id)))
+                return entry;
+        }
+
+        return null;
+    }
+
+    public static String attribute(Node n, String attribute) {
+        if (n==null)
+            return null;
+        Node att = n.getAttributes().getNamedItem(attribute);
+        if (att == null)
+            return null;
+        String val = att.getNodeValue();
+        if (val == null)
+            return null;
+        val = val.trim();
+        if (val.isEmpty())
+            return null;
+        return val;
+    }
+
+    public void setup_entries() throws Exception {
+        Node n = getFirstNode();
+        //NodeList ns = xpath_nodeset("//atom:entry");
+        List<Node> ns = XmlDoc.findAllNodes(n,"entry");
+        for(int idx=0;idx<ns.size();idx++) {
+            Node entryNode = ns.get(idx);
+            Node idNode = findNode(entryNode,"id");
+            String id = null;
+            if ( (idNode!=null) && (idNode.getTextContent() !=null) && (!idNode.getTextContent().trim().isEmpty()) )
+                id = idNode.getTextContent().trim();
+            if ( (id ==null)||(id.isEmpty()))
+                continue; // Atom spec says ID is required.  Also, we need it to identify which <entry> we are talking about
+
+            List<AtomLink> atomLinks = new ArrayList<>();
+            List<Node> links = XmlDoc.findAllNodes(entryNode,"link");
+            for(int idx2=0;idx2<links.size();idx2++) {
+                Node linkNode = links.get(idx2);
+                AtomLink link = new AtomLink(
+                        attribute(linkNode,"href"),
+                        attribute(linkNode,"rel"),
+                        attribute(linkNode,"type"),
+                        attribute(linkNode,"hreflang"),
+                        attribute(linkNode,"title")
+                    );
+                atomLinks.add(link);
+            }
+            AtomEntry entry = new AtomEntry(id,atomLinks);
+            entries.add(entry);
+        }
+    }
+
+
+    public Node findDescribedByLink(Node entryNode) {
+        List<Node> nodes = findNodes(entryNode,"link");
+        for (Node n : nodes) {
+             Node rel = n.getAttributes().getNamedItem("rel");
+             if ( (rel != null) && (rel.getNodeValue() !=null) && (!rel.getNodeValue().trim().isEmpty())) {
+                 if (rel.getNodeValue().trim().equals("describedby"))
+                     return n;
+             }
+        }
+        return null;
     }
 
     private void setup_XmlCapabilitiesAtom() throws  Exception {
@@ -58,16 +131,34 @@ public class XmlCapabilitiesAtom extends XmlCapabilitiesDocument {
         List<Node> ns = XmlDoc.findAllNodes(n,"entry");
         for(int idx=0;idx<ns.size();idx++) {
             String identity = null;
+            String authority = null;
             String url = null;
             Node entryNode = ns.get(idx);
            // Node spatial_dataset_identifier_codeNode = xpath_node(entryNode,"inspire_dls:spatial_dataset_identifier_code");
             Node spatial_dataset_identifier_codeNode = findNode(entryNode,"spatial_dataset_identifier_code");
-            Node urlNode = xpath_node(entryNode,"atom:link[@rel='describedby']");
+            Node spatial_dataset_identifier_namesapceNode = findNode(entryNode,"spatial_dataset_identifier_namespace");
+
+            // Node urlNode = xpath_node(entryNode,"atom:link[@rel='describedby']");
+            Node urlNode =findDescribedByLink(entryNode);
+            if (findNodes(entryNode,"spatial_dataset_identifier_code").size()>1)
+            {
+                int t=0;
+            }
+
+            Node idNode = findNode(entryNode,"id");
+            String id = null;
+            if ( (idNode!=null) && (idNode.getTextContent() !=null) && (!idNode.getTextContent().trim().isEmpty()) )
+                id = idNode.getTextContent().trim();
 
             if (spatial_dataset_identifier_codeNode != null) {
                 identity = spatial_dataset_identifier_codeNode.getTextContent();
                 if (identity.isEmpty())
                     identity = null;
+            }
+            if (spatial_dataset_identifier_namesapceNode != null) {
+                authority = spatial_dataset_identifier_namesapceNode.getTextContent();
+                if (authority.isEmpty())
+                    authority = null;
             }
             if (urlNode != null) {
                 Node hrefNode = urlNode.getAttributes().getNamedItem("href");
@@ -79,10 +170,22 @@ public class XmlCapabilitiesAtom extends XmlCapabilitiesDocument {
             }
             if ( (url !=null) || (identity !=null)) {
                 DatasetLink dl = new DatasetLink(identity,url);
+                dl.setAuthority(authority);
+                dl.setOgcLayerName(id);
                 this.getDatasetLinksList().add(dl);
             }
 
         }
+    }
+
+    //---
+
+    public List<AtomEntry> getEntries() {
+        return entries;
+    }
+
+    public void setEntries(List<AtomEntry> entries) {
+        this.entries = entries;
     }
 
 //    Extract the dataset authority:identifier from service feed

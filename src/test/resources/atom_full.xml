@@ -17,7 +17,7 @@
          <inspire_dls:spatial_dataset_identifier_code>spatial_dataset_identifier_code1</inspire_dls:spatial_dataset_identifier_code>
         <inspire_dls:spatial_dataset_identifier_namespace>spatial_dataset_identifier_namespace1</inspire_dls:spatial_dataset_identifier_namespace>
         <link rel="describedby" href="describedbyURL" type="application/xml" hreflang="en"/>
-        <link rel="alternate" href="hrefALT" type="application/atom+xml" hreflang="nl" title="Oppervlakte geologie"/>
+        <link rel="alternate" href="hrefALT" type="application/atom+xml" hreflang="nl" title="geology"/>
         <rights>Copyright</rights>
         <summary>ds summary</summary>
         <updated>2020-01-01T02:00:00Z</updated>

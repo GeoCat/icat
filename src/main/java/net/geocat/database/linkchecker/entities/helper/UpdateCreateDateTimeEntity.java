@@ -98,9 +98,9 @@ public class UpdateCreateDateTimeEntity {
     public String toString() {
         String result = "";
         if (createTimeUTC !=null)
-            result += "    createTimeUTC="+createTimeUTC+"\n";
+            result += "     createTimeUTC="+createTimeUTC+"\n";
         if (lastUpdateUTC !=null)
-            result += "    lastUpdateUTC="+lastUpdateUTC+"\n";
+            result += "     lastUpdateUTC="+lastUpdateUTC+"\n";
         if (errorMessage!=null)
             result += "     ERROR MESSAGE:"+errorMessage+"\n";
         return result;

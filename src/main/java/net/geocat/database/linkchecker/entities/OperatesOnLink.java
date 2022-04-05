@@ -33,6 +33,9 @@
 
 package net.geocat.database.linkchecker.entities;
 
+import net.geocat.database.linkchecker.entities.helper.DatasetIdentifier;
+import net.geocat.database.linkchecker.entities.helper.DatasetMetadataRecordDatasetIdentifier;
+import net.geocat.database.linkchecker.entities.helper.OperatesOnLinkDatasetIdentifier;
 import net.geocat.database.linkchecker.entities.helper.PartialDownloadHint;
 import net.geocat.database.linkchecker.entities.helper.RetrievableSimpleLink;
 import net.geocat.database.linkchecker.entities.helper.ServiceMetadataRecord;
@@ -40,6 +43,9 @@ import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 //represents an OperatesOn Link inside a Service Metadata Document
@@ -67,8 +73,10 @@ public class OperatesOnLink extends RetrievableSimpleLink {
     @Column(columnDefinition = "text")
     String fileIdentifier;
 
-    @Column(columnDefinition = "text")
-    String datasetIdentifier;
+    @OneToMany(mappedBy = "operatesOnLink",
+            cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
+    @Fetch(value = FetchMode.JOIN)
+   List<OperatesOnLinkDatasetIdentifier> datasetIdentifiers;
 
 
     // summary of this object (for display)
@@ -92,6 +100,7 @@ public class OperatesOnLink extends RetrievableSimpleLink {
 
     public OperatesOnLink() {
         this.setPartialDownloadHint(PartialDownloadHint.METADATA_ONLY);
+        datasetIdentifiers = new ArrayList<>();
     }
 
 
@@ -105,12 +114,13 @@ public class OperatesOnLink extends RetrievableSimpleLink {
         this.fileIdentifier = fileIdentifier;
     }
 
-    public String getDatasetIdentifier() {
-        return datasetIdentifier;
+    public List<OperatesOnLinkDatasetIdentifier> getDatasetIdentifiers() {
+        return datasetIdentifiers;
     }
 
-    public void setDatasetIdentifier(String datasetIdentifier) {
-        this.datasetIdentifier = datasetIdentifier;
+    public void setDatasetIdentifiers(List<DatasetIdentifier> datasetIdentifiers) {
+        this.datasetIdentifiers = datasetIdentifiers.stream().map(x->new OperatesOnLinkDatasetIdentifier(x,this)).collect(Collectors.toList());
+        // this.datasetIdentifiers = datasetIdentifiers;
     }
 
     public ServiceMetadataRecord getServiceMetadataRecord() {
@@ -164,7 +174,7 @@ public class OperatesOnLink extends RetrievableSimpleLink {
             result += "      uuidref: " + uuidref + "\n";
 
         result += "      file Identifier: " + fileIdentifier + "\n";
-        result += "      dataset identifier: " + datasetIdentifier + "\n";
+      //  result += "      dataset identifier: " + datasetIdentifier + "\n";
 
         result += super.toString();
        // result += "      has dataset Metadata Record :" + (datasetMetadataRecord != null) + "\n";

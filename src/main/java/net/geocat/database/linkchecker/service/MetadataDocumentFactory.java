@@ -80,11 +80,15 @@ public class MetadataDocumentFactory {
     public void augment(MetadataRecord metadataRecord, XmlMetadataDocument xml) {
         metadataRecord.setMetadataRecordType(xml.getMetadataDocumentType());
         metadataRecord.setFileIdentifier(xml.getFileIdentifier());
+        metadataRecord.setParentIdentifier(xml.getParentIdentifier());
     }
 
     public void augment(DatasetMetadataRecord datasetMetadataRecord, XmlDatasetMetadataDocument xml) throws Exception {
         augment((MetadataRecord) datasetMetadataRecord, (XmlMetadataDocument) xml);
-        datasetMetadataRecord.setDatasetIdentifier(xml.getDatasetIdentifier());
+
+        datasetMetadataRecord.setDatasetIdentifiers(xml.getDatasetIdentifiers());
+
+
 
          List<OnlineResource> links = serviceDocLinkExtractor.extractOnlineResource(xml);
 

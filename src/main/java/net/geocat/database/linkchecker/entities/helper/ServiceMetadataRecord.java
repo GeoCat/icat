@@ -81,12 +81,14 @@ public class ServiceMetadataRecord extends MetadataRecord {
     // i.e. operatesOnLinks.size()
     private Integer numberOfOperatesOnFound;
 
+    //Links (likely to capabilities documents) found in this service document
     @OneToMany(mappedBy = "serviceMetadataRecord",
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     // @JoinColumn(name="serviceMetadataRecordId")
     @Fetch(value = FetchMode.SUBSELECT)
     private Set<ServiceDocumentLink> serviceDocumentLinks;
 
+    //OperatesOn Links (likely to dataset metadata documents) found in this service document.
     @OneToMany(mappedBy = "serviceMetadataRecord",
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     // @JoinColumn(name="serviceMetadataRecordId")
@@ -128,8 +130,7 @@ public class ServiceMetadataRecord extends MetadataRecord {
     @Column(columnDefinition = "varchar(5)")
     IndicatorStatus INDICATOR_ALL_OPERATES_ON_RESOLVE;
 
-    //PASS if ALL of the OperatesOnLinks Dataset Metadata documents match a document linked from the Capabilities Layers.
-    // null = not evaluated
+    //INDICATOR_ALL_OPERATES_ON_MATCH_CAPABILITIES
     @Enumerated(EnumType.STRING)
     @Column(columnDefinition = "varchar(5)")
     IndicatorStatus INDICATOR_ALL_OPERATES_ON_MATCH_CAPABILITIES;

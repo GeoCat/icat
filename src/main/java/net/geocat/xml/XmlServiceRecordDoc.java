@@ -86,7 +86,12 @@ public class XmlServiceRecordDoc extends XmlMetadataDocument {
             return "view";
         else if (xmlServiceType.equalsIgnoreCase("ogc:wfs"))
             return "download";
-
+        if (xmlServiceType.equalsIgnoreCase("wms"))
+            return "view";
+        else if (xmlServiceType.equalsIgnoreCase("wmts"))
+            return "view";
+        else if (xmlServiceType.equalsIgnoreCase("wfs"))
+            return "download";
 
         return xmlServiceType;
     }

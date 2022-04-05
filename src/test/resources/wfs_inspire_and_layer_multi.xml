@@ -1,0 +1,199 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  ~  =============================================================================
+  ~  ===  Copyright (C) 2021 Food and Agriculture Organization of the
+  ~  ===  United Nations (FAO-UN), United Nations World Food Programme (WFP)
+  ~  ===  and United Nations Environment Programme (UNEP)
+  ~  ===
+  ~  ===  This program is free software; you can redistribute it and/or modify
+  ~  ===  it under the terms of the GNU General Public License as published by
+  ~  ===  the Free Software Foundation; either version 2 of the License, or (at
+  ~  ===  your option) any later version.
+  ~  ===
+  ~  ===  This program is distributed in the hope that it will be useful, but
+  ~  ===  WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~  ===  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~  ===  General Public License for more details.
+  ~  ===
+  ~  ===  You should have received a copy of the GNU General Public License
+  ~  ===  along with this program; if not, write to the Free Software
+  ~  ===  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+  ~  ===
+  ~  ===  Contact: Jeroen Ticheler - FAO - Viale delle Terme di Caracalla 2,
+  ~  ===  Rome - Italy. email: geonetwork@osgeo.org
+  ~  ===
+  ~  ===  Development of this program was financed by the European Union within
+  ~  ===  Service Contract NUMBER – 941143 – IPR – 2021 with subject matter
+  ~  ===  "Facilitating a sustainable evolution and maintenance of the INSPIRE
+  ~  ===  Geoportal", performed in the period 2021-2023.
+  ~  ===
+  ~  ===  Contact: JRC Unit B.6 Digital Economy, Via Enrico Fermi 2749,
+  ~  ===  21027 Ispra, Italy. email: JRC-INSPIRE-SUPPORT@ec.europa.eu
+  ~  ==============================================================================
+  -->
+
+<WFS_Capabilities
+        version="2.0.0"
+        xmlns="http://www.opengis.net/wfs/2.0"
+        xmlns:wfs="http://www.opengis.net/wfs/2.0"
+        xmlns:ows="http://www.opengis.net/ows/1.1"
+        xmlns:ogc="http://www.opengis.net/ogc"
+        xmlns:fes="http://www.opengis.net/fes/2.0"
+        xmlns:gml="http://www.opengis.net/gml"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">
+    <ows:ServiceIdentification>
+
+    </ows:ServiceIdentification>
+    <ows:ServiceProvider>
+
+    </ows:ServiceProvider>
+
+    <ows:OperationsMetadata>
+        <ows:Operation name="GetCapabilities">
+            <ows:DCP>
+                <ows:HTTP>
+                    <ows:Get xlink:href="getcap_get"/>
+                    <ows:Post xlink:href="getcap_post"/>
+                </ows:HTTP>
+            </ows:DCP>
+            <ows:Parameter name="AcceptVersions">
+                <ows:AllowedValues>
+                    <ows:Value>2.0.0</ows:Value>
+                    <ows:Value>1.1.0</ows:Value>
+                </ows:AllowedValues>
+            </ows:Parameter>
+            <ows:Parameter name="AcceptFormats">
+                <ows:AllowedValues>
+                    <ows:Value>text/xml</ows:Value>
+                </ows:AllowedValues>
+            </ows:Parameter>
+            <ows:Parameter name="Sections">
+                <ows:AllowedValues>
+                    <ows:Value>ServiceIdentification</ows:Value>
+                    <ows:Value>ServiceProvider</ows:Value>
+                    <ows:Value>OperationsMetadata</ows:Value>
+                    <ows:Value>FeatureTypeList</ows:Value>
+                    <ows:Value>Filter_Capabilities</ows:Value>
+                </ows:AllowedValues>
+            </ows:Parameter>
+        </ows:Operation>
+
+        <ows:Operation name="ListStoredQueries">
+            <ows:DCP>
+                <ows:HTTP>
+                    <ows:Get xlink:href="liststoredqueries_get"/>
+                    <ows:Post xlink:href="liststoredqueries_post"/>
+                </ows:HTTP>
+            </ows:DCP>
+        </ows:Operation>
+        <ows:Operation name="DescribeStoredQueries">
+            <ows:DCP>
+                <ows:HTTP>
+                    <ows:Get xlink:href="describestoredqueries_get"/>
+                    <ows:Post xlink:href="describestoredqueries_post"/>
+                </ows:HTTP>
+            </ows:DCP>
+        </ows:Operation>
+        <ows:Operation name="GetFeature">
+            <ows:DCP>
+                <ows:HTTP>
+                    <ows:Get xlink:href="http://localhost:8080/geoserver/wfs"/>
+                    <ows:Post xlink:href="getfeature_post"/>
+                </ows:HTTP>
+            </ows:DCP>
+        </ows:Operation>
+
+        <ows:Parameter name="version">
+            <ows:AllowedValues>
+                <ows:Value>2.0.0</ows:Value>
+                <ows:Value>1.1.0</ows:Value>
+            </ows:AllowedValues>
+        </ows:Parameter>
+        <ows:Parameter name="srsName">
+            <ows:AllowedValues>
+                <ows:Value>http://www.opengis.net/def/crs/EPSG/0/4258</ows:Value>
+                <ows:Value>http://www.opengis.net/def/crs/EPSG/0/3045</ows:Value>
+            </ows:AllowedValues>
+        </ows:Parameter>
+        <ows:Parameter name="outputFormat">
+            <ows:AllowedValues>
+                <ows:Value>application/gml+xml; version=3.2</ows:Value>
+                <ows:Value>text/xml; subtype=gml/3.2.1</ows:Value>
+            </ows:AllowedValues>
+        </ows:Parameter>
+        <ows:Parameter name="resolve">
+            <ows:AllowedValues>
+                <ows:Value>none</ows:Value>
+                <ows:Value>local</ows:Value>
+                <ows:Value>remote</ows:Value>
+                <ows:Value>all</ows:Value>
+            </ows:AllowedValues>
+        </ows:Parameter>
+
+        <ows:ExtendedCapabilities
+                xmlns:ows="http://www.opengis.net/ows/1.1"
+                xmlns:inspire_common="http://inspire.ec.europa.eu/schemas/common/1.0"
+                xmlns:inspire_dls="http://inspire.ec.europa.eu/schemas/inspire_dls/1.0"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <inspire_dls:ExtendedCapabilities>
+                <inspire_common:MetadataUrl>
+                    <inspire_common:URL>metadata_service_url</inspire_common:URL>
+                    <inspire_common:MediaType>application/vnd.iso.19139+xml</inspire_common:MediaType>
+
+                </inspire_common:MetadataUrl>
+                <inspire_common:SupportedLanguages>
+                    <inspire_common:DefaultLanguage>
+                        <inspire_common:Language>eng</inspire_common:Language>
+                    </inspire_common:DefaultLanguage>
+
+                </inspire_common:SupportedLanguages>
+                <inspire_common:ResponseLanguage>
+                    <inspire_common:Language>eng</inspire_common:Language>
+                </inspire_common:ResponseLanguage>
+                <inspire_dls:SpatialDataSetIdentifier metadataURL="ds_metadataurl1">
+                    <inspire_common:Code>dscode1</inspire_common:Code>
+                    <inspire_common:Namespace>dsnamespace1</inspire_common:Namespace>
+                </inspire_dls:SpatialDataSetIdentifier>
+                <inspire_dls:SpatialDataSetIdentifier metadataURL="ds_metadataurl2">
+                    <inspire_common:Code>dscode2</inspire_common:Code>
+                    <inspire_common:Namespace>dsnamespace2</inspire_common:Namespace>
+                </inspire_dls:SpatialDataSetIdentifier>
+            </inspire_dls:ExtendedCapabilities>
+
+        </ows:ExtendedCapabilities>
+    </ows:OperationsMetadata>
+    <FeatureTypeList>
+        <FeatureType>
+            <Name>ws:layer1</Name>
+            <Title>title1</Title>
+            <Abstract/>
+            <ows:Keywords>
+                <ows:Keyword>features</ows:Keyword>
+            </ows:Keywords>
+            <DefaultCRS>http://www.opengis.net/def/crs/EPSG/0/4326</DefaultCRS>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>0.0 0.0</ows:LowerCorner>
+                <ows:UpperCorner>1.0 1.0</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+            <MetadataURL xlink:href="ft1URL"/>
+        </FeatureType>
+        <FeatureType>
+            <Name>ws:layer2</Name>
+            <Title>title2</Title>
+            <Abstract/>
+            <ows:Keywords>
+                <ows:Keyword>features</ows:Keyword>
+            </ows:Keywords>
+            <DefaultCRS>http://www.opengis.net/def/crs/EPSG/0/4326</DefaultCRS>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>0.0 0.0</ows:LowerCorner>
+                <ows:UpperCorner>2.0 2.0</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+            <MetadataURL xlink:href="ft2URL"/>
+            <MetadataURL xlink:href="ft3URL"/>
+        </FeatureType>
+    </FeatureTypeList>
+
+</WFS_Capabilities>

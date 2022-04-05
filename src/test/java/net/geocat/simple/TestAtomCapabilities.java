@@ -45,6 +45,7 @@ import java.util.Scanner;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class TestAtomCapabilities {
 
@@ -63,6 +64,25 @@ public class TestAtomCapabilities {
 
         assertEquals("spatial_dataset_identifier_code1",xmlCapabilitiesDocument.getDatasetLinksList().get(0).getIdentifier());
         assertEquals("describedbyURL",xmlCapabilitiesDocument.getDatasetLinksList().get(0).getRawUrl());
+
+        assertEquals(1, xmlCapabilitiesDocument.getEntries().size());
+        assertEquals(2, xmlCapabilitiesDocument.getEntries().get(0).getLinks().size());
+
+        assertEquals("spatial_dataset_identifier_namespace1", xmlCapabilitiesDocument.getDatasetLinksList().get(0).getAuthority());
+        assertEquals("spatial_dataset_identifier_code1", xmlCapabilitiesDocument.getDatasetLinksList().get(0).getIdentifier());
+        assertNull( xmlCapabilitiesDocument.getDatasetLinksList().get(0).getAuthorityName());
+
+        assertEquals("describedby",xmlCapabilitiesDocument.getEntries().get(0).getLinks().get(0).getRel());
+        assertEquals("describedbyURL",xmlCapabilitiesDocument.getEntries().get(0).getLinks().get(0).getHref());
+        assertEquals("application/xml",xmlCapabilitiesDocument.getEntries().get(0).getLinks().get(0).getType());
+        assertEquals("en",xmlCapabilitiesDocument.getEntries().get(0).getLinks().get(0).getHreflang());
+        assertNull(xmlCapabilitiesDocument.getEntries().get(0).getLinks().get(0).getTitle());
+
+        assertEquals("alternate",xmlCapabilitiesDocument.getEntries().get(0).getLinks().get(1).getRel());
+        assertEquals("hrefALT",xmlCapabilitiesDocument.getEntries().get(0).getLinks().get(1).getHref());
+        assertEquals("application/atom+xml",xmlCapabilitiesDocument.getEntries().get(0).getLinks().get(1).getType());
+        assertEquals("nl",xmlCapabilitiesDocument.getEntries().get(0).getLinks().get(1).getHreflang());
+        assertEquals("geology",xmlCapabilitiesDocument.getEntries().get(0).getLinks().get(1).getTitle());
 
     }
 

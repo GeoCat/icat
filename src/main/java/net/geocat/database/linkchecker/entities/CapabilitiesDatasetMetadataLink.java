@@ -33,12 +33,18 @@
 
 package net.geocat.database.linkchecker.entities;
 
+import net.geocat.database.linkchecker.entities.helper.CapabilitiesDatasetMetadataLinkDatasetIdentifier;
+import net.geocat.database.linkchecker.entities.helper.DatasetIdentifier;
+import net.geocat.database.linkchecker.entities.helper.DatasetMetadataRecordDatasetIdentifier;
 import net.geocat.database.linkchecker.entities.helper.PartialDownloadHint;
 import net.geocat.database.linkchecker.entities.helper.RetrievableSimpleLink;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 // This models all the Dataset links from a capabilities (typically 1 per layer)
 @Entity
@@ -64,11 +70,28 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
 //    @Fetch(value = FetchMode.JOIN)
 //    CapabilitiesRemoteDatasetMetadataDocument capabilitiesRemoteDatasetMetadataDocument;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumns(
+            {
+                    @JoinColumn(name="cap_sha2",referencedColumnName = "sha2"),
+                    @JoinColumn(name="cap_jobId",referencedColumnName = "linkcheckjobid")
+            }
+    )
+    private CapabilitiesDocument capabilitiesDocument;
+
      @Column(columnDefinition = "text")
     String fileIdentifier;
 
-     @Column(columnDefinition = "text")
-    String datasetIdentifier;
+    @Column(columnDefinition = "text")
+    String parentIdentifier;
+
+    @OneToMany(mappedBy = "capDatasetMetadataLink",
+            cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
+    @Fetch(value = FetchMode.JOIN)
+   List<CapabilitiesDatasetMetadataLinkDatasetIdentifier> datasetIdentifiers;
+
+    @Column(columnDefinition = "text")
+    String ogcLayerName; // <Layer><Name>  or <FeatureType><Name>
 
 //    //link back to the capabilities document this link came from
 //    @ManyToOne(fetch = FetchType.EAGER,cascade = {CascadeType.ALL})
@@ -77,6 +100,15 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
     //from the Capabilities document - identity for the layer
     @Column(columnDefinition = "text")
     String identity;
+
+    //from the Capabilities document - authority (url) for the layer
+    @Column(columnDefinition = "text")
+    String authority;
+
+    //from the Capabilities document - authority (name of authority) for the layer
+    // i.e. <Identity authority="XYZ" .../>
+    @Column(columnDefinition = "text")
+    String authorityName;
 
     //store summary info about this
     @Column(columnDefinition = "text")
@@ -89,10 +121,35 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
 
     public CapabilitiesDatasetMetadataLink() {
         this.setPartialDownloadHint(PartialDownloadHint.METADATA_ONLY);
+        this.datasetIdentifiers=new ArrayList<>();
     }
 
     //---------------------------------------------------------------------------
 
+
+    public CapabilitiesDocument getCapabilitiesDocument() {
+        return capabilitiesDocument;
+    }
+
+    public void setCapabilitiesDocument(CapabilitiesDocument capabilitiesDocument) {
+        this.capabilitiesDocument = capabilitiesDocument;
+    }
+
+    public String getAuthority() {
+        return authority;
+    }
+
+    public void setAuthority(String authority) {
+        this.authority = authority;
+    }
+
+    public String getOgcLayerName() {
+        return ogcLayerName;
+    }
+
+    public void setOgcLayerName(String ogcLayerName) {
+        this.ogcLayerName = ogcLayerName;
+    }
 
     public String getFileIdentifier() {
         return fileIdentifier;
@@ -102,12 +159,13 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
         this.fileIdentifier = fileIdentifier;
     }
 
-    public String getDatasetIdentifier() {
-        return datasetIdentifier;
+    public List<CapabilitiesDatasetMetadataLinkDatasetIdentifier> getDatasetIdentifiers() {
+        return datasetIdentifiers;
     }
 
-    public void setDatasetIdentifier(String datasetIdentifier) {
-        this.datasetIdentifier = datasetIdentifier;
+    public void setDatasetIdentifiers(List<DatasetIdentifier> datasetIdentifiers) {
+        this.datasetIdentifiers = datasetIdentifiers.stream().map(x->new CapabilitiesDatasetMetadataLinkDatasetIdentifier(x,this)).collect(Collectors.toList());
+        // this.datasetIdentifiers = datasetIdentifiers;
     }
 
     public long getCapabilitiesDatasetMetadataLinkId() {
@@ -118,6 +176,13 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
         this.capabilitiesDatasetMetadataLinkId = capabilitiesDatasetMetadataLinkId;
     }
 
+    public String getAuthorityName() {
+        return authorityName;
+    }
+
+    public void setAuthorityName(String authorityName) {
+        this.authorityName = authorityName;
+    }
 
     public String getIdentity() {
         return identity;
@@ -125,6 +190,14 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
 
     public void setIdentity(String identity) {
         this.identity = identity;
+    }
+
+    public String getParentIdentifier() {
+        return parentIdentifier;
+    }
+
+    public void setParentIdentifier(String parentIdentifier) {
+        this.parentIdentifier = parentIdentifier;
     }
 
     //---------------------------------------------------------------------------
@@ -146,8 +219,10 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
         String result = "CapabilitiesDatasetMetadataLink {\n";
         result += "      capabilitiesDatasetMetadataLinkId: " + capabilitiesDatasetMetadataLinkId + "\n";
         result += "      identity: " + identity + "\n";
+        result += "      authority: " + authority + "\n";
         result += "      file Identifier: " + fileIdentifier + "\n";
-        result += "      dataset identifier: " + datasetIdentifier + "\n";
+      //  result += "      dataset identifier: " + datasetIdentifier + "\n";
+        result += "      ogcLayerName: " + ogcLayerName + "\n";
 
         result += "\n";
         result += super.toString();

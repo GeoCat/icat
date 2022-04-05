@@ -36,7 +36,7 @@ package net.geocat.eventprocessor.processors.processlinks.postprocessing;
 
 import net.geocat.database.harvester.repos.BlobStorageRepo;
 import net.geocat.database.linkchecker.entities.*;
-import net.geocat.database.linkchecker.entities.helper.DatasetMetadataRecord;
+import net.geocat.database.linkchecker.entities.helper.DatasetIdentifier;
 import net.geocat.database.linkchecker.entities.helper.IndicatorStatus;
 import net.geocat.database.linkchecker.repos.LinkCheckBlobStorageRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,7 +78,7 @@ public class ServiceOperatesOnIndicators {
         List<CapabilitiesDatasetMetadataLink>  capDatasetDocLinks =  capDocs.stream()
                 .map(x->x.getCapabilitiesDatasetMetadataLinkList())
                 .flatMap(List::stream)
-                .filter(x-> x != null && x.getFileIdentifier() !=null && x.getDatasetIdentifier() != null)
+                .filter(x-> x != null && x.getFileIdentifier() !=null && ((x.getDatasetIdentifiers() != null) && (!x.getDatasetIdentifiers().isEmpty()) ))
                 .collect(Collectors.toList());
 
 
@@ -96,9 +96,26 @@ public class ServiceOperatesOnIndicators {
         return record;
     }
 
+    public boolean matches(List  list1, List  list2) {
+        if ((list1 ==null) || list1.isEmpty() || (list2 ==null) || list2.isEmpty())
+                return false;
+        for(Object _id1 : list1) {
+            for (Object _id2:list2) {
+                DatasetIdentifier id1 = (DatasetIdentifier) _id1;
+                DatasetIdentifier id2 = (DatasetIdentifier) _id2;
+                if ((id1==null) || (id2==null) ||(id1.getCode()==null) || (id2.getCode()==null))
+                    continue;
+
+                if (id1.getCode().equals(id2.getCode()))
+                    return true;
+            }
+        }
+        return false;
+    }
+
     public boolean matches(OperatesOnLink operatesOnLink,  List<CapabilitiesDatasetMetadataLink>  capDatasetDocLinks) {
         CapabilitiesDatasetMetadataLink result= capDatasetDocLinks.stream()
-                .filter(x-> x.getFileIdentifier().equals(operatesOnLink.getFileIdentifier()) && x.getDatasetIdentifier().equals(operatesOnLink.getDatasetIdentifier() ))
+                .filter(x-> x.getFileIdentifier().equals(operatesOnLink.getFileIdentifier()) && matches(x.getDatasetIdentifiers(),operatesOnLink.getDatasetIdentifiers())  )
                 .findFirst( )
                 .orElse(null);
         return result != null;

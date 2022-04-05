@@ -37,6 +37,7 @@ import net.geocat.database.linkchecker.entities.CapabilitiesDocument;
 import net.geocat.database.linkchecker.entities.helper.SHA2JobIdCompositeKey;
 import net.geocat.xml.helpers.CapabilitiesType;
 import org.springframework.context.annotation.Scope;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 
@@ -47,5 +48,8 @@ import java.util.List;
 public interface CapabilitiesDocumentRepo extends CrudRepository<CapabilitiesDocument, SHA2JobIdCompositeKey> {
 
     List<CapabilitiesDocument> findByCapabilitiesDocumentType(CapabilitiesType type);
+
+
+    List<CapabilitiesDocument> findByLinkCheckJobId(String linkCheckJobId);
 
 }

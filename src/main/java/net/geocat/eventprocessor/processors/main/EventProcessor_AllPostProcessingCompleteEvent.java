@@ -37,6 +37,7 @@ import net.geocat.database.linkchecker.entities.LinkCheckJobState;
 import net.geocat.database.linkchecker.service.LinkCheckJobService;
 import net.geocat.eventprocessor.BaseEventProcessor;
 import net.geocat.events.Event;
+import net.geocat.events.EventFactory;
 import net.geocat.events.postprocess.AllPostProcessingCompleteEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +58,8 @@ public class EventProcessor_AllPostProcessingCompleteEvent extends BaseEventProc
     @Autowired
     LinkCheckJobService linkCheckJobService;
 
-
+    @Autowired
+    EventFactory eventFactory;
 
     @Override
     public EventProcessor_AllPostProcessingCompleteEvent externalProcessing() {
@@ -67,7 +69,9 @@ public class EventProcessor_AllPostProcessingCompleteEvent extends BaseEventProc
 
     @Override
     public EventProcessor_AllPostProcessingCompleteEvent internalProcessing() {
-        linkCheckJobService.updateLinkCheckJobStateInDB(getInitiatingEvent().getLinkCheckJobId(), LinkCheckJobState.COMPLETE);
+
+        linkCheckJobService.updateLinkCheckJobStateInDB(getInitiatingEvent().getLinkCheckJobId(), LinkCheckJobState.DATADOWNLOADING);
+
         return this;
     }
 
@@ -75,10 +79,11 @@ public class EventProcessor_AllPostProcessingCompleteEvent extends BaseEventProc
     @Override
     public List<Event> newEventProcessing() {
         logger.debug("AllPostProcessingCompleteEvent - all documents were postprocessed, linkcheckjobid="+getInitiatingEvent().getLinkCheckJobId());
-        logger.debug("LinkCheckJob COMPLETE - "+ getInitiatingEvent().getLinkCheckJobId());
+//        logger.debug("LinkCheckJob COMPLETE - "+ getInitiatingEvent().getLinkCheckJobId());
 
         List<Event> result = new ArrayList<>();
-
+        Event e = eventFactory.createStartDataDownloadEvent(this.getInitiatingEvent().getLinkCheckJobId());
+        result.add(e);
         return result;
     }
 

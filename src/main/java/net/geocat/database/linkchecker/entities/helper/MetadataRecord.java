@@ -58,6 +58,11 @@ public class MetadataRecord extends UpdateCreateDateTimeEntity {
     @Column(columnDefinition = "text")
     private String fileIdentifier;
 
+    //File identifier (see XML XSL)
+    @Column(columnDefinition = "text")
+    private String parentIdentifier;
+
+
     // what type of metadata document is this (service/dataset/series/...)
     @Column(columnDefinition = "varchar(22)")
     @Enumerated(EnumType.STRING)
@@ -85,6 +90,14 @@ public class MetadataRecord extends UpdateCreateDateTimeEntity {
 
     //---------------------------------------------------------------------------
 
+
+    public String getParentIdentifier() {
+        return parentIdentifier;
+    }
+
+    public void setParentIdentifier(String parentIdentifier) {
+        this.parentIdentifier = parentIdentifier;
+    }
 
     public String getTitle() {
         return title;
@@ -155,6 +168,7 @@ public class MetadataRecord extends UpdateCreateDateTimeEntity {
     @Override
     public String toString() {
         String result = super.toString();
+        result += "     title: " + title + "\n";
         result += "     sha2: " + sha2 + "\n";
         result += "     fileIdentifier: " + fileIdentifier + "\n";
         result += "     metadataRecordType: " + metadataRecordType + "\n";

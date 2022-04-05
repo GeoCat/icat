@@ -40,4 +40,5 @@ public interface CapabilitiesLinkResult {
 
     String getCapabilitiesdocumenttype();
 
+    String getOgclayername();
 }

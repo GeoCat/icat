@@ -35,6 +35,9 @@ package net.geocat.events;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import net.geocat.events.datadownload.AllDataDownloadedEvent;
+import net.geocat.events.datadownload.DataDownloadDatasetDocumentEvent;
+import net.geocat.events.datadownload.StartDataDownloadEvent;
 import net.geocat.events.findlinks.LinksFoundInAllDocuments;
 import net.geocat.events.findlinks.ProcessLocalMetadataDocumentEvent;
 import net.geocat.events.findlinks.StartProcessDocumentsEvent;
@@ -63,6 +66,10 @@ import net.geocat.events.processlinks.StartLinkProcessingEvent;
         @JsonSubTypes.Type(value = ProcessDatasetDocLinksEvent.class, name = "ProsDS"),
         @JsonSubTypes.Type(value = ProcessServiceDocLinksEvent.class, name = "ProsSer"),
         @JsonSubTypes.Type(value = StartLinkProcessingEvent.class, name = "StartLink"),
+
+        @JsonSubTypes.Type(value = DataDownloadDatasetDocumentEvent.class, name = "DownDoc"),
+        @JsonSubTypes.Type(value = StartDataDownloadEvent.class, name = "StartDown"),
+        @JsonSubTypes.Type(value = AllDataDownloadedEvent.class, name = "AllDownDone"),
 
 })
 public class Event {

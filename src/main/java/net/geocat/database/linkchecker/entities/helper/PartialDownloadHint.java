@@ -40,5 +40,6 @@ public enum PartialDownloadHint {
     ALWAYS_DOWNLOAD,
     XML_ONLY,
     CAPABILITIES_ONLY,
-    METADATA_ONLY
+    METADATA_ONLY,
+    ALWAYS_PARTIAL
 }

@@ -39,7 +39,7 @@ import java.io.IOException;
 
 public interface IHTTPRetriever {
 
-    HttpResult retrieveXML(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate)
+    HttpResult retrieve(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,int timeoutSeconds, String acceptsHeader)
             throws IOException, SecurityException, ExceptionWithCookies, RedirectException;
 
 }

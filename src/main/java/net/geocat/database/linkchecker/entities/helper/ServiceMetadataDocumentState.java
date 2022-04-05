@@ -43,5 +43,7 @@ public enum ServiceMetadataDocumentState {
 
     LINKS_POSTPROCESSED,
 
+    DATADOWNLOADED,
+
     ERROR // a problem occurred - could not process this document
 }

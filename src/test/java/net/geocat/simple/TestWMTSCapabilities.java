@@ -39,6 +39,7 @@ import net.geocat.xml.XmlCapabilitiesAtom;
 import net.geocat.xml.XmlCapabilitiesWMTS;
 import net.geocat.xml.XmlDocumentFactory;
 import net.geocat.xml.helpers.CapabilityDeterminer;
+import net.geocat.xml.helpers.WMTSTile;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -46,11 +47,84 @@ import java.util.Scanner;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class TestWMTSCapabilities {
 
     XmlDocumentFactory xmlDocumentFactory;
     WMTSCapabilitiesDatasetLinkExtractor wmtsCapabilitiesDatasetLinkExtractor;
+//
+//    @Test
+//    public void test_111() throws  Exception {
+//        XmlCapabilitiesWMTS xmlCapabilitiesDocument = read("wmts_111.xml");
+//        assertNotNull(xmlCapabilitiesDocument);
+//    }
+
+    @Test
+    public void test_limitMatrix() throws  Exception {
+        XmlCapabilitiesWMTS xmlCapabilitiesDocument = read("wmts_reducedMatrix.xml");
+        assertNotNull(xmlCapabilitiesDocument);
+
+        assertEquals("http://localhost:8080/geoserver", xmlCapabilitiesDocument.getGetTileEndpoint());
+
+        assertEquals(1,xmlCapabilitiesDocument.getTileMatrixSets().size());
+        assertEquals("MATRIXNAME",xmlCapabilitiesDocument.getTileMatrixSets().get(0).getIdentifier());
+        assertEquals("urn:ogc:def:crs:EPSG::1234",xmlCapabilitiesDocument.getTileMatrixSets().get(0).getCRS());
+        assertEquals(5,xmlCapabilitiesDocument.getTileMatrixSets().get(0).getTileMatrices().size());
+
+        assertEquals("MATRIXNAME:0",xmlCapabilitiesDocument.getTileMatrixSets().get(0).getTileMatrices().get(0).getIdentifier());
+        assertEquals(256,xmlCapabilitiesDocument.getTileMatrixSets().get(0).getTileMatrices().get(0).getHeight());
+        assertEquals(256,xmlCapabilitiesDocument.getTileMatrixSets().get(0).getTileMatrices().get(0).getWidth());
+        assertEquals(1,xmlCapabilitiesDocument.getTileMatrixSets().get(0).getTileMatrices().get(0).getMatrixHeight());
+        assertEquals(1,xmlCapabilitiesDocument.getTileMatrixSets().get(0).getTileMatrices().get(0).getMatrixWidth());
+
+        assertEquals("MATRIXNAME:1",xmlCapabilitiesDocument.getTileMatrixSets().get(0).getTileMatrices().get(1).getIdentifier());
+        assertEquals(256,xmlCapabilitiesDocument.getTileMatrixSets().get(0).getTileMatrices().get(1).getHeight());
+        assertEquals(256,xmlCapabilitiesDocument.getTileMatrixSets().get(0).getTileMatrices().get(1).getWidth());
+        assertEquals(2,xmlCapabilitiesDocument.getTileMatrixSets().get(0).getTileMatrices().get(1).getMatrixHeight());
+        assertEquals(2,xmlCapabilitiesDocument.getTileMatrixSets().get(0).getTileMatrices().get(1).getMatrixWidth());
+
+                //don't test other 3 (:2 :3 :4)
+
+        assertEquals(1,xmlCapabilitiesDocument.getWmtsLayers().size());
+        assertEquals("layer1ID",xmlCapabilitiesDocument.getWmtsLayers().get(0).getIdentifier());
+        assertEquals("title",xmlCapabilitiesDocument.getWmtsLayers().get(0).getTitle());
+        assertEquals(1,xmlCapabilitiesDocument.getWmtsLayers().get(0).getFormats().size());
+        assertEquals("image/png",xmlCapabilitiesDocument.getWmtsLayers().get(0).getFormats().get(0));
+
+        assertEquals(1,xmlCapabilitiesDocument.getWmtsLayers().get(0).getTileMatrixSetLinks().size());
+        assertEquals("MATRIXNAME",xmlCapabilitiesDocument.getWmtsLayers().get(0).getTileMatrixSetLinks().get(0).getTileMatrixSetName());
+        assertEquals(4,xmlCapabilitiesDocument.getWmtsLayers().get(0).getTileMatrixSetLinks().get(0).getTileMatrixSetLimits().size());
+
+        assertEquals("MATRIXNAME:0",xmlCapabilitiesDocument.getWmtsLayers().get(0).getTileMatrixSetLinks().get(0).getTileMatrixSetLimits().get(0).getTileMatrixName());
+        assertEquals(0,xmlCapabilitiesDocument.getWmtsLayers().get(0).getTileMatrixSetLinks().get(0).getTileMatrixSetLimits().get(0).getMinTileRow());
+        assertEquals(0,xmlCapabilitiesDocument.getWmtsLayers().get(0).getTileMatrixSetLinks().get(0).getTileMatrixSetLimits().get(0).getMaxTileRow());
+        assertEquals(0,xmlCapabilitiesDocument.getWmtsLayers().get(0).getTileMatrixSetLinks().get(0).getTileMatrixSetLimits().get(0).getMinTileCol());
+        assertEquals(0,xmlCapabilitiesDocument.getWmtsLayers().get(0).getTileMatrixSetLinks().get(0).getTileMatrixSetLimits().get(0).getMaxTileCol());
+
+        assertEquals("MATRIXNAME:3",xmlCapabilitiesDocument.getWmtsLayers().get(0).getTileMatrixSetLinks().get(0).getTileMatrixSetLimits().get(3).getTileMatrixName());
+        assertEquals(5,xmlCapabilitiesDocument.getWmtsLayers().get(0).getTileMatrixSetLinks().get(0).getTileMatrixSetLimits().get(3).getMinTileRow());
+        assertEquals(6,xmlCapabilitiesDocument.getWmtsLayers().get(0).getTileMatrixSetLinks().get(0).getTileMatrixSetLimits().get(3).getMaxTileRow());
+        assertEquals(3,xmlCapabilitiesDocument.getWmtsLayers().get(0).getTileMatrixSetLinks().get(0).getTileMatrixSetLimits().get(3).getMinTileCol());
+        assertEquals(4,xmlCapabilitiesDocument.getWmtsLayers().get(0).getTileMatrixSetLinks().get(0).getTileMatrixSetLimits().get(3).getMaxTileCol());
+
+        WMTSTile tile = xmlCapabilitiesDocument.sampleTile("layer1ID",null);
+        assertNotNull(tile);
+        assertEquals("MATRIXNAME",tile.getTileMatrixSetName());
+        assertEquals("MATRIXNAME:0",tile.getTileMatrixName());
+        assertEquals(0,tile.getRow());
+        assertEquals(0,tile.getCol());
+
+         tile = xmlCapabilitiesDocument.sampleTile("layer1ID","MATRIXNAME:3");
+        assertNotNull(tile);
+        assertEquals("MATRIXNAME",tile.getTileMatrixSetName());
+
+        assertEquals("MATRIXNAME:3",tile.getTileMatrixName());
+        assertEquals( 5,tile.getRow());
+        assertEquals( 3,tile.getCol());
+
+    }
+
 
     @Test
     public void testSimple() throws Exception {

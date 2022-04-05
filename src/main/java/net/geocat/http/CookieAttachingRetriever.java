@@ -43,12 +43,13 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.nio.charset.MalformedInputException;
 
 @Component
 @Scope("prototype")
 @Qualifier("cookieAttachingRetriever")
-public class CookieAttachingRetriever implements IHTTPRetriever {
+public class CookieAttachingRetriever   {
 
     @Autowired
     @Qualifier("redirectAwareHTTPRetriever")
@@ -59,11 +60,36 @@ public class CookieAttachingRetriever implements IHTTPRetriever {
 
     }
 
-        public HttpResult retrieveXML_underlying(boolean throwIfError,String verb, String location, String body, String cookie, IContinueReadingPredicate predicate) throws IOException, SecurityException, ExceptionWithCookies, RedirectException
+    public HttpResult retrieve(HTTPRequest request) throws Exception {
+        return retrieve(request.getVerb(),
+                request.getLocation(),
+                request.getBody(),
+                request.getCookie(),
+                request.getPredicate(),
+                request.getTimeoutSeconds(),
+                request.getTimeoutSecondsOnRetry(),
+                request.getAcceptsHeader());
+    }
+
+        public HttpResult retrieve_underlying(boolean throwIfError,
+                                                 boolean throwIfTimeout,
+                                                 String verb,
+                                                 String location,
+                                                 String body,
+                                                 String cookie,
+                                                 IContinueReadingPredicate predicate,
+                                                 int timeoutSeconds,
+                                                String acceptsHeader) throws IOException, SecurityException, ExceptionWithCookies, RedirectException
         {
             try {
-                HttpResult result = retriever.retrieveXML(verb, location, body, cookie, predicate);
+                HttpResult result = retriever.retrieve(verb, location, body, cookie, predicate, timeoutSeconds,acceptsHeader);
                 return result;
+            }
+            catch(SocketTimeoutException ste) {
+                logger.debug("error occurred getting - "+location+", error="+ste.getClass().getSimpleName() + " - " + ste.getMessage());
+                if (throwIfTimeout)
+                    throw ste;
+                return null;
             }
             catch(MalformedURLException m)
             {
@@ -77,22 +103,29 @@ public class CookieAttachingRetriever implements IHTTPRetriever {
             }
         }
 
-        @Override
-    public HttpResult retrieveXML(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate) throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
 
-        HttpResult result = retrieveXML_underlying(false,verb, location, body, cookie, predicate);
+
+    public HttpResult retrieve(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,int timeoutSeconds, String acceptsHeader) throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
+        return retrieve( verb,  location,  body,  cookie,  predicate, timeoutSeconds  ,timeoutSeconds,acceptsHeader);
+    }
+
+
+
+    public HttpResult retrieve(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,int timeoutSeconds, int timeout2,String acceptsHeader) throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
+
+        HttpResult result = retrieve_underlying(false,false,verb, location, body, cookie, predicate, timeoutSeconds,acceptsHeader);
         if ( (result !=null) && (result.getHttpCode() == 404))
             return result; // short cut -- not going to change with a retry
 
         if (result==null || result.isErrorOccurred() || (result.getHttpCode() ==500) ) {
             try {
-                Thread.sleep((long) (2.5 * 1000));
+                Thread.sleep((long) (1 * 1000));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
             logger.debug("retrying - "+location);
             String _cookie = result !=null ? result.getSpecialToSendCookie(): null;
-            result= retrieveXML_underlying(false,verb, location, body,_cookie, predicate);
+            result= retrieve_underlying(false,true,verb, location, body,_cookie, predicate,timeout2,acceptsHeader);
         }
 
         if  ( (result !=null) && (result.getHttpCode() == 403))
@@ -107,7 +140,7 @@ public class CookieAttachingRetriever implements IHTTPRetriever {
             }
             logger.debug("retrying2 - "+location);
             String _cookie = result !=null ? result.getSpecialToSendCookie(): null;
-            result= retrieveXML_underlying(true,verb, location, body, _cookie, predicate);
+            result= retrieve_underlying(true,true,verb, location, body, _cookie, predicate,timeoutSeconds,acceptsHeader);
         }
 
 

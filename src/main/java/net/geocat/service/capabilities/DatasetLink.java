@@ -37,9 +37,16 @@ import java.util.Objects;
 
 public class DatasetLink {
 
-    String identifier;
-    String rawUrl;
-    String authority; //for wms
+    //for atom;
+    //   ogcLayerName -> entry/id
+    //   identifier -> spatial_dataset_identifier_code  code
+    //   authority  -> spatial_dataset_identifier_namespace  namespace
+
+    String identifier; // identifier (if present) - code
+    String rawUrl; //metadataURL
+    String authority; //for wms/wmts and atom (codespace)
+    String authorityName; // alternative codespace for wmts/wms - name of the AuthorityURL
+    String ogcLayerName; // name of the layer/featuretype to make ogc request
 
     //---------------------------------------------------------------------------
 
@@ -51,6 +58,14 @@ public class DatasetLink {
 
     //---------------------------------------------------------------------------
 
+
+    public String getOgcLayerName() {
+        return ogcLayerName;
+    }
+
+    public void setOgcLayerName(String ogcLayerName) {
+        this.ogcLayerName = ogcLayerName;
+    }
 
     public String getAuthority() {
         return authority;
@@ -88,6 +103,14 @@ public class DatasetLink {
                 && Objects.equals(authority, that.authority) ;
     }
 
+    public String getAuthorityName() {
+        return authorityName;
+    }
+
+    public void setAuthorityName(String authorityName) {
+        this.authorityName = authorityName;
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(identifier, rawUrl);
@@ -104,6 +127,5 @@ public class DatasetLink {
             result +=", authority="+authority;
         result += "}";
         return result;
-
     }
 }

@@ -34,11 +34,17 @@
 package net.geocat.database.linkchecker.entities;
 
 import net.geocat.database.linkchecker.entities.helper.DatasetMetadataRecord;
+import net.geocat.database.linkchecker.entities.helper.LinkToData;
 import net.geocat.database.linkchecker.entities.helper.ServiceMetadataDocumentState;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
- //represents a harvested (local) Dataset document
+//represents a harvested (local) Dataset document
  @NamedEntityGraph(
          name = "LocalDatasetMetadataRecord-lazy-graph",
          attributeNodes = {
@@ -64,14 +70,62 @@ public class LocalDatasetMetadataRecord extends DatasetMetadataRecord {
     @Column(columnDefinition = "text")
     private String summary;
 
+    @OneToMany(mappedBy = "datasetMetadataRecord",
+            cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
+    @Fetch(value = FetchMode.JOIN)
+    private Set<LinkToData> dataLinks;
 
+    private Integer numberOfViewDataLinks;//dataLinks where WFS or Atom
+    private Integer numberOfDownloadDataLinks;//dataLinks where WMTS or WMS
 
+    //# of view links that were attempted to be downloaded.
+    // typically, the same as numberOfViewDataLinks, but might be less if there's a lot of them
+    //  We don't want to try 10,000 layers!
+    private Integer numberOfViewLinksAttempted;
+
+    // of the numberOfViewLinksAttempted, how many were actually successful?
+    private Integer numberOfViewLinksSuccessful;
+
+    private Integer numberOfDownloadLinksAttempted;
+    private Integer numberOfDownloadLinksSuccessful;
     //--------
 
     public LocalDatasetMetadataRecord() {
         super();
+        dataLinks = new HashSet<>();
     }
 
+    public Integer getNumberOfViewLinksAttempted() {
+        return numberOfViewLinksAttempted;
+    }
+
+    public void setNumberOfViewLinksAttempted(Integer numberOfViewLinksAttempted) {
+        this.numberOfViewLinksAttempted = numberOfViewLinksAttempted;
+    }
+
+    public Integer getNumberOfViewLinksSuccessful() {
+        return numberOfViewLinksSuccessful;
+    }
+
+    public void setNumberOfViewLinksSuccessful(Integer numberOfViewLinksSuccessful) {
+        this.numberOfViewLinksSuccessful = numberOfViewLinksSuccessful;
+    }
+
+    public Integer getNumberOfDownloadLinksAttempted() {
+        return numberOfDownloadLinksAttempted;
+    }
+
+    public void setNumberOfDownloadLinksAttempted(Integer numberOfDownloadLinksAttempted) {
+        this.numberOfDownloadLinksAttempted = numberOfDownloadLinksAttempted;
+    }
+
+    public Integer getNumberOfDownloadLinksSuccessful() {
+        return numberOfDownloadLinksSuccessful;
+    }
+
+    public void setNumberOfDownloadLinksSuccessful(Integer numberOfDownloadLinksSuccessful) {
+        this.numberOfDownloadLinksSuccessful = numberOfDownloadLinksSuccessful;
+    }
 
     public long getHarvesterMetadataRecordId() {
         return harvesterMetadataRecordId;
@@ -81,6 +135,21 @@ public class LocalDatasetMetadataRecord extends DatasetMetadataRecord {
         this.harvesterMetadataRecordId = harvesterMetadataRecordId;
     }
 
+    public Integer getNumberOfViewDataLinks() {
+        return numberOfViewDataLinks;
+    }
+
+    public void setNumberOfViewDataLinks(Integer numberOfViewDataLinks) {
+        this.numberOfViewDataLinks = numberOfViewDataLinks;
+    }
+
+    public Integer getNumberOfDownloadDataLinks() {
+        return numberOfDownloadDataLinks;
+    }
+
+    public void setNumberOfDownloadDataLinks(Integer numberOfDownloadDataLinks) {
+        this.numberOfDownloadDataLinks = numberOfDownloadDataLinks;
+    }
 
     public ServiceMetadataDocumentState getState() {
         return state;
@@ -90,8 +159,14 @@ public class LocalDatasetMetadataRecord extends DatasetMetadataRecord {
         this.state = state;
     }
 
+    public Set<LinkToData> getDataLinks() {
+        return dataLinks;
+    }
 
-    //---------------------------------------------------------------------------
+    public void setDataLinks(Set<LinkToData> dataLinks) {
+        this.dataLinks = dataLinks;
+    }
+//---------------------------------------------------------------------------
 
     @PreUpdate
     protected void onUpdate() {

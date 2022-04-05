@@ -49,6 +49,7 @@ public class XmlMetadataDocument extends XmlDoc {
     //i.e. service/dataset etc...
     MetadataDocumentType metadataDocumentType;
     String fileIdentifier;
+    String parentIdentifier;
     List<OnlineResource> transferOptions = new ArrayList<>();
     List<OnlineResource> connectPoints = new ArrayList<>();
     String title;
@@ -83,6 +84,15 @@ public class XmlMetadataDocument extends XmlDoc {
         n = XmlDoc.findNode(this.parsedXml,"MD_Metadata","fileIdentifier","CharacterString");
         fileIdentifier = n.getTextContent();
 
+        n = XmlDoc.findNode(this.parsedXml,"MD_Metadata","parentIdentifier","CharacterString");
+        if (n!= null) {
+            parentIdentifier = n.getTextContent();
+        } else {
+            n = XmlDoc.findNode(this.parsedXml,"MD_Metadata","parentIdentifier","Anchor");
+            if (n!= null) {
+                parentIdentifier = n.getTextContent();
+            }
+        }
 
         //NodeList nl = xpath_nodeset("//gmd:transferOptions/gmd:MD_DigitalTransferOptions/gmd:onLine/gmd:CI_OnlineResource");
         //NodeList nl = xpath_nodeset("//*[local-name()='transferOptions']/*[local-name()='MD_DigitalTransferOptions']/*[local-name()='onLine']/*[local-name()='CI_OnlineResource']");
@@ -174,6 +184,13 @@ public class XmlMetadataDocument extends XmlDoc {
         this.fileIdentifier = fileIdentifier;
     }
 
+    public String getParentIdentifier() {
+        return parentIdentifier;
+    }
+
+    public void setParentIdentifier(String parentIdentifier) {
+        this.parentIdentifier = parentIdentifier;
+    }
 
     public void setTransferOptions(List<OnlineResource> transferOptions) {
         this.transferOptions = transferOptions;

@@ -35,6 +35,7 @@ package net.geocat.service.downloadhelpers;
 
 import net.geocat.database.linkchecker.entities.helper.PartialDownloadHint;
 import net.geocat.database.linkchecker.entities.helper.RetrievableSimpleLink;
+import net.geocat.http.AlwaysAbortContinueReadingPredicate;
 import net.geocat.http.IContinueReadingPredicate;
 import net.geocat.xml.helpers.CapabilityDeterminer;
 import org.springframework.context.annotation.Scope;
@@ -59,7 +60,8 @@ public class PartialDownloadPredicateFactory {
                 return new MetadataContinueReadingPredicate();
             case CAPABILITIES_ONLY:
                 return new CapabilitiesContinueReadingPredicate(new CapabilityDeterminer());
-
+            case ALWAYS_PARTIAL:
+                return new AlwaysAbortContinueReadingPredicate( );
 
         }
         throw new Exception("PartialDownloadPredicateFactory - unknown option - " + hint);

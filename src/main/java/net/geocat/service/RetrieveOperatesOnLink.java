@@ -94,7 +94,7 @@ public class RetrieveOperatesOnLink {
         String sha2 = doc.computeSHA2(xmlStr);
 
         link.setFileIdentifier(xmlDatasetMetadataDocument.getFileIdentifier());
-        link.setDatasetIdentifier(xmlDatasetMetadataDocument.getDatasetIdentifier());
+        link.setDatasetIdentifiers(xmlDatasetMetadataDocument.getDatasetIdentifiers());
 
         link.setSha2(sha2);
         linkCheckBlobStorageService.ensureBlobExists(xmlStr, sha2);

@@ -36,8 +36,10 @@ package net.geocat.service.downloadhelpers;
 import net.geocat.database.linkchecker.entities.helper.RetrievableSimpleLink;
 import net.geocat.database.linkchecker.entities.helper.IndicatorStatus;
 import net.geocat.database.linkchecker.entities.HttpResult;
+import net.geocat.http.HTTPRequest;
 import net.geocat.http.IContinueReadingPredicate;
 import net.geocat.http.IHTTPRetriever;
+import net.geocat.http.SmartHTTPRetriever;
 import net.geocat.xml.XmlStringTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,18 +55,24 @@ import java.util.Arrays;
 @Scope("prototype")
 public class RetrievableSimpleLinkDownloader {
 
+    public static int headLength = 2048;
+
     private static final Logger logger = LoggerFactory.getLogger(RetrievableSimpleLinkDownloader.class);
 
 
     @Autowired
-    @Qualifier("cachingHttpRetriever")
-    IHTTPRetriever retriever;
+   // @Qualifier("cachingHttpRetriever")
+   // IHTTPRetriever retriever;
+    SmartHTTPRetriever smartHTTPRetriever;
 
     @Autowired
     PartialDownloadPredicateFactory partialDownloadPredicateFactory;
 
-
     public RetrievableSimpleLink process(RetrievableSimpleLink link) {
+        return process(link, headLength,null);
+    }
+
+    public RetrievableSimpleLink process(RetrievableSimpleLink link, int headLength, String acceptsHeader) {
         try {
 
             HttpResult data = null;
@@ -84,7 +92,12 @@ public class RetrievableSimpleLinkDownloader {
             IContinueReadingPredicate continueReadingPredicate = partialDownloadPredicateFactory.create(link);
 
             try {
-                data = retriever.retrieveXML("GET", url, null, null, continueReadingPredicate);
+                HTTPRequest request = HTTPRequest.createGET(url);
+                request.setLinkCheckJobId(link.getLinkCheckJobId());
+                request.setPredicate(continueReadingPredicate);
+                if ( (acceptsHeader!=null) && (!acceptsHeader.isEmpty()) )
+                    request.setAcceptsHeader(acceptsHeader);
+                data = smartHTTPRetriever.retrieve(request);
             } catch (Exception e) {
                 link.setIndicator_LinkResolves(IndicatorStatus.FAIL);
                 link.setLinkHTTPException(e.getClass().getSimpleName() + " - " + e.getMessage());
@@ -105,7 +118,7 @@ public class RetrievableSimpleLinkDownloader {
                 link.setLinkSSLUntrustedByJavaReason(data.getSslUnTrustedReason());
             }
 
-            byte[] headData = Arrays.copyOf(data.getData(), Math.min(1000, data.getData().length));
+            byte[] headData = Arrays.copyOf(data.getData(), Math.min(headLength, data.getData().length));
             link.setLinkContentHead(headData);
 
             link.setLinkIsXML(isXML(data));

@@ -59,6 +59,7 @@ public class ServiceMetadataRecordService {
         //metadataDocumentFactory.augment(result,doc);
 
         result.setFileIdentifier(doc.getFileIdentifier());
+        result.setParentIdentifier(doc.getParentIdentifier());
         result.setMetadataRecordType(doc.getMetadataDocumentType()); // service
         result.setMetadataServiceType(doc.getServiceType());
 

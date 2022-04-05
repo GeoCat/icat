@@ -60,22 +60,22 @@ public class RedirectAwareHTTPRetriever implements IHTTPRetriever {
 
 
     @Override
-    public HttpResult retrieveXML(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate)
+    public HttpResult retrieve(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,int timeoutSeconds,String acceptsHeader)
             throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
-        return _retrieveXML(verb, location, body, cookie, MAXREDIRECTS, predicate);
+        return _retrieve(verb, location, body, cookie, MAXREDIRECTS, predicate,timeoutSeconds,acceptsHeader);
     }
 
 
-    protected HttpResult _retrieveXML(String verb, String location, String body, String cookie, int nRedirectsRemaining, IContinueReadingPredicate predicate)
+    protected HttpResult _retrieve(String verb, String location, String body, String cookie, int nRedirectsRemaining, IContinueReadingPredicate predicate,int timeoutSeconds,String acceptsHeader)
             throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
         try {
-            return retriever.retrieveXML(verb, location, body, cookie, predicate);
+            return retriever.retrieve(verb, location, body, cookie, predicate,timeoutSeconds,acceptsHeader);
         } catch (RedirectException re) {
             nRedirectsRemaining--;
             if (nRedirectsRemaining <= 0)
                 throw new IOException("too many redirects!");
             logger.debug("     REDIRECTED TO location=" + re.getNewLocation());
-            return _retrieveXML(verb, re.getNewLocation(), body, cookie, nRedirectsRemaining--, predicate);
+            return _retrieve(verb, re.getNewLocation(), body, cookie, nRedirectsRemaining--, predicate,timeoutSeconds,acceptsHeader);
         }
     }
 }

@@ -45,6 +45,8 @@ public enum LinkCheckJobState {
 
     POST_PROCESSING,
 
+    DATADOWNLOADING,
+
     COMPLETE,
 
     ERROR, USERABORT  // abnormal ending

@@ -67,6 +67,9 @@ public interface LocalDatasetMetadataRecordRepo extends CrudRepository<LocalData
 
     LocalDatasetMetadataRecord findFirstByFileIdentifier(String fileID);
 
+    List<LocalDatasetMetadataRecord> findByFileIdentifier(String fileID);
+
+
     @Query(value = "SELECT datasetmetadatadocumentid FROM datasetmetadatarecord   WHERE linkcheckjobid = ?1",
             nativeQuery = true
     )

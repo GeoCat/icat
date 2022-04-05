@@ -91,6 +91,11 @@ public class CapabilitiesDocumentService {
 
         doc.setCapabilitiesDocumentType(xml.getCapabilitiesType());
 
+        if ((xml.getInspireDatasetLinks() !=null) && (!xml.getInspireDatasetLinks().isEmpty()) ) {
+            doc.setInspireSpatialDatasetIdentifiers(xml.getInspireDatasetLinks());
+            doc.getInspireSpatialDatasetIdentifiers().stream()
+                    .forEach(x->x.setCapabilitiesDocument(doc));
+        }
 
         List<CapabilitiesDatasetMetadataLink> dslinks = capabilitiesDatasetMetadataLinkService.createCapabilitiesDatasetMetadataLinks(doc, xml);
         doc.setCapabilitiesDatasetMetadataLinkList(dslinks);

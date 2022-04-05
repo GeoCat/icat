@@ -34,22 +34,117 @@
 package net.geocat.xml;
 
 import net.geocat.service.capabilities.DatasetLink;
-import net.geocat.service.capabilities.WMSCapabilitiesDatasetLinkExtractor;
 import net.geocat.xml.helpers.CapabilitiesType;
-import org.springframework.http.server.DelegatingServerHttpResponse;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
-import javax.xml.xpath.XPathExpressionException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static net.geocat.service.capabilities.WMSCapabilitiesDatasetLinkExtractor.findNodes;
+import static net.geocat.xml.XmlCapabilitiesAtom.attribute;
+import static net.geocat.xml.XmlStringTools.getNodeTextValue;
 
 public class XmlCapabilitiesWFS extends XmlCapabilitiesDocument {
 
+    String getFeatureEndpoint; //not all have a getfeature endpoint
+    String versionNumber;
+    List<String> SRSs;
 
 
     public XmlCapabilitiesWFS(XmlDoc doc) throws Exception {
         super(doc, CapabilitiesType.WFS);
         setup_XmlCapabilitiesWFS();
+        setup_getfeature20();
+        if (getFeatureEndpoint == null)
+            setup_getfeature11();
+        setup_getversion();
+        setup_srs_main();
+        setup_srs_layer();
+    }
+
+    // try to find srs info inside featuretypes
+    private void setup_srs_layer() throws Exception {
+        List<String> allcrses = new ArrayList<>();
+        Node main = getFirstNode();
+        Node secondary = findNode(main,"FeatureTypeList");
+        if (secondary == null)
+            return; // no feature types
+        List<Node> nl = findNodes(secondary,"FeatureType");
+
+        for(Node FTnode : nl) {
+            String defaultCRS = getNodeTextValue(findNode(FTnode,"DefaultCRS"));
+            if (defaultCRS != null)
+                allcrses.add(defaultCRS);
+            List<Node> otherCRSNodes = findNodes(FTnode,"OtherCRS");
+            for(Node otherCRSNode : otherCRSNodes){
+                String otherCR = getNodeTextValue(otherCRSNode);
+                if (otherCR != null)
+                    allcrses.add(otherCR);
+            }
+        }
+        List uniqueCRSs = allcrses.stream().distinct().collect(Collectors.toList());
+        SRSs.addAll(uniqueCRSs);
+        SRSs = SRSs.stream().distinct().collect(Collectors.toList());
+
+    }
+
+    //from the operationsmetadata/Parameter["srsName"]
+    private void setup_srs_main() throws Exception {
+        SRSs = new ArrayList<>();
+        Node main = getFirstNode();
+        Node op = findNode(main,"OperationsMetadata");
+        if (op ==null)
+            return;
+        List<Node> ops = findNodes(op,"Parameter");
+        for(Node o : ops){
+            String name = attribute(o,"name");
+            if ( (name == null) || (!name.equalsIgnoreCase("srsName")))
+                continue;
+            Node allowedValuesNode = findNode(o,"AllowedValues");
+            if (allowedValuesNode!=null) {
+                List<Node> allowedValuesNodes = findNodes(allowedValuesNode, "Value");
+                for (Node allowedValue : allowedValuesNodes) {
+                    String val = getNodeTextValue(allowedValue);
+                    if (val !=null)
+                        SRSs.add(val);
+                }
+            }
+        }
+    }
+
+
+    private void setup_getversion() throws Exception {
+        Node main = getFirstNode();
+        versionNumber = attribute(main,"version");
+    }
+
+    private void setup_getfeature11() throws Exception {
+        Node main = getFirstNode();
+        Node op = findNode(main, Arrays.asList(new String[]{"Capability", "Request", "GetFeature", "DCPType", "HTTP", "Get"}));
+        if (op == null)
+            return;
+        String url = attribute(op,"onlineResource");
+        this.getFeatureEndpoint=url;
+    }
+
+    private void setup_getfeature20() throws Exception {
+        Node main = getFirstNode();
+        Node op = findNode(main,"OperationsMetadata");
+        if (op ==null)
+            return;
+        List<Node> ops = findNodes(op,"Operation");
+        for(Node o : ops){
+            String name = attribute(o,"name");
+            if ( (name == null) || (!name.equalsIgnoreCase("GetFeature")))
+                continue;
+            Node getfeatureop = findNode(o,"DCP","HTTP","Get");
+            if (getfeatureop == null)
+                continue;
+            getFeatureEndpoint = attribute(getfeatureop,"xlink:href");
+        }
+
     }
 
     private String getLayerMetadataURL_inspire(Node spatialDatasetIdentifier) throws  Exception {
@@ -68,132 +163,91 @@ public class XmlCapabilitiesWFS extends XmlCapabilitiesDocument {
 
     }
 
-//    private String getLayerMetadataURL() throws  Exception {
-//        NodeList nl = xpath_nodeset("//wfs:FeatureType/wfs:MetadataURL/@xlink:href");
-//        for(int idx=0;idx<nl.getLength();idx++){
-//            Node n = nl.item(idx);
-//            String value = n.getNodeValue();
-//            if  (  (value == null) || ( value.isEmpty()) )
-//                continue;
-//            return value.trim();
-//        }
-//        return null;
-//    }
 
     private void setup_XmlCapabilitiesWFS() throws Exception {
-        Node extended = findNode(parsedXml,"WFS_Capabilities","OperationsMetadata","ExtendedCapabilities","ExtendedCapabilities");
-        //NodeList sdi = xpath_nodeset("//inspire_dls:SpatialDataSetIdentifier");
-
-        if (extended != null) {
-            List<Node> sdi = findAllNodes(extended,"SpatialDataSetIdentifier");
-
-
-            for (int idx = 0; idx < sdi.size(); idx++) {
-                Node n = sdi.get(idx);
-                String url = getLayerMetadataURL_inspire(n);
-
-                //Node codeNode = xpath_node(n, "./inspire_common:Code");
-                Node codeNode = findNode(n,"Code");
-                String identity = null;
-                if (codeNode != null)
-                    identity = codeNode.getTextContent().trim();
-                if ((url != null) || (identity != null)) {
-                    DatasetLink datasetLink = new DatasetLink(identity, url);
-                    datasetLinksList.add(datasetLink);
-                }
-            }
-        }
         setup_XmlCapabilitiesWFS_noinspire();
     }
 
-    protected Node findBestMetadataURL(Node layer) {
-        List<Node> metadataURLs = WMSCapabilitiesDatasetLinkExtractor.findAllNodes(layer, "MetadataURL");
-        if (metadataURLs.isEmpty())
-            return null;
-        if (metadataURLs.size() == 1) //only one, no need to choose
-            return metadataURLs.get(0);
 
-        Node good = null; // format has "xml" in it
-        Node good2 = null;// no format, but has "GetRecordById" in it
+    protected List<String> findMetadataURLs(Node layer) throws Exception {
 
-        for (Node metadataURL: metadataURLs){
-            Node format = WMSCapabilitiesDatasetLinkExtractor.findNode(metadataURL,"Format");
-            if (format==null)
-                format = metadataURL.getAttributes().getNamedItem("format");
-            if ( (format !=null) && (format.getTextContent() != null) ){
-                String mime = format.getTextContent().trim();
-                if (mime.toLowerCase().contains("/xml")) //  text/xml  application/xml
-                    return metadataURL; // this is perfect!
-                if (mime.toLowerCase().contains("xml")) {  // might catch something...
-                    good = metadataURL;
-                }
-            }
-            else
-            {
-                // no format info...
-                Node urlNode20 = metadataURL.getAttributes().getNamedItem("xlink:href"); //2.0
-                String text = metadataURL.getTextContent();
-                if (text !=null)
-                    text = text.trim();
-                String url = null;
-                if ( (urlNode20 != null) && (!urlNode20.getNodeValue().isEmpty()) )
-                    url = urlNode20.getNodeValue();
-                else if ( (text != null) && (!text.isEmpty()) )
-                     url = text;
-                if ( (url != null) && (url.toLowerCase().contains("getrecordbyid")) )
-                    good2 = metadataURL;
+        List<Node> metadataURLs = findAllNodes(layer, "MetadataURL");
 
-            }
-        }
-        if (good !=null)
-            return good;
-        if (good2 != null)
-            return good2;
-        // need to choose which one..
-        return metadataURLs.get(0);
-
+        return metadataURLs.stream()
+                .map(x->x.getAttributes().getNamedItem("xlink:href"))
+                .filter(x->x !=null && (x.getTextContent() != null) && (!x.getTextContent().trim().isEmpty()))
+                .map(x->x.getTextContent().trim())
+                .collect(Collectors.toList());
     }
+
+
 
     //alternative way - direct links
     private void setup_XmlCapabilitiesWFS_noinspire() throws Exception {
 
         Node main = getFirstNode();
-        Node secondary = WMSCapabilitiesDatasetLinkExtractor.findNode(main,"FeatureTypeList");
+        Node secondary = findNode(main,"FeatureTypeList");
         if (secondary == null)
             return; // no feature types
-        List<Node> nl = WMSCapabilitiesDatasetLinkExtractor.findNodes(secondary,"FeatureType");
+        List<Node> nl = findNodes(secondary,"FeatureType");
 
-        for(Node node : nl) {
-            Node metadataNode = findBestMetadataURL(node);
-            if (metadataNode == null)
-                continue;
-            Node urlNode20 = metadataNode.getAttributes().getNamedItem("xlink:href"); //2.0
-            if ( (urlNode20 != null) && (!urlNode20.getNodeValue().isEmpty()) ){
-                 String url = urlNode20.getNodeValue();
-                 DatasetLink datasetLink = new DatasetLink(null,url);
-                 datasetLinksList.add(datasetLink);
+        for(Node FTnode : nl) {
+            String name = null;
+            Node nameNode = findNode(FTnode,"Name");
+            if (nameNode !=null)
+                name = nameNode.getTextContent();
+            if (name !=null)
+                name = name.trim();
+
+            List<String> metadataURLs = findMetadataURLs(FTnode);
+
+            if  ( (metadataURLs == null) || (metadataURLs.isEmpty()) ) {
+                DatasetLink datasetLink = new DatasetLink(null,null);
+                datasetLink.setOgcLayerName(name);
+                datasetLinksList.add(datasetLink);
             }
-            else if (metadataNode.getTextContent() != null){
-                String text = metadataNode.getTextContent().trim();
-                if (text.toLowerCase().startsWith("http")) {
-                    DatasetLink datasetLink = new DatasetLink(null,text);
-                    datasetLinksList.add(datasetLink);
-                }
+            for (String url : metadataURLs){
+                DatasetLink datasetLink = new DatasetLink(null,url);
+                datasetLink.setOgcLayerName(name);
+                datasetLinksList.add(datasetLink);
             }
+
         }
+        // datasetLinksList = WMSCapabilitiesDatasetLinkExtractor.unique(datasetLinksList);
 
-//        NodeList metaurls = xpath_nodeset("//wfs:FeatureTypeList/wfs:FeatureType/wfs:MetadataURL");
-//        for(int idx=0; idx<metaurls.getLength();idx++) {
-//            Node n = metaurls.item(idx);
-//            Node urlNode = n.getAttributes().getNamedItem("xlink:href");
-//            if ( (urlNode != null) && (!urlNode.getNodeValue().isEmpty()) ) {
-//                String url = urlNode.getNodeValue();
-//                DatasetLink datasetLink = new DatasetLink(null,url);
-//                datasetLinksList.add(datasetLink);
-//            }
-//        }
-        datasetLinksList = WMSCapabilitiesDatasetLinkExtractor.unique(datasetLinksList);
     }
+
+    //--
+
+
+    public List<String> getSRSs() {
+        return SRSs;
+    }
+
+    public void setSRSs(List<String> SRSs) {
+        this.SRSs = SRSs;
+    }
+
+    public String getVersionNumber() {
+        return versionNumber;
+    }
+
+    public void setVersionNumber(String versionNumber) {
+        this.versionNumber = versionNumber;
+    }
+
+    public String getGetFeatureEndpoint() {
+        return getFeatureEndpoint;
+    }
+
+    public void setGetFeatureEndpoint(String getFeatureEndpoint) {
+        this.getFeatureEndpoint = getFeatureEndpoint;
+    }
+
+
+    //--
+
+
 
     @Override
     public String toString() {
