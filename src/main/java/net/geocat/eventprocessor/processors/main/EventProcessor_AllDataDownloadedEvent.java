@@ -62,6 +62,8 @@ import java.util.List;
         EventFactory eventFactory;
 
 
+
+
         @Override
         public net.geocat.eventprocessor.processors.main.EventProcessor_AllDataDownloadedEvent externalProcessing() {
             return this;
@@ -80,6 +82,7 @@ import java.util.List;
             logger.debug("AllDataDownloadedEvent - all data connections were downloaded and processed, linkcheckjobid="+ getInitiatingEvent().getLinkCheckJobId() );
             logger.debug("LinkCheckJob COMPLETE - "+ getInitiatingEvent().getLinkCheckJobId());
 
+            linkCheckJobService.finalize(getInitiatingEvent().getLinkCheckJobId());
 
             List<Event> result = new ArrayList<>();
             //Event e = eventFactory.createStartPostProcessEvent(this.getInitiatingEvent().getLinkCheckJobId());

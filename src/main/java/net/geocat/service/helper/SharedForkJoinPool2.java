@@ -41,7 +41,7 @@ import java.util.concurrent.ForkJoinPool;
 @Component
 @Scope("singleton")
 public class SharedForkJoinPool2 {
-    public static ForkJoinPool pool = new ForkJoinPool(12);
+    public static ForkJoinPool pool = new ForkJoinPool(16);
 
 
     public   ForkJoinPool getPool() {

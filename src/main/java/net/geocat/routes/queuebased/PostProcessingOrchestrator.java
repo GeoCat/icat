@@ -68,7 +68,7 @@ public class PostProcessingOrchestrator extends SpringRouteBuilder {
                         new RedirectEvent(AllPostProcessingCompleteEvent.class, "activemq:" + MainOrchestrator.myJMSQueueName)
                 ),
                 Arrays.asList(new Class[0]),
-                5
+                7
         );
     }
 }

@@ -67,7 +67,7 @@ public class DataDownloadOrchestrator extends SpringRouteBuilder {
                         new RedirectEvent(AllDataDownloadedEvent.class, "activemq:" + MainOrchestrator.myJMSQueueName)
                 ),
                 Arrays.asList(new Class[0]),
-                7  //todo changeme
+                11  //todo changeme
         );
     }
 }

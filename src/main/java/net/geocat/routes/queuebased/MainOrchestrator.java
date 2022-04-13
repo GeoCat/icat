@@ -83,7 +83,7 @@ public class MainOrchestrator extends SpringRouteBuilder {
                         , new RedirectEvent(StartDataDownloadEvent.class, "activemq:" + DataDownloadOrchestrator.myJMSQueueName)
                 ),
                 Arrays.asList(new Class[0]),
-                2
+                3
         );
 
         from("activemq:ActiveMQ.DLQ")

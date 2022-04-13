@@ -34,6 +34,7 @@
 package net.geocat.database.linkchecker.entities;
 
 import net.geocat.database.linkchecker.entities.helper.UpdateCreateDateTimeEntity;
+import net.geocat.model.LinkCheckRunConfig;
 
 import javax.persistence.*;
 import java.time.ZoneId;
@@ -47,6 +48,12 @@ public class LinkCheckJob extends UpdateCreateDateTimeEntity  {
     @Id
     @Column(columnDefinition = "varchar(40)")
     private String jobId;
+
+    boolean useOtherJobsHTTPCache ;
+    boolean deleteHTTPCacheWhenComplete ;
+    int maxDataLinksToFollow  ;
+    int maxAtomEntriesToAttempt ;
+    int maxAtomSectionLinksToFollow ;
 
     //GUID of the havest job this is processing
     @Column(columnDefinition = "varchar(40)")
@@ -89,6 +96,49 @@ public class LinkCheckJob extends UpdateCreateDateTimeEntity  {
 
     //------------------------------------
 
+
+
+
+
+    public int getMaxDataLinksToFollow() {
+        return maxDataLinksToFollow;
+    }
+
+    public void setMaxDataLinksToFollow(int maxDataLinksToFollow) {
+        this.maxDataLinksToFollow = maxDataLinksToFollow;
+    }
+
+    public int getMaxAtomEntriesToAttempt() {
+        return maxAtomEntriesToAttempt;
+    }
+
+    public void setMaxAtomEntriesToAttempt(int maxAtomEntriesToAttempt) {
+        this.maxAtomEntriesToAttempt = maxAtomEntriesToAttempt;
+    }
+
+    public int getMaxAtomSectionLinksToFollow() {
+        return maxAtomSectionLinksToFollow;
+    }
+
+    public void setMaxAtomSectionLinksToFollow(int maxAtomSectionLinksToFollow) {
+        this.maxAtomSectionLinksToFollow = maxAtomSectionLinksToFollow;
+    }
+
+    public boolean isUseOtherJobsHTTPCache() {
+        return useOtherJobsHTTPCache;
+    }
+
+    public void setUseOtherJobsHTTPCache(boolean useOtherJobsHTTPCache) {
+        this.useOtherJobsHTTPCache = useOtherJobsHTTPCache;
+    }
+
+    public boolean isDeleteHTTPCacheWhenComplete() {
+        return deleteHTTPCacheWhenComplete;
+    }
+
+    public void setDeleteHTTPCacheWhenComplete(boolean deleteHTTPCacheWhenComplete) {
+        this.deleteHTTPCacheWhenComplete = deleteHTTPCacheWhenComplete;
+    }
 
     public Long getNumberOfNotProcessedDatasetRecords() {
         return numberOfNotProcessedDatasetRecords;

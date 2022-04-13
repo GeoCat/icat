@@ -215,6 +215,23 @@ public class XmlDoc {
         return result;
     }
 
+    public static Node findNode_recurse(Node n,String localName) {
+        NodeList nl = n.getChildNodes();
+        for (int idx=0; idx <nl.getLength();idx++) {
+            Node nn = nl.item(idx);
+            String name = nn.getLocalName() == null ? nn.getNodeName() : nn.getLocalName();
+            if (name.equals(localName)) {
+                return nn;
+            }
+            else {
+                 Node nnn=findNode_recurse(nn,localName);
+                 if (nnn != null)
+                     return nnn;
+            }
+        }
+        return null;
+    }
+
     // finds nodes of name "localName" that are direct children of "n"
     public static List<Node> findAllNodes(Node n, String localName) {
         List<Node> result = new ArrayList<>();

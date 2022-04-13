@@ -58,6 +58,7 @@ public class ServiceDocumentLinkService {
         result.setOperationName(onlineResource.getOperationName());
         result.setRawURL(onlineResource.getRawURL());
         result.setProtocol(onlineResource.getProtocol());
+        result.setApplicationProfile(onlineResource.getApplicationProfile());
         result.setLinkCheckJobId(localServiceMetadataRecord.getLinkCheckJobId());
 
         return result;
@@ -73,6 +74,7 @@ public class ServiceDocumentLinkService {
         result.setOperationName(onlineResource.getOperationName());
         result.setRawURL(onlineResource.getRawURL());
         result.setProtocol(onlineResource.getProtocol());
+        result.setApplicationProfile(onlineResource.getApplicationProfile());
 
         result.setLinkCheckJobId(datasetMetadataRecord.getLinkCheckJobId());
 

@@ -44,6 +44,7 @@ import org.springframework.stereotype.Component;
 
 import static net.geocat.eventprocessor.processors.datadownload.downloaders.DownloaderHelper.isRecognizedImage;
 import static net.geocat.http.HTTPRequest.ACCEPTS_HEADER_XML;
+import static net.geocat.http.HTTPRequest.ACCEPTS_HEADER_XML_IMAGE;
 import static net.geocat.xml.XmlStringTools.determineRootTagInfo;
 
 @Component
@@ -54,7 +55,7 @@ public class OGCRequestResolver {
 
     public void resolve(OGCRequest ogcRequest) {
 
-        retrievableSimpleLinkDownloader.process(ogcRequest, 4096,ACCEPTS_HEADER_XML);
+        retrievableSimpleLinkDownloader.process(ogcRequest, 4096,ACCEPTS_HEADER_XML_IMAGE);
 
         if (ogcRequest.getIndicator_LinkResolves() == IndicatorStatus.FAIL){
             ogcRequest.setSuccessfulOGCRequest(false);

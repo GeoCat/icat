@@ -49,11 +49,13 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToOne;
+import javax.persistence.Table;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -62,6 +64,24 @@ import java.util.Objects;
 
 
 @Entity(name="linktodata")
+@Table(
+        indexes = {
+//                @Index(
+//                        name = "link2data_dsid",
+//                        columnList = "datasetmetadatarecord_datasetmetadatadocumentid",
+//                        unique = false
+//                ),
+                @Index(
+                        name = "link2data_ogcrequest_ogcrequestid_idx",
+                        columnList = "ogcrequest_ogcrequestid",
+                        unique = false
+                ),
+                @Index(
+                        name = "link2data_atomsubfeedrequestid_idx",
+                        columnList = "atomsubfeedrequest_atomsubfeedrequestid",
+                        unique = false
+                )
+        })
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "linkType",
         discriminatorType = DiscriminatorType.STRING)
@@ -78,9 +98,11 @@ public class LinkToData {
 
     //----
     //which dataset metadata document did this link come from?
-    @ManyToOne(fetch = FetchType.EAGER,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
-    DatasetMetadataRecord datasetMetadataRecord;
+//    @ManyToOne(fetch = FetchType.EAGER,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+//    DatasetMetadataRecord datasetMetadataRecord;
 
+    @Column(columnDefinition = "text")
+    private String datasetMetadataFileIdentifier;
 
     //link to the underlying Capabilities -----------
     //sha2 of the XML's text
@@ -101,10 +123,13 @@ public class LinkToData {
     public LinkToData(String linkcheckjobid, String sha2, String capabilitiesdocumenttype,DatasetMetadataRecord datasetMetadataRecord) {
         this.linkCheckJobId = linkcheckjobid;
         this.capabilitiesSha2 = sha2;
-        this.datasetMetadataRecord = datasetMetadataRecord;
+       // this.datasetMetadataRecord = datasetMetadataRecord;
+        if (datasetMetadataRecord !=null)
+            this.datasetMetadataFileIdentifier = datasetMetadataRecord.getFileIdentifier();
         if  ( (capabilitiesdocumenttype !=null) && (!capabilitiesdocumenttype.isEmpty()))
             this.capabilitiesDocumentType = CapabilitiesType.valueOf(capabilitiesdocumenttype);
     }
+
 
 
     //------------------------------------------------
@@ -117,6 +142,14 @@ public class LinkToData {
 
     //------
 
+
+    public String getDatasetMetadataFileIdentifier() {
+        return datasetMetadataFileIdentifier;
+    }
+
+    public void setDatasetMetadataFileIdentifier(String datasetMetadataFileIdentifier) {
+        this.datasetMetadataFileIdentifier = datasetMetadataFileIdentifier;
+    }
 
     public String getErrorInfo() {
         return errorInfo;
@@ -166,13 +199,13 @@ public class LinkToData {
         this.linkToDataId = linkToDataId;
     }
 
-    public DatasetMetadataRecord getDatasetMetadataRecord() {
-        return datasetMetadataRecord;
-    }
-
-    public void setDatasetMetadataRecord(DatasetMetadataRecord datasetMetadataRecord) {
-        this.datasetMetadataRecord = datasetMetadataRecord;
-    }
+//    public DatasetMetadataRecord getDatasetMetadataRecord() {
+//        return datasetMetadataRecord;
+//    }
+//
+//    public void setDatasetMetadataRecord(DatasetMetadataRecord datasetMetadataRecord) {
+//        this.datasetMetadataRecord = datasetMetadataRecord;
+//    }
 
 
 

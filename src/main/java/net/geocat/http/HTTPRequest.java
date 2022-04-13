@@ -35,16 +35,22 @@ package net.geocat.http;
 
 import org.slf4j.MDC;
 
-public class HTTPRequest {
+public class HTTPRequest implements Cloneable {
 
     public static String ACCEPTS_HEADER_XML = "application/xml,application/xml; q=1.0,text/xml; q=1.0,application/atom+xml; q=0.9";
+    public static String ACCEPTS_HEADER_XML_IMAGE = "application/xml,application/xml; q=1.0,text/xml; q=1.0,application/atom+xml; q=0.9,image/*; q=0.8,*/*; q=0.6";
 
     String verb = "GET";
     String location;
     String body = null;
     String cookie = null;
     IContinueReadingPredicate predicate = null;
-    String acceptsHeader = "application/xml,application/xml; q=1.0,text/xml; q=1.0,application/atom+xml; q=0.9";
+    String acceptsHeader = ACCEPTS_HEADER_XML_IMAGE;
+    String contentType = "application/xml";
+
+
+    int maxRedirects = 5;
+    int nRedirectsRemaining = maxRedirects;
 
     boolean useCache = true;
     boolean saveToCache =true;
@@ -54,22 +60,37 @@ public class HTTPRequest {
     int timeoutSeconds = 20;  //vast majority will respond in this time..
     int timeoutSecondsOnRetry = 60; // some might take longer...
 
-    public static HTTPRequest createGET(String location){
-        String linkCheckJobId = MDC.get("JMSCorrelationID");
-        HTTPRequest result = new HTTPRequest();
-        result.setLocation(location);
-        return result;
+    public HTTPRequest clone() throws CloneNotSupportedException
+    {
+        return (HTTPRequest) super.clone();
     }
 
-    public static HTTPRequest createPOST(String location,String body){
-        String linkCheckJobId = MDC.get("JMSCorrelationID");
-        HTTPRequest result = new HTTPRequest();
-        result.setLocation(location);
-        result.setVerb("POST");
-        result.setBody(body);
-        return result;
+
+
+    public String getContentType() {
+        return contentType;
     }
 
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    public int getnRedirectsRemaining() {
+        return nRedirectsRemaining;
+    }
+
+    public void setnRedirectsRemaining(int nRedirectsRemaining) {
+        this.nRedirectsRemaining = nRedirectsRemaining;
+    }
+
+    public int getMaxRedirects() {
+        return maxRedirects;
+    }
+
+    public void setMaxRedirects(int maxRedirects) {
+        this.maxRedirects = maxRedirects;
+        nRedirectsRemaining = maxRedirects;
+    }
 
     public int getTimeoutSecondsOnRetry() {
         return timeoutSecondsOnRetry;

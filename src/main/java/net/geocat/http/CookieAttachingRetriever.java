@@ -60,33 +60,36 @@ public class CookieAttachingRetriever   {
 
     }
 
-    public HttpResult retrieve(HTTPRequest request) throws Exception {
-        return retrieve(request.getVerb(),
-                request.getLocation(),
-                request.getBody(),
-                request.getCookie(),
-                request.getPredicate(),
-                request.getTimeoutSeconds(),
-                request.getTimeoutSecondsOnRetry(),
-                request.getAcceptsHeader());
-    }
+//    public HttpResult retrieve(HTTPRequest request) throws Exception {
+//        return retrieve(request.getVerb(),
+//                request.getLocation(),
+//                request.getBody(),
+//                request.getCookie(),
+//                request.getPredicate(),
+//                request.getTimeoutSeconds(),
+//                request.getTimeoutSecondsOnRetry(),
+//                request.getAcceptsHeader());
+//    }
 
-        public HttpResult retrieve_underlying(boolean throwIfError,
-                                                 boolean throwIfTimeout,
-                                                 String verb,
-                                                 String location,
-                                                 String body,
-                                                 String cookie,
-                                                 IContinueReadingPredicate predicate,
-                                                 int timeoutSeconds,
-                                                String acceptsHeader) throws IOException, SecurityException, ExceptionWithCookies, RedirectException
-        {
+//        public HttpResult retrieve_underlying(boolean throwIfError,
+//                                                 boolean throwIfTimeout,
+//                                                 String verb,
+//                                                 String location,
+//                                                 String body,
+//                                                 String cookie,
+//                                                 IContinueReadingPredicate predicate,
+//                                                 int timeoutSeconds,
+//                                                String acceptsHeader) throws IOException, SecurityException, ExceptionWithCookies, RedirectException
+    public HttpResult retrieve_underlying(boolean throwIfError,
+                                                  boolean throwIfTimeout,
+                                                  HTTPRequest request) throws Exception
+    {
             try {
-                HttpResult result = retriever.retrieve(verb, location, body, cookie, predicate, timeoutSeconds,acceptsHeader);
+                HttpResult result = retriever.retrieve(request);
                 return result;
             }
             catch(SocketTimeoutException ste) {
-                logger.debug("error occurred getting - "+location+", error="+ste.getClass().getSimpleName() + " - " + ste.getMessage());
+                logger.debug("error occurred getting - "+request.getLocation()+", error="+ste.getClass().getSimpleName() + " - " + ste.getMessage());
                 if (throwIfTimeout)
                     throw ste;
                 return null;
@@ -96,8 +99,8 @@ public class CookieAttachingRetriever   {
                 throw m;//not recoverable with retry
             }
             catch (Exception e) {
-                    logger.debug("error occurred getting - "+location+", error="+e.getClass().getSimpleName() + " - " + e.getMessage());
-                if (throwIfError)
+                    logger.debug("error occurred getting - "+request.getLocation()+", error="+e.getClass().getSimpleName() + " - " + e.getMessage());
+                 if (throwIfError)
                     throw e;
                 return null;
             }
@@ -105,42 +108,42 @@ public class CookieAttachingRetriever   {
 
 
 
-    public HttpResult retrieve(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,int timeoutSeconds, String acceptsHeader) throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
-        return retrieve( verb,  location,  body,  cookie,  predicate, timeoutSeconds  ,timeoutSeconds,acceptsHeader);
-    }
+//    public HttpResult retrieve(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,int timeoutSeconds, String acceptsHeader) throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
+//        return retrieve( verb,  location,  body,  cookie,  predicate, timeoutSeconds  ,timeoutSeconds,acceptsHeader);
+//    }
 
 
+    public HttpResult retrieve(HTTPRequest request) throws  Exception {
 
-    public HttpResult retrieve(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,int timeoutSeconds, int timeout2,String acceptsHeader) throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
-
-        HttpResult result = retrieve_underlying(false,false,verb, location, body, cookie, predicate, timeoutSeconds,acceptsHeader);
+        HttpResult result = retrieve_underlying(false,false,request);
         if ( (result !=null) && (result.getHttpCode() == 404))
             return result; // short cut -- not going to change with a retry
 
         if (result==null || result.isErrorOccurred() || (result.getHttpCode() ==500) ) {
             try {
-                Thread.sleep((long) (1 * 1000));
+                Thread.sleep((long) (1 * 100));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            logger.debug("retrying - "+location);
+            logger.debug("retrying - "+request.getLocation());
             String _cookie = result !=null ? result.getSpecialToSendCookie(): null;
-            result= retrieve_underlying(false,true,verb, location, body,_cookie, predicate,timeout2,acceptsHeader);
+            request.setCookie(_cookie);
+            result= retrieve_underlying(false,true,request);
         }
 
-        if  ( (result !=null) && (result.getHttpCode() == 403))
+        if  ( (result !=null) && ((result.getHttpCode() == 403) || (result.getHttpCode() == 401) ))
             return result; // short cut -- not going to change with a retry (probably shouldn't have re-tried in the first place, but...)
 
         //3rd try
         if (result==null || result.isErrorOccurred() || (result.getHttpCode() ==500) ) {
             try {
-                Thread.sleep((long) (10 * 1000));
+                Thread.sleep((long) (1 * 100));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            logger.debug("retrying2 - "+location);
+            logger.debug("retrying2 - "+request.getLocation());
             String _cookie = result !=null ? result.getSpecialToSendCookie(): null;
-            result= retrieve_underlying(true,true,verb, location, body, _cookie, predicate,timeoutSeconds,acceptsHeader);
+            result= retrieve_underlying(true,true,request);
         }
 
 

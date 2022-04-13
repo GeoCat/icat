@@ -33,9 +33,6 @@
 
 package net.geocat.runner;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import net.geocat.database.harvester.repos.MetadataRecordRepo;
 import net.geocat.database.linkchecker.entities.*;
 import net.geocat.database.linkchecker.entities.helper.*;
@@ -52,7 +49,6 @@ import net.geocat.eventprocessor.processors.datadownload.downloaders.WMTSLayerDo
 import net.geocat.eventprocessor.processors.processlinks.postprocessing.*;
 import net.geocat.events.EventFactory;
 import net.geocat.http.BasicHTTPRetriever;
-import net.geocat.http.IHTTPRetriever;
 import net.geocat.http.SmartHTTPRetriever;
 import net.geocat.service.*;
 
@@ -64,7 +60,7 @@ import net.geocat.xml.XmlDoc;
 import net.geocat.xml.XmlDocumentFactory;
 
 import net.geocat.xml.helpers.CapabilitiesType;
-import net.geocat.xml.helpers.WMSLayer;
+import net.geocat.xml.helpers.OnlineResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,6 +73,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import javax.persistence.EntityManager;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static java.util.stream.Collectors.groupingBy;
 
@@ -232,9 +229,9 @@ public class MyCommandLineRunner implements CommandLineRunner {
     @Autowired
     EventFactory eventFactory;
 
-    @Autowired
-    @Qualifier("cachingHttpRetriever")
-    IHTTPRetriever retriever_cachingHttpRetriever;
+//    @Autowired
+//    @Qualifier("cachingHttpRetriever")
+//    IHTTPRetriever retriever_cachingHttpRetriever;
 
     @Autowired
     WFSLayerDownloader wfsLayerDownloader;
@@ -266,17 +263,53 @@ public class MyCommandLineRunner implements CommandLineRunner {
     @Autowired
     AtomActualDataEntryRepo atomActualDataEntryRepo;
 
+    @Autowired
+    DocumentLinkToCapabilitiesProcessor documentLinkToCapabilitiesProcessor;
+
+    @Autowired
+    DatasetDocumentLinkRepo datasetDocumentLinkRepo;
+
 
     @Override
     public void run(String... args) throws Exception {
 
         try {
 
+       //     all_cap();
+      //      test_ogcDownload(3640069);
+            long startTime;
+            long endTime;
 
+            startTime = System.currentTimeMillis();
 //        CapabilitiesDocument cap = capabilitiesDocumentRepo.findById( new SHA2JobIdCompositeKey(
-//                                   "6A98AEF11BB3619425EC88C49A3FD78AC184618C7DD548DA3BA8607C95192560",
-//                           "0ae3d6d6-1cbf-436f-8ea8-fc98ceda6f7a") ).get();
+//                                   "DDCE01CEFCC1E8EF7779D23E55DC42C72B798A92D5EDF60CE4DE6C47C367BC90",
+//                           "eacc7604-447d-4fe3-9539-8096f7b793ed") ).get();
+
+
+//            LocalServiceMetadataRecord localServiceMetadataRecord = localServiceMetadataRecordRepo.findById(860463L).get();
+//            localServiceMetadataRecord.setLinkCheckJobId("TESTCASE - "+Math.random());
+//            ServiceDocumentLink link = localServiceMetadataRecord.getServiceDocumentLinks().iterator().next();
+//            localServiceMetadataRecord.setServiceDocumentLinks( new HashSet<>(Arrays.asList(link)));
+//            documentLinkToCapabilitiesProcessor.processDocumentLinks(localServiceMetadataRecord);
+
+//            List<DatasetDocumentLink> links =
+//                    StreamSupport.stream(datasetDocumentLinkRepo.findAll().spliterator(), false)
+//                            .collect(Collectors.toList());
 //
+//            for(DatasetDocumentLink link : links) {
+//                boolean is = link.isInspireSimplifiedLink();
+//                if (is) {
+//                    int u=3;
+//                }
+//                int tt3=0;
+//            }
+
+//           LocalDatasetMetadataRecord record =
+//                   localDatasetMetadataRecordRepo.findById(581469L).get();
+
+            endTime = System.currentTimeMillis();
+            System.out.println("records  total execution time: " + (endTime - startTime));
+            int ttt1=0;
 //        String xmlCap = linkCheckBlobStorageRepo.findById(cap.getSha2()).get().getTextValue();
 //        XmlCapabilitiesWMS _cap = (XmlCapabilitiesWMS)xmlDocumentFactory.create(xmlCap);
 //
@@ -286,7 +319,9 @@ public class MyCommandLineRunner implements CommandLineRunner {
 //            LocalDatasetMetadataRecord localDatasetMetadataRecord = localDatasetMetadataRecordRepo.findById(2121154L).get();
 //
 //
-//            OGCInfoCacheItem ogcInfoCacheItem = ogcRequestGenerator.prep("94b0cb06-5a04-4474-b35c-efe157f9786f", "CC22E03D1E13717C5C06D1E3EA179A8EC7774B75504A5C34416A3ADF9A557339");
+//            OGCInfoCacheItem ogcInfoCacheItem = ogcRequestGenerator.prep(
+//            "94b0cb06-5a04-4474-b35c-efe157f9786f",
+//            "CC22E03D1E13717C5C06D1E3EA179A8EC7774B75504A5C34416A3ADF9A557339");
 //
 //           // SimpleAtomLinkToData link = (SimpleAtomLinkToData)  linkToDataRepo.findById(2121265L).get();
 //            SimpleAtomLinkToData link =(SimpleAtomLinkToData) localDatasetMetadataRecord.getDataLinks().stream()
@@ -457,6 +492,14 @@ public class MyCommandLineRunner implements CommandLineRunner {
         logger.debug("DONE!");
     }
 
+    public void test_ogcDownload(long link2dataId){
+        LinkToData link = linkToDataRepo.findById(link2dataId).get();
+        OGCLinkToData ogcLinkToData= (OGCLinkToData) link;
+        OGCRequest request = ogcLinkToData.getOgcRequest();
+        ogcRequestResolver.resolve(request);
+        int t=0;
+    }
+
     private void test_linkstodata2(String linkcheckjob) throws Exception {
         for (LocalDatasetMetadataRecord record: localDatasetMetadataRecordRepo.findAll() ){
             String xml = blobStorageService.findXML(record.getSha2());
@@ -616,6 +659,7 @@ public class MyCommandLineRunner implements CommandLineRunner {
     public void allWFS() throws Exception {
 
         List wfs = executeSQL3("SELECT text_value FROM blob_storage WHERE text_value like '%WFS_Capabilities%'");
+
         for (Object v: wfs) {
             String xml = (String) v;
             XmlCapabilitiesWFS doc = (XmlCapabilitiesWFS) xmlDocumentFactory.create(xml);
@@ -701,14 +745,73 @@ public class MyCommandLineRunner implements CommandLineRunner {
 
     public void all_() throws Exception {
 
-        List wfs = executeSQL3("SELECT text_value FROM blob_storage WHERE  text_value  ilike '%codeListValue=\"dataset\"%' ");
-      // List wfs = executeSQL3("SELECT text_value FROM blob_storage WHERE  text_value  ilike '%9a21b8e2-1b28-43ee-91e9-241357add698%' ");
+        List texts = executeSQL3("SELECT text_value FROM blob_storage WHERE  text_value  ilike '%applicationProfile%' ");
+        long startTime;
+        long endTime;
 
-        for (Object v: wfs) {
+        startTime = System.currentTimeMillis();
+        for (Object v: texts) {
             String xml = (String) v;
             XmlDoc doc = xmlDocumentFactory.create(xml);
+            if (!(doc instanceof XmlDatasetMetadataDocument))
+                continue;
+            XmlDatasetMetadataDocument _doc = (XmlDatasetMetadataDocument) doc;
+            List<OnlineResource> links = new ArrayList<>(_doc.getConnectPoints());
+            links.addAll(_doc.getTransferOptions());
+
+            DatasetMetadataRecord r= new DatasetMetadataRecord();
+            r.setLinkCheckJobId("TESTCASE");
+
+            List<DatasetDocumentLink> links2 = links.stream().
+                    map(x -> serviceDocumentLinkService.create(r, x)).collect(Collectors.toList());
+
+            List<String> xmls = links.stream()
+                    .map(x-> {
+                        try {
+                            return XmlDoc.writeXML(x.getCI_OnlineResource());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            return "";
+                        }
+                    })
+                    .collect(Collectors.toList());
+            List<Boolean> ok = links2.stream()
+                    .map(x->x.isInspireSimplifiedLink())
+                    .collect(Collectors.toList());
+        List<String> protocols = links2.stream()
+                .map(x->x.getProtocol()) .collect(Collectors.toList());
+            List<String> appProfiles = links2.stream()
+                    .map(x->x.getApplicationProfile()) .collect(Collectors.toList());
             int t=0;
+            ok = links2.stream()
+                    .map(x->x.isInspireSimplifiedLink())
+                    .collect(Collectors.toList());
+
         }
+        endTime = System.currentTimeMillis();
+        System.out.println("records  total execution time: " + (endTime - startTime));
+    }
+
+    public void all_cap() throws Exception {
+
+        List wfs = executeSQL3("SELECT text_value FROM blob_storage WHERE text_value like '%WFS_Capabilities%' limit 1000");
+        List wms = executeSQL3("SELECT text_value FROM blob_storage WHERE text_value like '%WMS_Capabilities%' limit 1000");
+
+        List texts = new ArrayList(wfs);
+        texts.addAll(wms);
+
+        long startTime;
+        long endTime;
+
+        startTime = System.currentTimeMillis();
+        for (Object v: texts) {
+            String xml = (String) v;
+            XmlDoc doc = xmlDocumentFactory.create(xml);
+
+
+        }
+        endTime = System.currentTimeMillis();
+        System.out.println("records  total execution time: " + (endTime - startTime));
     }
 
 
@@ -771,58 +874,58 @@ public class MyCommandLineRunner implements CommandLineRunner {
 
 
      */
-    public void run_scrape(String countryCode, String jobid) throws  Exception {
-        try{
-            String sql =  "drop table if exists scrap;";
-            executeSQL2(sql);
-        }
-        catch (Exception e){}
-
-        try{
-            String sql =  "CREATE TABLE scrap (title text, is_view boolean, is_download boolean, country_code text,\n" +
-                    "                file_id text, local_is_view boolean , local_is_download boolean);";
-            executeSQL2(sql);
-        }
-        catch (Exception e){}
-
-        String url = "https://inspire-geoportal.ec.europa.eu/solr/select?wt=json&q=*:*^1.0&sow=false&fq=sourceMetadataResourceLocator:*&fq=resourceType:(dataset%20OR%20series)&fq=memberStateCountryCode:%22MYCOUNTRYCODE%22&fl=id,resourceTitle,resourceTitle_*,providedTranslationLanguage,automatedTranslationLanguage,memberStateCountryCode,metadataLanguage,isDw:query($isDwQ),isVw:query($isVwQ),spatialScope&isDwQ=interoperabilityAspect:(DOWNLOAD_MATCHING_DATA_IS_AVAILABLE%20AND%20DATA_DOWNLOAD_LINK_IS_AVAILABLE)&isVwQ=interoperabilityAspect:(LAYER_MATCHING_DATA_IS_AVAILABLE)&isDwVwQ=interoperabilityAspect:(DOWNLOAD_MATCHING_DATA_IS_AVAILABLE%20AND%20DATA_DOWNLOAD_LINK_IS_AVAILABLE%20AND%20LAYER_MATCHING_DATA_IS_AVAILABLE)&sort=query($isDwVwQ)%20desc,%20query($isDwQ)%20desc,%20query($isVwQ)%20desc,%20resourceTitle%20asc&start=0&rows=300000&callback=?&json.wrf=processData_dtResults&_=1634538073094";
-        url = url.replace("MYCOUNTRYCODE",countryCode.toLowerCase());
-
-            HttpResult result = basicHTTPRetriever.retrieveJSON("GET", url, null, null, null,20);
-
-            String json = new String(result.getData());
-            json = json.replace("processData_dtResults(","");
-
-          ObjectMapper m = new ObjectMapper();
-      JsonNode rootNode = m.readValue(json, JsonNode.class);
-
-       JsonNode response =  rootNode.get("response");
-       ArrayNode docs = (ArrayNode) response.get("docs");
-
-      // executeSQL2("create table delme(i int)");
-       for(JsonNode doc : docs) {
-            String title = doc.get("resourceTitle").asText().replace("'","''");
-            boolean isView = (doc.get("isVw") != null);
-            boolean isDownload = (doc.get("isDw") != null);
-            String country = doc.get("memberStateCountryCode").asText();
-            String sql =  String.format("INSERT INTO scrap  (title,is_view,is_download, country_code) VALUES ('%s',%s,%s,'%s') "
-                    , title, String.valueOf(isView), String.valueOf(isDownload),country);
-            executeSQL2(sql);
-           int tt=0;
-
-       }
-        int t=0;
-
-        String sql =  "update scrap set file_id = (select fileidentifier from datasetmetadatarecord where datasetmetadatarecord.title = scrap.title limit 1);";
-        executeSQL2(sql);
-
-
-        sql =  " update scrap set local_is_view = (select indicator_layer_matches_view = 'PASS' from datasetmetadatarecord where datasetmetadatarecord.fileidentifier = scrap.file_id and linkcheckjobid='"+jobid+"');";
-        executeSQL2(sql);
-
-        sql =  " update scrap set local_is_download = (select indicator_layer_matches_download = 'PASS' from datasetmetadatarecord where datasetmetadatarecord.fileidentifier = scrap.file_id and linkcheckjobid='"+jobid+"') ";
-        executeSQL2(sql);
-    }
+//    public void run_scrape(String countryCode, String jobid) throws  Exception {
+//        try{
+//            String sql =  "drop table if exists scrap;";
+//            executeSQL2(sql);
+//        }
+//        catch (Exception e){}
+//
+//        try{
+//            String sql =  "CREATE TABLE scrap (title text, is_view boolean, is_download boolean, country_code text,\n" +
+//                    "                file_id text, local_is_view boolean , local_is_download boolean);";
+//            executeSQL2(sql);
+//        }
+//        catch (Exception e){}
+//
+//        String url = "https://inspire-geoportal.ec.europa.eu/solr/select?wt=json&q=*:*^1.0&sow=false&fq=sourceMetadataResourceLocator:*&fq=resourceType:(dataset%20OR%20series)&fq=memberStateCountryCode:%22MYCOUNTRYCODE%22&fl=id,resourceTitle,resourceTitle_*,providedTranslationLanguage,automatedTranslationLanguage,memberStateCountryCode,metadataLanguage,isDw:query($isDwQ),isVw:query($isVwQ),spatialScope&isDwQ=interoperabilityAspect:(DOWNLOAD_MATCHING_DATA_IS_AVAILABLE%20AND%20DATA_DOWNLOAD_LINK_IS_AVAILABLE)&isVwQ=interoperabilityAspect:(LAYER_MATCHING_DATA_IS_AVAILABLE)&isDwVwQ=interoperabilityAspect:(DOWNLOAD_MATCHING_DATA_IS_AVAILABLE%20AND%20DATA_DOWNLOAD_LINK_IS_AVAILABLE%20AND%20LAYER_MATCHING_DATA_IS_AVAILABLE)&sort=query($isDwVwQ)%20desc,%20query($isDwQ)%20desc,%20query($isVwQ)%20desc,%20resourceTitle%20asc&start=0&rows=300000&callback=?&json.wrf=processData_dtResults&_=1634538073094";
+//        url = url.replace("MYCOUNTRYCODE",countryCode.toLowerCase());
+//
+//            HttpResult result = basicHTTPRetriever.retrieveJSON("GET", url, null, null, null,20);
+//
+//            String json = new String(result.getData());
+//            json = json.replace("processData_dtResults(","");
+//
+//          ObjectMapper m = new ObjectMapper();
+//      JsonNode rootNode = m.readValue(json, JsonNode.class);
+//
+//       JsonNode response =  rootNode.get("response");
+//       ArrayNode docs = (ArrayNode) response.get("docs");
+//
+//      // executeSQL2("create table delme(i int)");
+//       for(JsonNode doc : docs) {
+//            String title = doc.get("resourceTitle").asText().replace("'","''");
+//            boolean isView = (doc.get("isVw") != null);
+//            boolean isDownload = (doc.get("isDw") != null);
+//            String country = doc.get("memberStateCountryCode").asText();
+//            String sql =  String.format("INSERT INTO scrap  (title,is_view,is_download, country_code) VALUES ('%s',%s,%s,'%s') "
+//                    , title, String.valueOf(isView), String.valueOf(isDownload),country);
+//            executeSQL2(sql);
+//           int tt=0;
+//
+//       }
+//        int t=0;
+//
+//        String sql =  "update scrap set file_id = (select fileidentifier from datasetmetadatarecord where datasetmetadatarecord.title = scrap.title limit 1);";
+//        executeSQL2(sql);
+//
+//
+//        sql =  " update scrap set local_is_view = (select indicator_layer_matches_view = 'PASS' from datasetmetadatarecord where datasetmetadatarecord.fileidentifier = scrap.file_id and linkcheckjobid='"+jobid+"');";
+//        executeSQL2(sql);
+//
+//        sql =  " update scrap set local_is_download = (select indicator_layer_matches_download = 'PASS' from datasetmetadatarecord where datasetmetadatarecord.fileidentifier = scrap.file_id and linkcheckjobid='"+jobid+"') ";
+//        executeSQL2(sql);
+//    }
 
 
     public void run_3(String dsId, String serviceId, String linkCheckJobId) throws Exception {

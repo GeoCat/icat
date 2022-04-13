@@ -33,6 +33,7 @@
 
 package net.geocat.eventprocessor.processors.datadownload;
 
+import net.geocat.database.linkchecker.entities.LinkCheckJob;
 import net.geocat.database.linkchecker.entities.LocalDatasetMetadataRecord;
 import net.geocat.database.linkchecker.entities.OGCRequest;
 import net.geocat.database.linkchecker.entities.SimpleAtomLinkToData;
@@ -43,6 +44,7 @@ import net.geocat.database.linkchecker.entities.SimpleStoredQueryDataLink;
 import net.geocat.database.linkchecker.entities.helper.LinkToData;
 import net.geocat.database.linkchecker.entities.helper.ServiceMetadataDocumentState;
 import net.geocat.database.linkchecker.repos.LocalDatasetMetadataRecordRepo;
+import net.geocat.database.linkchecker.service.LinkCheckJobService;
 import net.geocat.eventprocessor.BaseEventProcessor;
 import net.geocat.eventprocessor.processors.datadownload.downloaders.AtomDownloadProcessor;
 import net.geocat.eventprocessor.processors.datadownload.downloaders.OGCInfoCacheItem;
@@ -50,7 +52,9 @@ import net.geocat.eventprocessor.processors.datadownload.downloaders.OGCRequestG
 import net.geocat.eventprocessor.processors.datadownload.downloaders.OGCRequestResolver;
 import net.geocat.events.Event;
 import net.geocat.events.EventFactory;
+import net.geocat.events.EventService;
 import net.geocat.events.datadownload.DataDownloadDatasetDocumentEvent;
+import net.geocat.model.LinkCheckRunConfig;
 import net.geocat.service.helper.SharedForkJoinPool2;
 import net.geocat.service.helper.ShouldTransitionOutOfDataDownloading;
 import net.geocat.xml.helpers.CapabilitiesType;
@@ -77,7 +81,8 @@ public class EventProcessor_DataDownloadDatasetDocumentEvent extends BaseEventPr
 
     Logger logger = LoggerFactory.getLogger(EventProcessor_DataDownloadDatasetDocumentEvent.class);
 
-    public static int MAX_LINKS_TO_FOLLOW = 100;
+    @Autowired
+    LinkCheckJobService linkCheckJobService;
 
     @Autowired
     LocalDatasetMetadataRecordRepo localDatasetMetadataRecordRepo;
@@ -161,11 +166,14 @@ public class EventProcessor_DataDownloadDatasetDocumentEvent extends BaseEventPr
             OGCInfoCacheItem ogcInfoCacheItem = ogcRequestGenerator.prep(localDatasetMetadataRecord.getLinkCheckJobId(), capSha2);
             ogcInfoCache.put(capSha2, ogcInfoCacheItem);
         }
-        processView(viewLinks,ogcInfoCache);
-        processDownload(downloadLinks,ogcInfoCache);
+        LinkCheckJob job = linkCheckJobService.getJobInfo(localDatasetMetadataRecord.getLinkCheckJobId(),false);
+        processView(viewLinks,ogcInfoCache,job);
+        processDownload(downloadLinks,ogcInfoCache,job);
      }
 
-    private void processDownload(List<LinkToData> downloadLinks, Map<String, OGCInfoCacheItem> ogcInfoCache) {
+    private void processDownload(List<LinkToData> downloadLinks, Map<String, OGCInfoCacheItem> ogcInfoCache, LinkCheckJob job) {
+        int MAX_LINKS_TO_FOLLOW = job==null ? LinkCheckRunConfig.maxDataLinksToFollow_default : job.getMaxDataLinksToFollow();
+
         if (downloadLinks.size() > MAX_LINKS_TO_FOLLOW) {
             // we want to always grab the same set of links...
             Collections.sort(downloadLinks,( link1,link2) ->{
@@ -190,8 +198,13 @@ public class EventProcessor_DataDownloadDatasetDocumentEvent extends BaseEventPr
 
 
 
-    private void processView(List<LinkToData> viewLinks, Map<String, OGCInfoCacheItem> ogcInfoCache) throws Exception {
+    private void processView(List<LinkToData> viewLinks, Map<String, OGCInfoCacheItem> ogcInfoCache, LinkCheckJob job) throws Exception {
+        int MAX_LINKS_TO_FOLLOW = job==null ? LinkCheckRunConfig.maxDataLinksToFollow_default : job.getMaxDataLinksToFollow();
+
          if (viewLinks.size() > MAX_LINKS_TO_FOLLOW) {
+             Collections.sort(viewLinks,( link1,link2) ->{
+                 return link1.key().compareToIgnoreCase(link2.key());
+             });
             viewLinks = viewLinks.subList(0,MAX_LINKS_TO_FOLLOW);
         }
         localDatasetMetadataRecord.setNumberOfViewLinksAttempted(viewLinks.size());

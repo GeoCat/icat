@@ -157,7 +157,7 @@ public class HtmlDatasetService {
 
         result += "<h3>link "+indx+" - <a href='/api/html/linktodata/"+link.getLinkToDataId() +"'>"+ link.getClass().getSimpleName() + "</a></h3>";
         if (showDSLink)
-            result += "dataset: <a href='" +"/api/html/dataset/"+ link.getDatasetMetadataRecord().getLinkCheckJobId()+"/"+link.getDatasetMetadataRecord().getFileIdentifier()+ "'>"+link.getDatasetMetadataRecord().getFileIdentifier()  + "  </a>" + "</h3><br>\n";
+            result += "dataset: <a href='" +"/api/html/dataset/"+ link.getLinkCheckJobId()+"/"+link.getDatasetMetadataFileIdentifier()+ "'>"+link.getDatasetMetadataFileIdentifier()  + "  </a>" + "</h3><br>\n";
 
         result += "capabilities: <a href='" +"/api/html/capabilities/"+ link.getLinkCheckJobId()+"/"+link.getCapabilitiesSha2() + "'>"+link.getCapabilitiesDocumentType()  + " Capabilities</a>" + "</h3>\n";
 

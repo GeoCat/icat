@@ -70,11 +70,14 @@ public class CapabilitiesDocumentService {
     CapabilitiesDatasetMetadataLinkService capabilitiesDatasetMetadataLinkService;
 
     public CapabilitiesDocument create(DocumentLink link) throws Exception {
+
         String xmlStr = XmlStringTools.bytea2String(link.getFullData());
 
         XmlDoc _doc = xmlDocumentFactory.create(xmlStr);
         if (_doc !=null)
             link.setXmlDocInfo(_doc.toString());
+
+
 
         XmlCapabilitiesDocument xml = (XmlCapabilitiesDocument)_doc;
 

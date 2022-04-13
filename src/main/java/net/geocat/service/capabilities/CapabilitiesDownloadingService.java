@@ -155,10 +155,14 @@ public class CapabilitiesDownloadingService {
 
     private void handleLayerDatasetLink(CapabilitiesDatasetMetadataLink capabilitiesDatasetMetadataLink) {
         try {
+//            long startTime  = System.currentTimeMillis();
+
             String jobid = capabilitiesDatasetMetadataLink.getLinkCheckJobId();
             capabilitiesDatasetMetadataLink = retrieveCapabilitiesDatasetMetadataLink.process(capabilitiesDatasetMetadataLink,jobid);
 
             capabilitiesDatasetMetadataLink.setLinkState(LinkState.Complete);
+//            System.out.println("handleLayerDatasetLink handleLayerDatasetLink time: " + (System.currentTimeMillis() - startTime));
+
         }
         catch(Exception e){
             logger.error("error occurred while processing cap Dataset link, CapabilitiesDatasetMetadataLink="+capabilitiesDatasetMetadataLink+", error="+e.getMessage(),e);
@@ -181,8 +185,8 @@ public class CapabilitiesDownloadingService {
                     capabilitiesDocument.getCapabilitiesDatasetMetadataLinkList().stream().parallel()
                             .forEach(x -> {
                                 handleLayerDatasetLink(x);
-                                int ndone = counter.incrementAndGet();
-                                logger.trace("processed link cap's DS link " + ndone + " of " + nTotal); // a wee bit of a lie, but will be "accurate"
+                               // int ndone = counter.incrementAndGet();
+                              //  logger.trace("processed link cap's DS link " + ndone + " of " + nTotal); // a wee bit of a lie, but will be "accurate"
                             })
             ).get();
 

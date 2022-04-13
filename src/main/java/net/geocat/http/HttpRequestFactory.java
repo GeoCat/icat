@@ -34,53 +34,59 @@
 package net.geocat.http;
 
 import net.geocat.database.linkchecker.entities.HttpResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import net.geocat.database.linkchecker.entities.LinkCheckJob;
+import net.geocat.database.linkchecker.service.LinkCheckJobService;
+import net.geocat.events.EventService;
+ import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.endpoint.web.Link;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import static net.geocat.model.LinkCheckRunConfig.maxAtomSectionLinksToFollow_default;
+import static net.geocat.model.LinkCheckRunConfig.useOtherJobsHTTPCache_default;
 
 @Component
 @Scope("prototype")
-@Qualifier("redirectAwareHTTPRetriever")
-public class RedirectAwareHTTPRetriever implements IHTTPRetriever {
+public class HttpRequestFactory {
 
-    public static int MAXREDIRECTS = 5;
     @Autowired
-    @Qualifier("basicHTTPRetriever")
-    public BasicHTTPRetriever retriever; // public for testing
-    Logger logger = LoggerFactory.getLogger(RedirectAwareHTTPRetriever.class);
-
-    public RedirectAwareHTTPRetriever() {
-
-    }
+    LinkCheckJobService linkCheckJobService;
 
 
-    @Override
-//    public HttpResult retrieve(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,int timeoutSeconds,String acceptsHeader)
-//            throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
-//    public HttpResult retrieve(HTTPRequest request) throws  Exception
-//        return _retrieve(verb, location, body, cookie, MAXREDIRECTS, predicate,timeoutSeconds,acceptsHeader);
-  //  }
-
-
-//    protected HttpResult _retrieve(String verb, String location, String body, String cookie, int nRedirectsRemaining, IContinueReadingPredicate predicate,int timeoutSeconds,String acceptsHeader)
-//            throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
-        public HttpResult retrieve(HTTPRequest request) throws  Exception {
-
+    public LinkCheckJob getJob(String linkCheckJobId){
         try {
-            return retriever.retrieve(request);
-        } catch (RedirectException re) {
-            request.setnRedirectsRemaining(request.getnRedirectsRemaining() -1);
-            if (request.getnRedirectsRemaining() <= 0)
-                throw new IOException("too many redirects!");
-            logger.debug("     REDIRECTED TO location=" + re.getNewLocation());
-            request = request.clone();
-            request.setLocation(re.getNewLocation());
-            return  retrieve(request);
+            LinkCheckJob job = linkCheckJobService.getJobInfo(linkCheckJobId,false);
+            return job;
+        }
+        catch (Exception e){
+            return null;
         }
     }
+
+    public   HTTPRequest createGET(String location, String linkCheckJobId){
+        LinkCheckJob job = getJob(linkCheckJobId);
+        HTTPRequest result = new HTTPRequest();
+        result.setLinkCheckJobId(linkCheckJobId);
+        result.setLocation(location);
+
+        boolean useOtherCaches = job == null ? useOtherJobsHTTPCache_default: job.isUseOtherJobsHTTPCache();
+        result.setCacheUseOtherJobs(useOtherCaches);
+
+        return result;
+    }
+
+    public   HTTPRequest createPOST(String location,String body, String linkCheckJobId){
+        LinkCheckJob job = getJob(linkCheckJobId);
+
+        HTTPRequest result = new HTTPRequest();
+        result.setLocation(location);
+        result.setVerb("POST");
+        result.setBody(body);
+
+        boolean useOtherCaches = job == null ? useOtherJobsHTTPCache_default: job.isUseOtherJobsHTTPCache();
+        result.setCacheUseOtherJobs(useOtherCaches);
+
+        return result;
+    }
+
 }

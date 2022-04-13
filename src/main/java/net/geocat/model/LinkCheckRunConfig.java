@@ -44,8 +44,20 @@ import java.util.Optional;
 public class LinkCheckRunConfig {
 
     String longTermTag;
-
     String harvestJobId;
+
+    public static boolean useOtherJobsHTTPCache_default = true;
+    public static boolean deleteHTTPCacheWhenComplete_default = false;
+    public static int maxDataLinksToFollow_default = 100;
+    public static int maxAtomEntriesToAttempt_default = 100;
+    public static int maxAtomSectionLinksToFollow_default = 10;
+
+    boolean useOtherJobsHTTPCache = useOtherJobsHTTPCache_default;
+    boolean deleteHTTPCacheWhenComplete = deleteHTTPCacheWhenComplete_default;
+    
+    int maxDataLinksToFollow = maxDataLinksToFollow_default;
+    int maxAtomEntriesToAttempt = maxAtomEntriesToAttempt_default;
+    int maxAtomSectionLinksToFollow = maxAtomSectionLinksToFollow_default;
 
     // GUID for the harvest (used as JMS Correlation ID).  Provided by server (do not specify)
     private String processID;
@@ -72,6 +84,56 @@ public class LinkCheckRunConfig {
             }
         }
 
+        if (maxAtomEntriesToAttempt <=0)
+            throw new Exception("maxAtomEntriesToAttempt must be >0");
+        if (maxAtomSectionLinksToFollow <=0)
+            throw new Exception("maxAtomSectionLinksToFollow must be >0");
+        if (maxDataLinksToFollow <=0)
+            throw new Exception("maxDataLinksToFollow must be >0");
+
+    }
+
+    //--
+
+
+    public int getMaxDataLinksToFollow() {
+        return maxDataLinksToFollow;
+    }
+
+    public void setMaxDataLinksToFollow(int maxDataLinksToFollow) {
+        this.maxDataLinksToFollow = maxDataLinksToFollow;
+    }
+
+    public int getMaxAtomEntriesToAttempt() {
+        return maxAtomEntriesToAttempt;
+    }
+
+    public void setMaxAtomEntriesToAttempt(int maxAtomEntriesToAttempt) {
+        this.maxAtomEntriesToAttempt = maxAtomEntriesToAttempt;
+    }
+
+    public int getMaxAtomSectionLinksToFollow() {
+        return maxAtomSectionLinksToFollow;
+    }
+
+    public void setMaxAtomSectionLinksToFollow(int maxAtomSectionLinksToFollow) {
+        this.maxAtomSectionLinksToFollow = maxAtomSectionLinksToFollow;
+    }
+
+    public boolean isUseOtherJobsHTTPCache() {
+        return useOtherJobsHTTPCache;
+    }
+
+    public void setUseOtherJobsHTTPCache(boolean useOtherJobsHTTPCache) {
+        this.useOtherJobsHTTPCache = useOtherJobsHTTPCache;
+    }
+
+    public boolean isDeleteHTTPCacheWhenComplete() {
+        return deleteHTTPCacheWhenComplete;
+    }
+
+    public void setDeleteHTTPCacheWhenComplete(boolean deleteHTTPCacheWhenComplete) {
+        this.deleteHTTPCacheWhenComplete = deleteHTTPCacheWhenComplete;
     }
 
     public String getLongTermTag() {

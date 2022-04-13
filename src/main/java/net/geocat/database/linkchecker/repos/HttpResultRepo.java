@@ -46,4 +46,7 @@ public interface HttpResultRepo extends CrudRepository<HttpResult, Long>  {
     HttpResult findFirstByURL( String URL);
 
     boolean existsByURL( String URL);
+
+    Long deleteByLinkCheckJobId(String linkCheckJobId);
+
 }

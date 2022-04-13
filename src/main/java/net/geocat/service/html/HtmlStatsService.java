@@ -108,14 +108,20 @@ public class HtmlStatsService {
         result += "<br><br>\n";
 
         result += "<table border=1>";
+        result += "<tr><td></td><td style='text-align:center' colspan=3><b>VIEW</b></td><td></td><td style='text-align:center'  colspan=3><b>DOWNLOAD</b></td></tr>";
         result += "<tr><td>Dataset fileid</td><td>n view links</td><td>n view attempted</td><td>n view success</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td>n download links</td><td>n download attempted</td><td>n  download success</td>";
 
         for (LocalDatasetMetadataRecord record : datasets){
             String row ="";
+            String style = "";
             row += "<tr><td><a href='/api/html/dataset/"+record.getLinkCheckJobId()+"/"+record.getFileIdentifier()+"'>"+ record.getFileIdentifier() + "</a></td>";
-            row += "<td style='text-align: center'>"+ record.getNumberOfViewDataLinks() + "</td>";
 
-            String style=getStyle(record.getNumberOfViewDataLinks(),record.getNumberOfViewLinksAttempted());
+            if (record.getNumberOfViewDataLinks() ==0)
+                style = "background:#FFDDDD;";
+
+            row += "<td style='text-align: center;"+style+"'>"+ record.getNumberOfViewDataLinks() + "</td>";
+
+            style=getStyle(record.getNumberOfViewDataLinks(),record.getNumberOfViewLinksAttempted());
 
             row += "<td style='text-align: center;"+style+"'>"+ record.getNumberOfViewLinksAttempted() + "</td>";
 
@@ -124,7 +130,11 @@ public class HtmlStatsService {
 
             row += "<td> </td>";
 
-            row += "<td style='text-align: center'>"+ record.getNumberOfDownloadDataLinks() + "</td>";
+            style = "";
+            if (record.getNumberOfViewDataLinks() ==0)
+                style = "background:#FFDDDD;";
+
+            row += "<td style='text-align: center;"+style+"'>"+ record.getNumberOfDownloadDataLinks() + "</td>";
 
             style=getStyle(record.getNumberOfDownloadDataLinks(),record.getNumberOfDownloadLinksAttempted());
 

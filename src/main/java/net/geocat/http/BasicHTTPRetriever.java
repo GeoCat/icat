@@ -75,11 +75,11 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
         return predicate.continueReading(tinyBuffer);
     }
 
-    public HttpResult retrieveJSON(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,int timeoutSeconds)
-            throws IOException, SecurityException, ExceptionWithCookies, RedirectException
-    {
-        return retrieve(verb,location,body, cookie,predicate, "application/json",new String[] {"application/json"},timeoutSeconds);
-    }
+//    public HttpResult retrieveJSON(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,int timeoutSeconds)
+//            throws IOException, SecurityException, ExceptionWithCookies, RedirectException
+//    {
+//        return retrieve(verb,location,body, cookie,predicate, "application/json",new String[] {"application/json"},timeoutSeconds);
+//    }
 
     /**
      * @param verb     GET or POST
@@ -89,12 +89,12 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
      * @return response from server
      * @throws Exception
      */
-    public HttpResult retrieve(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,int timeoutSeconds,String acceptsHeader)
-            throws IOException, SecurityException, ExceptionWithCookies, RedirectException
-    {
-        //some systems don't understand the q qualifier
-        return retrieve(verb,location,body, cookie,predicate, "application/xml",  new String[] {acceptsHeader},timeoutSeconds);
-    }
+//    public HttpResult retrieve(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,int timeoutSeconds,String acceptsHeader)
+//            throws IOException, SecurityException, ExceptionWithCookies, RedirectException
+//    {
+//        //some systems don't understand the q qualifier
+//        return retrieve(verb,location,body, cookie,predicate, "application/xml",  new String[] {acceptsHeader},timeoutSeconds);
+//    }
 
 
     /**
@@ -105,22 +105,25 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
      * @return response from server
      * @throws Exception
      */
-    public HttpResult retrieve (String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,String contentType,String[] accept,int timeoutSeconds) throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
-
-        if (body == null)
-            body = "";
-        URL url = new URL(location);
+  //  public HttpResult retrieve (String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,String contentType,String[] accept,int timeoutSeconds) throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
+    public HttpResult retrieve(HTTPRequest request) throws Exception {
+        if (request.getBody() == null)
+            request.setBody("");
+        URL url = new URL(request.getLocation());
         if (!url.getProtocol().equalsIgnoreCase("http") && (!url.getProtocol().equalsIgnoreCase("https")))
             throw new SecurityException("Security violation - url should be HTTP or HTTPS");
 
-        if (!verb.equals("POST") && !verb.equals("GET"))
+        if (!request.getVerb().equals("POST") && !request.getVerb().equals("GET"))
             throw new SecurityException("verb should be 'POST' or 'GET'");
 
-        logger.debug("      * " + verb + " to " + location + " with body " + body.replace("\n", ""));
+        if (request.getBody().isEmpty())
+            logger.debug("      * " + request.getVerb() + " to " + request.getLocation() );
+        else
+            logger.debug("      * " + request.getVerb() + " to " + request.getLocation() + " with body " + request.getBody().replace("\n", ""));
 
         boolean isHTTPs = url.getProtocol().equalsIgnoreCase("HTTPS");
 
-        byte[] body_bytes = body.getBytes(StandardCharsets.UTF_8);
+        byte[] body_bytes = request.getBody().getBytes(StandardCharsets.UTF_8);
         byte[] response_bytes;
 
         URLConnection con = url.openConnection();
@@ -138,26 +141,26 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
 
 
 
-        http.setConnectTimeout(timeoutSeconds*1000);
-        http.setReadTimeout(timeoutSeconds*1000);
-        http.setRequestMethod(verb);
+        http.setConnectTimeout(request.getTimeoutSeconds()*1000);
+        http.setReadTimeout(request.getTimeoutSeconds()*1000);
+        http.setRequestMethod(request.getVerb());
         http.setDoOutput(true);
         http.setDoInput(true);
-        if (verb.equals("POST")) {
+        if (request.getVerb().equals("POST")) {
             http.setFixedLengthStreamingMode(body_bytes.length);
            // http.setRequestProperty("Content-Type", "application/xml");
         }
-        if (verb.equals("POST")) {
-            http.setRequestProperty("Content-Type", contentType); // some servers don't like this set if there's no body
+        if (request.getVerb().equals("POST")) {
+            http.setRequestProperty("Content-Type", request.getContentType()); // some servers don't like this set if there's no body
         }
-        if (accept !=null) {
-            for(String a:accept){
-                http.setRequestProperty("Accept", a);
-            }
+        if (request.getAcceptsHeader() !=null) {
+           // for(String a:accept){
+                http.setRequestProperty("Accept", request.getAcceptsHeader());
+           // }
         }
 
-        if ((cookie != null) && (!cookie.isEmpty()))
-            http.setRequestProperty("Cookie", cookie);
+        if ((request.getCookie() != null) && (!request.getCookie().isEmpty()))
+            http.setRequestProperty("Cookie", request.getCookie());
 
         String response;
         try {
@@ -181,7 +184,7 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
                 byte[] tinyBuffer = new byte[initialReadSize];
                 int ntinyRead = IOUtils.read(is, tinyBuffer);
                 byte[] bigBuffer = new byte[0];
-                if (shouldReadMore(tinyBuffer, predicate)) {
+                if (shouldReadMore(tinyBuffer, request.getPredicate())) {
                     fullyRead = true;
                     bigBuffer = IOUtils.toByteArray(is);
                 }
@@ -202,7 +205,7 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
                 }
             }
             HttpResult errorResult = new HttpResult(errorBuffer);
-            errorResult.setURL(location);
+            errorResult.setURL(request.getLocation());
             errorResult.setHTTPS(isHTTPs);
             errorResult.setSslTrusted(true);
             if (verifyingTrustingX509TrustManager != null) {
@@ -222,7 +225,7 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
             errorResult.setFinalURL(url.toString());
             if (cookies != null)
                 errorResult.setReceivedCookie(String.join("\n",cookies));
-            errorResult.setSentCookie(cookie);
+            errorResult.setSentCookie(request.getCookie());
             errorResult.setFullyRead(false);
             errorResult.setErrorOccurred(true);
             errorResult.setHttpCode(http.getResponseCode());
@@ -248,7 +251,7 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
         List<String> cookies = http.getHeaderFields().get("Set-Cookie");
 
         HttpResult result = new HttpResult(response_bytes);
-        result.setURL(location);
+        result.setURL(request.getLocation());
 
         result.setHTTPS(isHTTPs);
         result.setSslTrusted(true);
@@ -267,7 +270,7 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
         }
         if (cookies != null)
             result.setReceivedCookie(String.join("\n",cookies));
-        result.setSentCookie(cookie);
+        result.setSentCookie(request.getCookie());
         result.setFinalURL(url.toString());
         result.setFullyRead(fullyRead);
         result.setHttpCode(responseCode);

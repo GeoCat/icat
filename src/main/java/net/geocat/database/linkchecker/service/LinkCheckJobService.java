@@ -35,20 +35,79 @@ package net.geocat.database.linkchecker.service;
 
 import net.geocat.database.linkchecker.entities.LinkCheckJob;
 import net.geocat.database.linkchecker.entities.LinkCheckJobState;
+import net.geocat.database.linkchecker.repos.HttpResultRepo;
 import net.geocat.database.linkchecker.repos.LinkCheckJobRepo;
 import net.geocat.events.LinkCheckRequestedEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Component
 @Scope("prototype")
 public class LinkCheckJobService {
 
+    static Map<String, LinkCheckJob> jobs = new HashMap<>();
+    static Object lockObj = new Object();
+
     @Autowired
     LinkCheckJobRepo linkCheckJobRepo;
+
+    @Autowired
+    HttpResultRepo httpResultRepo;
+
+
+    //run this code after the job is complete
+    public void finalize(String linkCheckJobId) {
+        LinkCheckJob  job=getJobInfo(linkCheckJobId,true);
+//        // we are using a cache - it might be out-of-date.
+//        // if the job isn't marked as complete (or error/abort), we re-load it
+//        if ( (job.getState() != LinkCheckJobState.ERROR) && (job.getState() != LinkCheckJobState.USERABORT) && (job.getState() != LinkCheckJobState.COMPLETE) )
+//        {
+//            job=getJobInfo(linkCheckJobId,true);
+//        }
+        if (job == null)
+            return;// nothing to do - shouldnt happen
+
+        if (job.getState() == LinkCheckJobState.ERROR) {
+            _finalize(job);
+        }
+        else if (job.getState() == LinkCheckJobState.USERABORT) {
+            _finalize(job);
+        }
+        else if (job.getState() == LinkCheckJobState.COMPLETE) {
+            _finalize(job);
+        }
+        else {
+            _finalize(job);
+        }
+    }
+
+    private void _finalize(LinkCheckJob  job) {
+        if ( (job == null) || (job.getJobId() ==null) || (job.getJobId().isEmpty()) )
+            return; //shouldn't happen
+        if (job.isDeleteHTTPCacheWhenComplete()) {
+            Long nItemsDeleted = httpResultRepo.deleteByLinkCheckJobId(job.getJobId());
+            int t=0;
+        }
+    }
+
+    //access to config (when needed)
+    public LinkCheckJob getJobInfo(String linkCheckJobId, boolean forceRefresh) {
+        synchronized (lockObj) {
+            LinkCheckJob result = jobs.get(linkCheckJobId);
+            if ( (result != null) && !forceRefresh)
+                return result;
+            Optional<LinkCheckJob> job = linkCheckJobRepo.findById(linkCheckJobId);
+            if (!job.isPresent())
+                return null; //shouln't happen
+            jobs.put(linkCheckJobId,job.get());
+            return job.get();
+        }
+    }
 
     public LinkCheckJob updateNumberofDocumentsInBatch(String linkCheckJobId, Long number) {
         LinkCheckJob job =  linkCheckJobRepo.findById(linkCheckJobId).get();
@@ -57,7 +116,9 @@ public class LinkCheckJobService {
     }
 
     public LinkCheckJob updateLinkCheckJobStateInDBToError(String guid) throws Exception {
-        return updateLinkCheckJobStateInDB(guid, LinkCheckJobState.ERROR);
+        LinkCheckJob result =  updateLinkCheckJobStateInDB(guid, LinkCheckJobState.ERROR);
+        finalize(guid);
+        return result;
     }
 
     public LinkCheckJob updateLinkCheckJobStateInDB(String guid, LinkCheckJobState state) {
@@ -84,6 +145,14 @@ public class LinkCheckJobService {
         newJob.setLongTermTag(event.getLongTermTag());
         newJob.setJobId(event.getLinkCheckJobId());
         newJob.setHarvestJobId(event.getHarvestJobId());
+
+        newJob.setDeleteHTTPCacheWhenComplete(event.getLinkCheckRunConfig().isDeleteHTTPCacheWhenComplete());
+        newJob.setUseOtherJobsHTTPCache(event.getLinkCheckRunConfig().isUseOtherJobsHTTPCache());
+
+        newJob.setMaxDataLinksToFollow(event.getLinkCheckRunConfig().getMaxDataLinksToFollow());
+        newJob.setMaxAtomEntriesToAttempt(event.getLinkCheckRunConfig().getMaxAtomEntriesToAttempt());
+        newJob.setMaxAtomSectionLinksToFollow(event.getLinkCheckRunConfig().getMaxAtomSectionLinksToFollow());
+
         return linkCheckJobRepo.save(newJob);
      }
 

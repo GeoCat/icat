@@ -38,6 +38,7 @@ import net.geocat.database.linkchecker.entities.helper.DatasetIdentifier;
 import net.geocat.database.linkchecker.entities.helper.DatasetMetadataRecordDatasetIdentifier;
 import net.geocat.database.linkchecker.entities.helper.PartialDownloadHint;
 import net.geocat.database.linkchecker.entities.helper.RetrievableSimpleLink;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
@@ -87,7 +88,8 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
 
     @OneToMany(mappedBy = "capDatasetMetadataLink",
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
-    @Fetch(value = FetchMode.JOIN)
+    @Fetch(value = FetchMode.SELECT)
+            @BatchSize(size=500)
    List<CapabilitiesDatasetMetadataLinkDatasetIdentifier> datasetIdentifiers;
 
     @Column(columnDefinition = "text")

@@ -116,6 +116,8 @@ public class EventProcessor_ProcessLocalMetadataDocumentEvent extends BaseEventP
     public EventProcessor_ProcessLocalMetadataDocumentEvent externalProcessing() throws Exception {
         String sha2 = getInitiatingEvent().getSha2();
         // long endpointJobId = getInitiatingEvent().getEndpointJobId();
+//        if (true)
+//         throw new Exception("blah");
         xml = blobStorageService.findXML(sha2);
         doc = (XmlMetadataDocument)xmlDocumentFactory.create(xml);
         return this;

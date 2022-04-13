@@ -36,6 +36,8 @@ package net.geocat.database.linkchecker.entities.helper;
 import net.geocat.database.linkchecker.entities.CapabilitiesDocument;
 
 import javax.persistence.*;
+import java.util.Arrays;
+import java.util.List;
 
 //Represents a link in a document
 @MappedSuperclass
@@ -52,6 +54,10 @@ public abstract class DocumentLink extends  RetrievableSimpleLink {
     //if the function was attached to the link, its recorded here (see XML XSL)
     @Column(columnDefinition = "text")
     String function;
+
+    //applicationProfile from XML
+    @Column(columnDefinition = "text")
+    String applicationProfile;
 
     //not saved - if this resolved to a capabilities document, temporarily store it here.
     @Transient
@@ -71,6 +77,60 @@ public abstract class DocumentLink extends  RetrievableSimpleLink {
 
     public DocumentLink(){
         super();
+    }
+
+    //--
+
+    public static List<String> validProtocols = Arrays.asList(new String[] {
+            "http://www.opengis.net/def/serviceType/ogc/wms".toLowerCase(),
+            "http://www.opengis.net/def/serviceType/ogc/wmts".toLowerCase(),
+            "http://www.opengis.net/def/serviceType/ogc/wfs".toLowerCase(),
+            "https://tools.ietf.org/html/rfc4287".toLowerCase(),
+            "ATOM Syndication Format".toLowerCase(),
+            "OGC Web Feature Service".toLowerCase(),
+            "OGC Web Map Service".toLowerCase(),
+            "OGC Web Map Tile Service".toLowerCase(),
+            "wms",
+            "wmts",
+            "wfs",
+            "atom",
+            "http://www.opengeospatial.org/standards/wms",
+            "http://www.opengeospatial.org/standards/wmts",
+            "http://www.opengeospatial.org/standards/wfs",
+            "INSPIRE Atom".toLowerCase()
+    });
+
+    public static List<String> validAppProfiles =  Arrays.asList(new String[] {
+            "Download Service".toLowerCase(),
+            "View Service".toLowerCase(),
+            "http://inspire.ec.europa.eu/metadata-codelist/SpatialDataServiceType/download".toLowerCase(),
+            "http://inspire.ec.europa.eu/metadata-codelist/SpatialDataServiceType/view".toLowerCase()
+    });
+
+    public boolean isInspireSimplifiedLink() {
+        if ( (rawURL == null) || (protocol ==null) || (applicationProfile == null))
+            return false;
+        if ( rawURL.isEmpty() || protocol.isEmpty() || applicationProfile.isEmpty())
+            return false;
+
+        if (!validProtocols.contains(protocol.toLowerCase()))
+            return false;
+
+        if (!validAppProfiles.contains(applicationProfile.toLowerCase()))
+            return false;
+
+        return true;
+    }
+
+
+    //--
+
+    public String getApplicationProfile() {
+        return applicationProfile;
+    }
+
+    public void setApplicationProfile(String applicationProfile) {
+        this.applicationProfile = applicationProfile;
     }
 
     public String getOperationName() {

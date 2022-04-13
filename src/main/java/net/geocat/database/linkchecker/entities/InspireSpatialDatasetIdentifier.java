@@ -54,6 +54,11 @@ import javax.persistence.Table;
                         name = "inspireSpatialDatasetIdentifier_code_idx",
                         columnList = "code",
                         unique = false
+                ),
+                @Index(
+                        name = "inspireSpatialDatasetIdentifier_ap_idx",
+                        columnList = "cap_sha2,cap_jobid",
+                        unique = false
                 )
         }
 )

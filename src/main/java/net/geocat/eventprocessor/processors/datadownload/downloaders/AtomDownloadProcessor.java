@@ -34,9 +34,13 @@
 package net.geocat.eventprocessor.processors.datadownload.downloaders;
 
 import net.geocat.database.linkchecker.entities.AtomActualDataEntry;
+import net.geocat.database.linkchecker.entities.LinkCheckJob;
 import net.geocat.database.linkchecker.entities.SimpleAtomLinkToData;
 import net.geocat.database.linkchecker.entities.helper.AtomDataRequest;
 import net.geocat.database.linkchecker.entities.helper.AtomSubFeedRequest;
+import net.geocat.database.linkchecker.service.LinkCheckJobService;
+import net.geocat.events.EventService;
+import net.geocat.model.LinkCheckRunConfig;
 import net.geocat.service.downloadhelpers.RetrievableSimpleLinkDownloader;
 import net.geocat.xml.XmlCapabilitiesAtom;
 import net.geocat.xml.XmlDoc;
@@ -51,6 +55,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -71,6 +76,9 @@ public class AtomDownloadProcessor {
 
     @Autowired
     RetrievableSimpleLinkDownloader retrievableSimpleLinkDownloader;
+
+    @Autowired
+    LinkCheckJobService linkCheckJobService;
 
 
     public void process(SimpleAtomLinkToData simpleAtomLinkToData,OGCInfoCacheItem ogcInfoCacheItem) throws Exception {
@@ -102,8 +110,20 @@ public class AtomDownloadProcessor {
         }
         simpleAtomLinkToData.setAtomActualDataEntryList(new ArrayList<>());
         int index=0;
+
         //okay, 2nd phase -- try to find one dataset that fully downloads!
-        for (AtomEntry entry : secondaryAtom.getEntries()) {
+        List<AtomEntry> secondaryEntries = new ArrayList<>(secondaryAtom.getEntries());
+        LinkCheckJob job = linkCheckJobService.getJobInfo(simpleAtomLinkToData.getLinkCheckJobId(),false);
+        int nToProcess = job == null ? LinkCheckRunConfig.maxAtomEntriesToAttempt_default : job.getMaxAtomEntriesToAttempt();
+        if (secondaryEntries.size()> nToProcess)
+        {
+            Collections.sort(secondaryEntries,(entry1, entry2) ->{
+                return entry1.getId().compareToIgnoreCase(entry2.getId());
+            });
+            secondaryEntries = secondaryEntries.subList(0,nToProcess);
+        }
+
+        for (AtomEntry entry : secondaryEntries) {
             AtomActualDataEntry atomActualDataEntry = new AtomActualDataEntry();
             atomActualDataEntry.setEntryId(entry.getId());
             atomActualDataEntry.setSimpleAtomLinkToData(simpleAtomLinkToData);
@@ -114,6 +134,14 @@ public class AtomDownloadProcessor {
                 links = entry.findLinks("section");
             if ((links == null)||(links.isEmpty()))
                 continue; // nothing to process
+
+            int nToProcessDownload = job == null ? LinkCheckRunConfig.maxAtomSectionLinksToFollow_default : job.getMaxAtomSectionLinksToFollow();
+            if (links.size() > nToProcessDownload) {
+                Collections.sort(links,(link1, link2) ->{
+                    return link1.getHref().compareToIgnoreCase(link2.getHref());
+                });
+                links = links.subList(0,nToProcessDownload);
+            }
 
             List<AtomDataRequest> requests = links.stream()
                             .map(x->atomLayerDownloader.createAtomDataRequest(x,atomActualDataEntry,simpleAtomLinkToData.getLinkCheckJobId()))

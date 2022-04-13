@@ -92,7 +92,13 @@ public class RetrieveServiceDocumentLink {
             return link;
 
 
+//        long startTime  = System.currentTimeMillis();
+
         CapabilitiesDocument capDoc = capabilitiesDocumentService.create(link);
+
+//        System.out.println("execution time: " + (System.currentTimeMillis() - startTime));
+
+
         link.setCapabilitiesDocument(capDoc);
         link.setSha2(capDoc.getSha2());
 

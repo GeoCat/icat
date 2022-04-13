@@ -53,8 +53,11 @@ public class XmlDocumentFactory {
     public CapabilityDeterminer capabilityDeterminer;
 
     public XmlDoc create(String xml) throws Exception {
+//        long startTime  = System.currentTimeMillis();
+
         XmlDoc doc = new XmlDoc(xml);
         doc = simplify(doc);
+//        System.out.println("parse time1: " + (System.currentTimeMillis() - startTime));
 
         if (isCSWServiceMetadataDocument(doc)) {
             XmlServiceRecordDoc xmlServiceRecordDoc = new XmlServiceRecordDoc(doc);
@@ -71,7 +74,12 @@ public class XmlDocumentFactory {
         }
         if (isCapabilitiesDoc(doc)) {
             CapabilitiesType type = capabilityDeterminer.determineCapabilitiesType(doc);
-            return XmlCapabilitiesDocument.create(doc, type);
+//            System.out.println("parse time2: " + (System.currentTimeMillis() - startTime));
+
+            XmlDoc result =  XmlCapabilitiesDocument.create(doc, type);
+//            System.out.println("parse time3: " + (System.currentTimeMillis() - startTime));
+
+            return result;
         }
         return doc;
     }

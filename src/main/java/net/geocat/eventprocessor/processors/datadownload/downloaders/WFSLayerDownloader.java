@@ -39,6 +39,7 @@ import net.geocat.database.linkchecker.entities.helper.HTTPRequestCheckerType;
 import net.geocat.database.linkchecker.entities.helper.IndicatorStatus;
 import net.geocat.http.AlwaysAbortContinueReadingPredicate;
 import net.geocat.http.IHTTPRetriever;
+import net.geocat.http.SmartHTTPRetriever;
 import net.geocat.service.downloadhelpers.PartialDownloadPredicateFactory;
 import net.geocat.service.downloadhelpers.RetrievableSimpleLinkDownloader;
 import net.geocat.xml.XmlCapabilitiesWFS;
@@ -64,8 +65,7 @@ public class WFSLayerDownloader {
 
 
     @Autowired
-    @Qualifier("cachingHttpRetriever")
-    IHTTPRetriever retriever;
+    SmartHTTPRetriever retriever;
 
     @Autowired
     PartialDownloadPredicateFactory partialDownloadPredicateFactory;

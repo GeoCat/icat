@@ -45,11 +45,14 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
 import static net.geocat.database.linkchecker.entities.helper.PartialDownloadHint.ALWAYS_PARTIAL;
 
 @Entity
+
 public class OGCRequest extends RetrievableSimpleLink  {
 
     @Id
@@ -58,8 +61,8 @@ public class OGCRequest extends RetrievableSimpleLink  {
 
     Boolean successfulOGCRequest;
 
-    @OneToOne(mappedBy = "ogcRequest")
-    OGCLinkToData linkToData;
+//    @OneToOne(mappedBy = "ogcRequest")
+//    OGCLinkToData linkToData;
 
 
     @Column(columnDefinition = "text")
@@ -122,14 +125,14 @@ public class OGCRequest extends RetrievableSimpleLink  {
     public void setOgcRequestId(long ogcRequestId) {
         this.ogcRequestId = ogcRequestId;
     }
-
-    public OGCLinkToData getLinkToData() {
-        return linkToData;
-    }
-
-    public void setLinkToData(OGCLinkToData linkToData) {
-        this.linkToData = linkToData;
-    }
+//
+//    public OGCLinkToData getLinkToData() {
+//        return linkToData;
+//    }
+//
+//    public void setLinkToData(OGCLinkToData linkToData) {
+//        this.linkToData = linkToData;
+//    }
 
     @Override
     public String toString() {

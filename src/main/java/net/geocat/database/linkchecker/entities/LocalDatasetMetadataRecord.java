@@ -36,6 +36,7 @@ package net.geocat.database.linkchecker.entities;
 import net.geocat.database.linkchecker.entities.helper.DatasetMetadataRecord;
 import net.geocat.database.linkchecker.entities.helper.LinkToData;
 import net.geocat.database.linkchecker.entities.helper.ServiceMetadataDocumentState;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
@@ -70,9 +71,11 @@ public class LocalDatasetMetadataRecord extends DatasetMetadataRecord {
     @Column(columnDefinition = "text")
     private String summary;
 
-    @OneToMany(mappedBy = "datasetMetadataRecord",
+    @OneToMany(//mappedBy = "datasetMetadataRecord",
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
-    @Fetch(value = FetchMode.JOIN)
+    @JoinColumn(name="linktodata_id")
+    @Fetch(value = FetchMode.SUBSELECT)
+   // @BatchSize(size=500)
     private Set<LinkToData> dataLinks;
 
     private Integer numberOfViewDataLinks;//dataLinks where WFS or Atom

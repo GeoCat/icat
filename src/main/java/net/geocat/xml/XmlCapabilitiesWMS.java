@@ -57,6 +57,7 @@ public class XmlCapabilitiesWMS extends XmlCapabilitiesDocument {
 
     public XmlCapabilitiesWMS(XmlDoc doc) throws Exception {
         super(doc, CapabilitiesType.WMS);
+
         setup_XmlCapabilitiesWMS();
         setup_getversion();
         setup_getmapEndpoint();

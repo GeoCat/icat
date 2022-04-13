@@ -72,6 +72,9 @@ public class DocumentLinkToCapabilitiesProcessor {
 
     public void processDocumentLinks( LocalDatasetMetadataRecord localDatasetMetadataRecord) throws Exception {
         List<? extends DocumentLink> links = new ArrayList<>(localDatasetMetadataRecord.getDocumentLinks());
+        links = links.stream()
+                .filter(x->x.isInspireSimplifiedLink())
+                .collect(Collectors.toList());
         long docid = localDatasetMetadataRecord.getDatasetMetadataDocumentId();
         String serviceRecordType = null; // no service record -> no idea what type of service this is
         processDocumentLinks(links,docid,serviceRecordType);

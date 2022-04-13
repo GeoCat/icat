@@ -39,7 +39,6 @@ import java.io.IOException;
 
 public interface IHTTPRetriever {
 
-    HttpResult retrieve(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,int timeoutSeconds, String acceptsHeader)
-            throws IOException, SecurityException, ExceptionWithCookies, RedirectException;
+      HttpResult retrieve(HTTPRequest request) throws Exception;
 
 }

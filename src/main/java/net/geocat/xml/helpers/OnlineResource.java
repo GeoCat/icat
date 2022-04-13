@@ -43,6 +43,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static net.geocat.service.capabilities.WMSCapabilitiesDatasetLinkExtractor.findNodes;
+import static net.geocat.xml.XmlCapabilitiesAtom.attribute;
 import static net.geocat.xml.XmlDoc.findNode;
 
 //represents a <gmd:CI_OnlineResource>
@@ -54,6 +55,7 @@ public class OnlineResource {
     String rawURL;
     String protocol;
     String function;
+    String applicationProfile;
 
     public OnlineResource(Node node) throws Exception {
         this(node, null);
@@ -123,6 +125,24 @@ public class OnlineResource {
             if (protocol.equals("null"))
                 protocol = null;
         }
+        else {
+            protocolNode = XmlDoc.findNode(CI_OnlineResource, "protocol","Anchor");
+            protocol =  attribute(protocolNode,"xlink:href");
+            if ( (protocol ==null) || (protocol.isEmpty())) {
+                if (protocolNode !=null)
+                    protocol = protocolNode.getTextContent();
+            }
+
+        }
+
+        Node appProfileNode = XmlDoc.findNode(CI_OnlineResource, "applicationProfile","CharacterString");
+        if ((appProfileNode != null)) {
+            applicationProfile = appProfileNode.getTextContent();
+        }
+        else {
+            appProfileNode = XmlDoc.findNode(CI_OnlineResource, "applicationProfile","Anchor");
+            applicationProfile =  attribute(appProfileNode,"xlink:href");
+        }
 
         //function
        // Node functionNode = XmlDoc.xpath_node(CI_OnlineResource, "gmd:function/gmd:CI_OnLineFunctionCode/@codeListValue");
@@ -131,6 +151,14 @@ public class OnlineResource {
             functionNode = functionNode.getAttributes().getNamedItem("codeListValue");
         if (functionNode != null)
             function = functionNode.getTextContent();
+    }
+
+    public String getApplicationProfile() {
+        return applicationProfile;
+    }
+
+    public Node getCI_OnlineResource() {
+        return CI_OnlineResource;
     }
 
     public String getOperationName() {

@@ -68,6 +68,8 @@ public class EventProcessor_LinkCheckAbortEvent extends BaseEventProcessor<LinkC
         logger.warn("attempting to user abort for " + processID);
         linkCheckJobService.updateLinkCheckJobStateInDB(processID, LinkCheckJobState.USERABORT);
         logger.warn("user abort processed for " + processID);
+        linkCheckJobService.finalize(getInitiatingEvent().getProcessID());
+
         return this;
     }
 

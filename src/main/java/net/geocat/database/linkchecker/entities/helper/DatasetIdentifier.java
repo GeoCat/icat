@@ -46,13 +46,29 @@ import javax.persistence.Enumerated;
  import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+ import javax.persistence.Index;
  import javax.persistence.Inheritance;
  import javax.persistence.InheritanceType;
  import javax.persistence.JoinColumn;
  import javax.persistence.JoinColumns;
  import javax.persistence.ManyToOne;
+ import javax.persistence.Table;
 
 @Entity
+@Table(
+        indexes = {
+                @Index(
+                        name = "dsid_ds",
+                        columnList = "datasetmetadatarecord_datasetmetadatadocumentid",
+                        unique = false
+                )
+                ,
+                @Index(
+                        name = "dsid_cap",
+                        columnList = "capdatasetmetadatalink_capabilitiesdatasetmetadatalinkid",
+                        unique = false
+                )
+        })
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "datasetIdentifierParentType",
         discriminatorType = DiscriminatorType.STRING)

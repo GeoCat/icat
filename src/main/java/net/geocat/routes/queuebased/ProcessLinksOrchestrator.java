@@ -63,7 +63,7 @@ public class ProcessLinksOrchestrator extends SpringRouteBuilder {
                         new RedirectEvent(AllLinksCheckedEvent.class, "activemq:" + MainOrchestrator.myJMSQueueName)
                 ),
                 Arrays.asList(new Class[0]),
-                7 //todo : change me
+                12 //todo : change me
         );
     }
 }

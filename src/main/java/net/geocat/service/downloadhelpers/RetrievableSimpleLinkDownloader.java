@@ -37,6 +37,7 @@ import net.geocat.database.linkchecker.entities.helper.RetrievableSimpleLink;
 import net.geocat.database.linkchecker.entities.helper.IndicatorStatus;
 import net.geocat.database.linkchecker.entities.HttpResult;
 import net.geocat.http.HTTPRequest;
+import net.geocat.http.HttpRequestFactory;
 import net.geocat.http.IContinueReadingPredicate;
 import net.geocat.http.IHTTPRetriever;
 import net.geocat.http.SmartHTTPRetriever;
@@ -55,7 +56,7 @@ import java.util.Arrays;
 @Scope("prototype")
 public class RetrievableSimpleLinkDownloader {
 
-    public static int headLength = 2048;
+    public static int headLength = 4048;
 
     private static final Logger logger = LoggerFactory.getLogger(RetrievableSimpleLinkDownloader.class);
 
@@ -67,6 +68,9 @@ public class RetrievableSimpleLinkDownloader {
 
     @Autowired
     PartialDownloadPredicateFactory partialDownloadPredicateFactory;
+
+    @Autowired
+    HttpRequestFactory httpRequestFactory;
 
     public RetrievableSimpleLink process(RetrievableSimpleLink link) {
         return process(link, headLength,null);
@@ -92,8 +96,7 @@ public class RetrievableSimpleLinkDownloader {
             IContinueReadingPredicate continueReadingPredicate = partialDownloadPredicateFactory.create(link);
 
             try {
-                HTTPRequest request = HTTPRequest.createGET(url);
-                request.setLinkCheckJobId(link.getLinkCheckJobId());
+                HTTPRequest request = httpRequestFactory.createGET(url, link.getLinkCheckJobId());
                 request.setPredicate(continueReadingPredicate);
                 if ( (acceptsHeader!=null) && (!acceptsHeader.isEmpty()) )
                     request.setAcceptsHeader(acceptsHeader);

@@ -162,7 +162,7 @@ public class EventProcessor_ProcessServiceDocLinksEvent extends BaseEventProcess
             int nlinksOperates = localServiceMetadataRecord.getOperatesOnLinks().size();
             logger.debug("processing links SERVICE documentid="+getInitiatingEvent().getServiceMetadataId()+", with fileID="+ localServiceMetadataRecord.getFileIdentifier() +" that has "+nlinksCap+" document links, and "+nlinksOperates+" operates on links");
 
-            documentLinkToCapabilitiesProcessor.processDocumentLinks(localServiceMetadataRecord);
+             documentLinkToCapabilitiesProcessor.processDocumentLinks(localServiceMetadataRecord);
 
 
             processOperatesOnLinks(localServiceMetadataRecord);

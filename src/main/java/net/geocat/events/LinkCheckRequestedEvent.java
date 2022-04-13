@@ -33,11 +33,16 @@
 
 package net.geocat.events;
 
+import net.geocat.model.LinkCheckRunConfig;
+
 public class LinkCheckRequestedEvent extends Event {
 
     private String linkCheckJobId;
     private String harvestJobId;
     private String longTermTag;
+
+    private LinkCheckRunConfig linkCheckRunConfig;
+
 
     public LinkCheckRequestedEvent() {
     }
@@ -46,6 +51,15 @@ public class LinkCheckRequestedEvent extends Event {
         this.harvestJobId = harvestJobId;
         this.linkCheckJobId = linkCheckJobId;
         this.longTermTag = longTermTag;
+    }
+
+
+    public LinkCheckRunConfig getLinkCheckRunConfig() {
+        return linkCheckRunConfig;
+    }
+
+    public void setLinkCheckRunConfig(LinkCheckRunConfig linkCheckRunConfig) {
+        this.linkCheckRunConfig = linkCheckRunConfig;
     }
 
     public String getLongTermTag() {

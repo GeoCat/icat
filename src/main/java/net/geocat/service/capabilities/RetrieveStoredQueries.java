@@ -39,6 +39,7 @@ import net.geocat.database.linkchecker.entities.HttpResult;
 import net.geocat.database.linkchecker.entities.ServiceDocumentLink;
 import net.geocat.database.linkchecker.entities.helper.DocumentLink;
 import net.geocat.http.HTTPRequest;
+import net.geocat.http.HttpRequestFactory;
 import net.geocat.http.IHTTPRetriever;
 import net.geocat.http.SmartHTTPRetriever;
 import net.geocat.xml.XmlCapabilitiesWFS;
@@ -67,6 +68,9 @@ public class RetrieveStoredQueries {
 
     @Autowired
     SmartHTTPRetriever smartHTTPRetriever;
+
+    @Autowired
+    HttpRequestFactory httpRequestFactory;
 
     public String fixURL(String link) throws Exception {
         link = link.trim();
@@ -111,8 +115,7 @@ public class RetrieveStoredQueries {
             url = fixURL(url);
 
 
-            HTTPRequest request = HTTPRequest.createGET(url);
-            request.setLinkCheckJobId(link.getLinkCheckJobId());
+            HTTPRequest request = httpRequestFactory.createGET(url,link.getLinkCheckJobId());
             HttpResult httpResult = smartHTTPRetriever.retrieve(request);
 
              if (!httpResult.isFullyRead())

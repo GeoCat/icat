@@ -69,8 +69,10 @@ public class XmlCapabilitiesDocument extends XmlDoc {
         }
     }
 
-    private void setup_lang() throws XPathExpressionException {
-        Node extendedCap = xpath_node("//*[local-name()='ExtendedCapabilities']");
+    private void setup_lang() throws Exception {
+        Node extendedCap = findNode_recurse(getFirstNode(),"ExtendedCapabilities");
+
+       // Node extendedCap = xpath_node("//*[local-name()='ExtendedCapabilities']");
         if (extendedCap ==null)
             return;
         Node langNode = findNode(extendedCap,"ExtendedCapabilities","SupportedLanguages","DefaultLanguage","Language");
@@ -103,7 +105,8 @@ public class XmlCapabilitiesDocument extends XmlDoc {
     }
 
     private void setup_spatialdatasetidentifiers() throws Exception {
-        Node extendedCap = xpath_node("//*[local-name()='ExtendedCapabilities']");
+       Node extendedCap = findNode_recurse(getFirstNode(),"ExtendedCapabilities");
+    //    Node extendedCap = xpath_node("//*[local-name()='ExtendedCapabilities']");
         if (extendedCap ==null)
             return;
         Node extendedCap2 = findNode(extendedCap,"ExtendedCapabilities");
@@ -156,7 +159,9 @@ public class XmlCapabilitiesDocument extends XmlDoc {
 
         n = attemptToFindExtended();
         if (n == null) {
-            n = xpath_node("//*[local-name()='ExtendedCapabilities']");
+           n= findNode_recurse(getFirstNode(),"ExtendedCapabilities");
+
+          //  n = xpath_node("//*[local-name()='ExtendedCapabilities']");
             if (n == null) {
                 nn = xpath_node("//*[local-name()='feed']/*[local-name()='link'][@rel=\"describedby\"]/@href");
                 if (nn == n)

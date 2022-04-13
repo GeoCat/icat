@@ -41,6 +41,7 @@ import net.geocat.database.linkchecker.entities.LinkCheckJob;
 import net.geocat.database.linkchecker.repos.LinkCheckJobRepo;
 import net.geocat.http.BasicHTTPRetriever;
 import net.geocat.http.HTTPRequest;
+import net.geocat.http.HttpRequestFactory;
 import net.geocat.http.SmartHTTPRetriever;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -67,6 +68,9 @@ public class HtmlScrapeService {
 
     @Autowired
     SmartHTTPRetriever smartHTTPRetriever;
+
+    @Autowired
+    HttpRequestFactory httpRequestFactory;
 
     @Autowired
     //@Qualifier("transactionManager")
@@ -146,7 +150,7 @@ public class HtmlScrapeService {
         url = url.replace("MYCOUNTRYCODE",countryCode.toLowerCase());
 
 
-        HTTPRequest request = HTTPRequest.createGET(url);
+        HTTPRequest request = httpRequestFactory.createGET(url,null);
         request.setSaveToCache(false);
         HttpResult result = smartHTTPRetriever.retrieve(request);
 
