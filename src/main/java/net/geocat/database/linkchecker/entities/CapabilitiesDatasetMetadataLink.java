@@ -41,6 +41,8 @@ import net.geocat.database.linkchecker.entities.helper.RetrievableSimpleLink;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -90,7 +92,8 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SELECT)
             @BatchSize(size=500)
-   List<CapabilitiesDatasetMetadataLinkDatasetIdentifier> datasetIdentifiers;
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    List<CapabilitiesDatasetMetadataLinkDatasetIdentifier> datasetIdentifiers;
 
     @Column(columnDefinition = "text")
     String ogcLayerName; // <Layer><Name>  or <FeatureType><Name>

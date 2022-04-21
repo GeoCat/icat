@@ -38,6 +38,8 @@ import net.geocat.database.linkchecker.entities.helper.DatasetMetadataRecord;
 import net.geocat.database.linkchecker.entities.helper.LinkToData;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -61,11 +63,13 @@ public class SimpleAtomLinkToData extends LinkToData {
     String context;
 
     @OneToOne(cascade = CascadeType.ALL)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     AtomSubFeedRequest atomSubFeedRequest;
 
     @OneToMany(
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER, mappedBy = "simpleAtomLinkToData")
     @Fetch(value = FetchMode.SUBSELECT)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     List<AtomActualDataEntry> atomActualDataEntryList;
 
     public SimpleAtomLinkToData() {

@@ -33,14 +33,17 @@
 
 package net.geocat.dblogging.logback;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.CoreConstants;
+import org.slf4j.helpers.BasicMarker;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Map;
 
 import static ch.qos.logback.core.db.DBHelper.closeStatement;
@@ -51,13 +54,46 @@ public class CustomDBAppender extends ch.qos.logback.classic.db.DBAppender {
     String SQL = "update logging_event  set jms_correlation_id=? where event_id = ?";
     String SQL_ERROR = "INSERT INTO logging_event_exception (event_id, i, caused_by_depth, trace_line) VALUES (?, ?, ?, ?)";
 
+    Map<String, String> mergePropertyMaps(ILoggingEvent event) {
+        Map<String, String> mergedMap = new HashMap<String, String>();
+        // we add the context properties first, then the event properties, since
+        // we consider that event-specific properties should have priority over
+        // context-wide properties.
+        Map<String, String> loggerContextMap = event.getLoggerContextVO().getPropertyMap();
+        Map<String, String> mdcMap = event.getMDCPropertyMap();
+        if (loggerContextMap != null) {
+            mergedMap.putAll(loggerContextMap);
+        }
+        if (mdcMap != null) {
+            mergedMap.putAll(mdcMap);
+        }
+
+        return mergedMap;
+    }
+
+    @Override
+    protected void secondarySubAppend(ILoggingEvent event, Connection connection, long eventId) throws Throwable {
+        Map<String, String> mergedMap = mergePropertyMaps(event);
+        if ( (event.getMarker() != null) && (event.getMarker() instanceof BasicMarker) ){
+            String name = ((BasicMarker) event.getMarker()).getName();
+            mergedMap.put("markerValue",name);
+        }
+        insertProperties(mergedMap, connection, eventId);
+
+        if (event.getThrowableProxy() != null) {
+            insertThrowable(event.getThrowableProxy(), connection, eventId);
+        }
+    }
     @Override
     protected void insertProperties(Map<String, String> mergedMap, Connection connection, long eventId)
             throws SQLException {
-        if (!mergedMap.containsKey("JMSCorrelationID"))
+        if (!mergedMap.containsKey("JMSCorrelationID") && !mergedMap.containsKey("markerValue"))
             return; // nothing to do
 
         String value = mergedMap.get("JMSCorrelationID");
+        if ( (value == null) || (value.isEmpty()) ){
+            value = mergedMap.get("markerValue");
+        }
         if ((value == null) || (value.isEmpty()))
             return; //nothing to do
 

@@ -49,12 +49,14 @@ import net.geocat.database.linkchecker.repos.LinkToDataRepo;
 import net.geocat.database.linkchecker.repos.LocalDatasetMetadataRecordRepo;
 import net.geocat.service.BlobStorageService;
 import net.geocat.xml.XmlDoc;
+import net.geocat.xml.helpers.CapabilitiesType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Component
@@ -227,7 +229,27 @@ public class HtmlDatasetService {
     public static String showDataLinks(List<LinkToData> links, boolean showDSLink) {
         String result = "";
         int indx =0;
-        for (LinkToData link:links) {
+        List<LinkToData> links_down = links.stream()
+                .filter(x->x.getCapabilitiesDocumentType() == CapabilitiesType.Atom || x.getCapabilitiesDocumentType() == CapabilitiesType.WFS)
+                .collect(Collectors.toList());
+        List<LinkToData> links_view = links.stream()
+                .filter(x->x.getCapabilitiesDocumentType() == CapabilitiesType.WMTS || x.getCapabilitiesDocumentType() == CapabilitiesType.WMS)
+                .collect(Collectors.toList());
+        result += "<h3>View Links - "+links_view.size()+"</h3>";
+        if (links_view.isEmpty())
+            result += "NO LINKS <BR>\n";
+
+        for (LinkToData link:links_view) {
+            result += showDataLink(link,showDSLink,new Integer(indx));
+            indx++;
+        }
+
+
+        result += "<h3>Download Links - "+links_down.size()+"</h3>";
+        if (links_down.isEmpty())
+            result += "NO LINKS <BR>\n";
+
+        for (LinkToData link:links_down) {
             result += showDataLink(link,showDSLink,new Integer(indx));
             indx++;
         }

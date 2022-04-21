@@ -80,6 +80,11 @@ import java.util.Objects;
                         name = "link2data_atomsubfeedrequestid_idx",
                         columnList = "atomsubfeedrequest_atomsubfeedrequestid",
                         unique = false
+                ),
+                @Index(
+                        name = "link2data_linkcheckjobid_idx",
+                        columnList = "linkcheckjobid",
+                        unique = false
                 )
         })
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)

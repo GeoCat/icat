@@ -36,6 +36,8 @@ package net.geocat.database.linkchecker.entities;
 import net.geocat.database.linkchecker.entities.helper.AtomDataRequest;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -67,6 +69,7 @@ public class AtomActualDataEntry {
     @OneToMany(
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER, mappedBy = "atomActualDataEntry")
     @Fetch(value = FetchMode.SUBSELECT)
+    @OnDelete(action = OnDeleteAction.CASCADE)
   //  @JoinColumn(name = "atomDataRequestId")
     List<AtomDataRequest> atomDataRequestList;
 

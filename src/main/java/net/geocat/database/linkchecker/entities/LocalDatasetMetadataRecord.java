@@ -39,6 +39,8 @@ import net.geocat.database.linkchecker.entities.helper.ServiceMetadataDocumentSt
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -76,6 +78,7 @@ public class LocalDatasetMetadataRecord extends DatasetMetadataRecord {
     @JoinColumn(name="linktodata_id")
     @Fetch(value = FetchMode.SUBSELECT)
    // @BatchSize(size=500)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<LinkToData> dataLinks;
 
     private Integer numberOfViewDataLinks;//dataLinks where WFS or Atom
@@ -84,9 +87,13 @@ public class LocalDatasetMetadataRecord extends DatasetMetadataRecord {
     //# of view links that were attempted to be downloaded.
     // typically, the same as numberOfViewDataLinks, but might be less if there's a lot of them
     //  We don't want to try 10,000 layers!
+    // this will be Min(numberOfViewDataLinks, maxDataLinksToFollow)
+    //    maxDataLinksToFollow --> from the LinkCheckJob Request (cf. LinkCheckRunConfig).
+    //    defaults to LinkCheckRunConfig.maxDataLinksToFollow_default
     private Integer numberOfViewLinksAttempted;
 
     // of the numberOfViewLinksAttempted, how many were actually successful?
+    // max will be numberOfViewLinksAttempted
     private Integer numberOfViewLinksSuccessful;
 
     private Integer numberOfDownloadLinksAttempted;

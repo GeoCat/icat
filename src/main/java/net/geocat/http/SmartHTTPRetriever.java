@@ -35,9 +35,12 @@ package net.geocat.http;
 
 import net.geocat.database.linkchecker.entities.HttpResult;
 import net.geocat.database.linkchecker.repos.HttpResultRepo;
+import net.geocat.service.LoggingSupport;
 import net.geocat.service.helper.ProcessLockingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.helpers.BasicMarkerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
@@ -101,11 +104,13 @@ public class SmartHTTPRetriever {
     }
 
 
+
     HttpResult retrieveCached(HTTPRequest request) throws ExceptionWithCookies, IOException, RedirectException {
 
         HttpResult result = getCached(request);
         if (result != null) {
-            logger.debug("    * CACHED - "+request.getLocation());
+            Marker marker = LoggingSupport.getMarker(request.getLinkCheckJobId());
+            logger.debug(marker,"    * CACHED - "+request.getLocation());
             return result;
         }
 

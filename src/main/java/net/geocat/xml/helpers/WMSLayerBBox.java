@@ -53,6 +53,26 @@ public class WMSLayerBBox {
         return new WMSLayerBBox(CRS,xmin,ymin,xmax,ymax);
     }
 
+    public WMSLayerBBox makeSmaller(double ratio) throws Exception {
+        if (ratio >1)
+            throw new Exception("ration <=1");
+        if (ratio <=0)
+            throw new Exception("ration >0");
+
+        double width = xmax-xmin;
+        double height = ymax-ymin;
+        double center_x = (xmax-xmin)/2.0;
+        double center_y = (ymax-ymin)/2.0;
+
+        double _xmin = center_x - (width/2.0) * ratio;
+        double _ymin = center_y - (height/2.0) * ratio;
+
+        double _xmax = center_x + (width/2.0) * ratio;
+        double _ymax = center_y + (height/2.0) * ratio;
+
+        return new WMSLayerBBox(CRS,_xmin,_ymin,_xmax,_ymax);
+    }
+
     public String getCRS() {
         return CRS;
     }

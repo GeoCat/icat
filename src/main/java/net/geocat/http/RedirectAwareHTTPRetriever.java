@@ -34,8 +34,10 @@
 package net.geocat.http;
 
 import net.geocat.database.linkchecker.entities.HttpResult;
+import net.geocat.service.LoggingSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
@@ -77,7 +79,9 @@ public class RedirectAwareHTTPRetriever implements IHTTPRetriever {
             request.setnRedirectsRemaining(request.getnRedirectsRemaining() -1);
             if (request.getnRedirectsRemaining() <= 0)
                 throw new IOException("too many redirects!");
-            logger.debug("     REDIRECTED TO location=" + re.getNewLocation());
+            Marker marker = LoggingSupport.getMarker(request.getLinkCheckJobId());
+
+            logger.debug(marker,"     REDIRECTED TO location=" + re.getNewLocation());
             request = request.clone();
             request.setLocation(re.getNewLocation());
             return  retrieve(request);

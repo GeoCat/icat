@@ -63,7 +63,9 @@ public class XmlStringTools {
         if (!isXML(doc))
             return null; //not XML
 
+        doc = removeComment(doc);
         doc = replaceXMLDecl(doc).trim();
+        doc = removeComment(doc);
         doc = getRootTag(doc).trim();
 
         String prefix = getPrefix(doc);
@@ -148,6 +150,7 @@ public class XmlStringTools {
 
     public static boolean isXML(String doc) {
         try {
+            doc = removeComment(doc);
             if (!doc.startsWith("<?xml")) {
                 // sometimes it doesn't start with the xml declaration
                 doc =  trim(doc);

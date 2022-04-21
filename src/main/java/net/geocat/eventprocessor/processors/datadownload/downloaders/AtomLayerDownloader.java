@@ -103,6 +103,8 @@ public class AtomLayerDownloader {
 
     public void validate(AtomSubFeedRequest atomSubFeedRequest) {
         if (!atomSubFeedRequest.getUrlFullyRead()) {
+            String xml  = XmlStringTools.bytea2String(atomSubFeedRequest.getLinkContentHead());
+            XmlStringTools.isXML(xml);
             atomSubFeedRequest.setUnSuccessfulAtomRequestReason("http result was not downloaded(not an xml document)");
             atomSubFeedRequest.setSuccessfulAtomRequest(false);
             return;

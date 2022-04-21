@@ -37,6 +37,8 @@ import net.geocat.database.linkchecker.entities.helper.*;
 import net.geocat.xml.helpers.CapabilitiesType;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -79,6 +81,7 @@ public class CapabilitiesDocument extends UpdateCreateDateTimeEntity {
     //link to the service metadata referenced in the XML's ExtendedCapabilities
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER )
     @JoinColumn(name = "remoteServiceMetadataRecordLinkId")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private RemoteServiceMetadataRecordLink remoteServiceMetadataRecordLink;
 
 

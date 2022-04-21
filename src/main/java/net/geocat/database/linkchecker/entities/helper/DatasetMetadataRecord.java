@@ -37,6 +37,8 @@ package net.geocat.database.linkchecker.entities.helper;
 import net.geocat.database.linkchecker.entities.DatasetDocumentLink;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -74,6 +76,7 @@ public class DatasetMetadataRecord extends MetadataRecord {
     @OneToMany(mappedBy = "datasetMetadataRecord",
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.JOIN)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     Set<DatasetMetadataRecordDatasetIdentifier> datasetIdentifiers;
 
     // number of links found in the document
@@ -99,6 +102,7 @@ public class DatasetMetadataRecord extends MetadataRecord {
     @OneToMany(mappedBy = "datasetMetadataRecord",
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.JOIN)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private List<DatasetDocumentLink> documentLinks;
 
     //PASS if ANY of the capabilities documents has a layer link (dataset) that matches this document (file id and dataset id).

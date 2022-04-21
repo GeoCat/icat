@@ -113,7 +113,7 @@ public class OGCRequestResolver {
                 }
 
                 XmlTagInfo rootTagInfo = determineRootTagInfo(partialXML);
-                if (!rootTagInfo.getTagName().equals("FeatureCollection")) {
+                if (!rootTagInfo.getTagName().equals("FeatureCollection") && !rootTagInfo.getTagName().equals("SpatialDataSet")) {
                     ogcRequest.setUnSuccessfulOGCRequestReason("xml result is not a FeatureCollection");
                     ogcRequest.setSuccessfulOGCRequest(false);
                     return;

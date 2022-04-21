@@ -31,19 +31,24 @@
  *  ==============================================================================
  */
 
-package net.geocat.database.linkchecker.repos;
+package net.geocat.service;
 
-
-import net.geocat.database.linkchecker.entities.LinkCheckJob;
-import org.springframework.context.annotation.Scope;
-import org.springframework.data.repository.CrudRepository;
+import org.slf4j.Marker;
+import org.slf4j.helpers.BasicMarkerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+public class LoggingSupport {
 
-@Component
-@Scope("prototype")
-public interface LinkCheckJobRepo extends CrudRepository<LinkCheckJob, String> {
+    static BasicMarkerFactory markerFactory = new BasicMarkerFactory();
 
-    List<LinkCheckJob> findByLongTermTag(String longTermTag);
+    static Object lockObj = new Object();
+
+    public static Marker getMarker(String linkCheckJobId){
+        if ( (linkCheckJobId == null) || linkCheckJobId.isEmpty())
+            return null;
+        synchronized (lockObj){
+            Marker m = markerFactory.getMarker(linkCheckJobId);
+            return m;
+        }
+    }
 }

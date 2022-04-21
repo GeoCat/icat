@@ -41,6 +41,8 @@ import net.geocat.database.linkchecker.entities.helper.RetrievableSimpleLink;
 import net.geocat.database.linkchecker.entities.helper.ServiceMetadataRecord;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -76,7 +78,8 @@ public class OperatesOnLink extends RetrievableSimpleLink {
     @OneToMany(mappedBy = "operatesOnLink",
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.JOIN)
-   List<OperatesOnLinkDatasetIdentifier> datasetIdentifiers;
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    List<OperatesOnLinkDatasetIdentifier> datasetIdentifiers;
 
 
     // summary of this object (for display)

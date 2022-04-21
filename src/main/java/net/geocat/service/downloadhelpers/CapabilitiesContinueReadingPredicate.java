@@ -85,6 +85,7 @@ public class CapabilitiesContinueReadingPredicate implements IContinueReadingPre
     public boolean continueReading(byte[] head) {
         try {
             String doc = XmlStringTools.bytea2String(head) ;
+            doc = removeComment(doc);
             if (!XmlStringTools.isXML(doc))
                 return false; //not XML
 

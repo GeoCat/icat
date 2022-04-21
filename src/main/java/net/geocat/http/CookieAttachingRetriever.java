@@ -34,8 +34,10 @@
 package net.geocat.http;
 
 import net.geocat.database.linkchecker.entities.HttpResult;
+import net.geocat.service.LoggingSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
@@ -89,7 +91,8 @@ public class CookieAttachingRetriever   {
                 return result;
             }
             catch(SocketTimeoutException ste) {
-                logger.debug("error occurred getting - "+request.getLocation()+", error="+ste.getClass().getSimpleName() + " - " + ste.getMessage());
+                Marker marker = LoggingSupport.getMarker(request.getLinkCheckJobId());
+                logger.debug(marker,"error occurred getting - "+request.getLocation()+", error="+ste.getClass().getSimpleName() + " - " + ste.getMessage());
                 if (throwIfTimeout)
                     throw ste;
                 return null;
@@ -99,7 +102,8 @@ public class CookieAttachingRetriever   {
                 throw m;//not recoverable with retry
             }
             catch (Exception e) {
-                    logger.debug("error occurred getting - "+request.getLocation()+", error="+e.getClass().getSimpleName() + " - " + e.getMessage());
+                Marker marker = LoggingSupport.getMarker(request.getLinkCheckJobId());
+                logger.debug(marker,"error occurred getting - "+request.getLocation()+", error="+e.getClass().getSimpleName() + " - " + e.getMessage());
                  if (throwIfError)
                     throw e;
                 return null;
@@ -125,7 +129,8 @@ public class CookieAttachingRetriever   {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            logger.debug("retrying - "+request.getLocation());
+            Marker marker = LoggingSupport.getMarker(request.getLinkCheckJobId());
+            logger.debug(marker,"retrying - "+request.getLocation());
             String _cookie = result !=null ? result.getSpecialToSendCookie(): null;
             request.setCookie(_cookie);
             result= retrieve_underlying(false,true,request);
@@ -141,7 +146,8 @@ public class CookieAttachingRetriever   {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            logger.debug("retrying2 - "+request.getLocation());
+            Marker marker = LoggingSupport.getMarker(request.getLinkCheckJobId());
+            logger.debug(marker,"retrying2 - "+request.getLocation());
             String _cookie = result !=null ? result.getSpecialToSendCookie(): null;
             result= retrieve_underlying(true,true,request);
         }

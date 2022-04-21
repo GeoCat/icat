@@ -34,9 +34,11 @@
 package net.geocat.http;
 
 import net.geocat.database.linkchecker.entities.HttpResult;
+import net.geocat.service.LoggingSupport;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -116,10 +118,12 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
         if (!request.getVerb().equals("POST") && !request.getVerb().equals("GET"))
             throw new SecurityException("verb should be 'POST' or 'GET'");
 
+        Marker marker = LoggingSupport.getMarker(request.getLinkCheckJobId());
+
         if (request.getBody().isEmpty())
-            logger.debug("      * " + request.getVerb() + " to " + request.getLocation() );
+            logger.debug(marker,"      * " + request.getVerb() + " to " + request.getLocation() );
         else
-            logger.debug("      * " + request.getVerb() + " to " + request.getLocation() + " with body " + request.getBody().replace("\n", ""));
+            logger.debug(marker,"      * " + request.getVerb() + " to " + request.getLocation() + " with body " + request.getBody().replace("\n", ""));
 
         boolean isHTTPs = url.getProtocol().equalsIgnoreCase("HTTPS");
 

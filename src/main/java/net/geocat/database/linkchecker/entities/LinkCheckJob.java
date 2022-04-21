@@ -49,10 +49,33 @@ public class LinkCheckJob extends UpdateCreateDateTimeEntity  {
     @Column(columnDefinition = "varchar(40)")
     private String jobId;
 
+    /**
+     *   When making HTTP/S requests, should we use (old) jobs in the HttpRequestCache?
+     */
     boolean useOtherJobsHTTPCache ;
+
+    /**
+     *  When the job is COMPLETE (or ERROR or USERABORT), should the data (for this job)
+     *  be deleted from the HttpRequestCache?
+     */
     boolean deleteHTTPCacheWhenComplete ;
+
+    /**
+     *  When downloading data, what is the maximum number of LinkToData links to follow?
+     */
     int maxDataLinksToFollow  ;
+
+    /**
+     * When processing an ATOM link, and there are multiple entries in the Dataset Feed, how many should we
+     * follow?
+     * NOTE: when a "good" entry is found, no others will be attempted.
+     */
     int maxAtomEntriesToAttempt ;
+
+    /**
+     * When processing an ATOM Dataset Feed Entry and there are multiple "section" links, how many should we follow?
+     * NOTE: ALL must be "good"
+     */
     int maxAtomSectionLinksToFollow ;
 
     //GUID of the havest job this is processing

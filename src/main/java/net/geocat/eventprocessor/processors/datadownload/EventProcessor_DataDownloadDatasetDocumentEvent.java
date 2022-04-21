@@ -55,11 +55,13 @@ import net.geocat.events.EventFactory;
 import net.geocat.events.EventService;
 import net.geocat.events.datadownload.DataDownloadDatasetDocumentEvent;
 import net.geocat.model.LinkCheckRunConfig;
+import net.geocat.service.LoggingSupport;
 import net.geocat.service.helper.SharedForkJoinPool2;
 import net.geocat.service.helper.ShouldTransitionOutOfDataDownloading;
 import net.geocat.xml.helpers.CapabilitiesType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -322,7 +324,8 @@ public class EventProcessor_DataDownloadDatasetDocumentEvent extends BaseEventPr
         }
         catch (Exception e){
             link.setSuccessfullyDownloaded(false);
-            logger.debug("exception occurred while attempting to download a view", e);
+            Marker marker = LoggingSupport.getMarker(link.getLinkCheckJobId());
+            logger.debug(marker,"exception occurred while attempting to download a view", e);
         }
      }
     private void processViewLink_SimpleSpatialDSIDDataLink(SimpleSpatialDSIDDataLink link, Map<String, OGCInfoCacheItem> ogcInfoCache) throws Exception {

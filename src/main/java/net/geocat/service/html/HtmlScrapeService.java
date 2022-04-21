@@ -132,6 +132,7 @@ public class HtmlScrapeService {
 
 
     */
+
     public void run_scrape(String countryCode, String jobid) throws  Exception {
         try{
             String sql =  "drop table if exists scrap;";
@@ -141,7 +142,7 @@ public class HtmlScrapeService {
 
         try{
             String sql =  "CREATE TABLE scrap (title text, is_view boolean, is_download boolean, country_code text,\n" +
-                    "                file_id text, local_is_view boolean , local_is_download boolean);";
+                    "                file_id text, local_is_view boolean , local_is_download boolean, local_is_view_download boolean, local_is_download_download boolean);";
             executeSQL2(sql);
         }
         catch (Exception e){}
@@ -186,85 +187,89 @@ public class HtmlScrapeService {
         sql =  " update scrap set local_is_view = (select indicator_view_link_to_data = 'PASS' from datasetmetadatarecord where datasetmetadatarecord.fileidentifier = scrap.file_id and linkcheckjobid='"+jobid+"');";
         executeSQL2(sql);
 
+        sql =  " update scrap set local_is_view_download = (select numberofviewlinkssuccessful>0 from datasetmetadatarecord where datasetmetadatarecord.fileidentifier = scrap.file_id and linkcheckjobid='"+jobid+"');";
+        executeSQL2(sql);
+
         sql =  " update scrap set local_is_download = (select indicator_download_link_to_data = 'PASS' from datasetmetadatarecord where datasetmetadatarecord.fileidentifier = scrap.file_id and linkcheckjobid='"+jobid+"') ";
+        executeSQL2(sql);
+
+        sql =  " update scrap set local_is_download_download = (select numberofdownloadlinkssuccessful>0 from datasetmetadatarecord where datasetmetadatarecord.fileidentifier = scrap.file_id and linkcheckjobid='"+jobid+"') ";
         executeSQL2(sql);
     }
 
+    static Object lockObject = new Object();
+
     public String getHtml(String linkcheckjob, String country) throws Exception {
-        if ( (country==null) || (country.trim().isEmpty()))
-            throw new Exception("country is empty");
-        country = country.trim();
-        if (country.length() != 2)
-            throw new Exception("country must be 2 letters");
+        synchronized (lockObject) {
+            if ((country == null) || (country.trim().isEmpty()))
+                throw new Exception("country is empty");
+            country = country.trim();
+            if (country.length() != 2)
+                throw new Exception("country must be 2 letters");
 
-        if (country.contains("\"") || country.contains("'") || country.contains("-"))
-            throw new Exception("security exception");
+            if (country.contains("\"") || country.contains("'") || country.contains("-"))
+                throw new Exception("security exception");
 
-        String linkCheckJob = linkcheckjob;
-        if ( (linkCheckJob ==null) || (linkCheckJob.trim().isEmpty()) )
-            linkCheckJob = lastLinkCheckJob(country);
+            String linkCheckJob = linkcheckjob;
+            if ((linkCheckJob == null) || (linkCheckJob.trim().isEmpty()))
+                linkCheckJob = lastLinkCheckJob(country);
 
 
-        run_scrape(country,linkCheckJob);
+            run_scrape(country, linkCheckJob);
 
-        String result ="<h1>Differences - "+linkCheckJob+"</h1>";
+            String result = "<h1>Differences - " + linkCheckJob + "</h1>";
 
-        //       select file_id, title, is_view, local_is_view from scrap where is_view !=  local_is_view and is_view and title is not null order by title;
-        //        select file_id, title, is_download, local_is_download from scrap where is_download !=  local_is_download and is_download and title is not null order by title;
+            //       select file_id, title, is_view, local_is_view from scrap where is_view !=  local_is_view and is_view and title is not null order by title;
+            //        select file_id, title, is_download, local_is_download from scrap where is_download !=  local_is_download and is_download and title is not null order by title;
 
-        List queryResult = executeSQL3("select file_id, title, is_view, local_is_view from scrap where is_view !=  local_is_view and is_view and title is not null order by title");
-        result +="<h1> View Differences - "+queryResult.size()+" differences (geoportal viewable)</h2><br>\n";
-        if (!queryResult.isEmpty()) {
-            result+="<b>Geoportal says these are Viewable, but we do not</b><Br>";
-            result += results(linkCheckJob,queryResult);
+            List queryResult = executeSQL3("select file_id, title, is_view, local_is_view,local_is_view_download from scrap where ((is_view !=  local_is_view) or (is_view !=  local_is_view_download)) and is_view and title is not null order by title");
+            result += "<h1> View Differences - " + queryResult.size() + " differences (geoportal viewable)</h2><br>\n";
+            if (!queryResult.isEmpty()) {
+                result += "<b>Geoportal says these are Viewable, but we do not</b><Br>";
+                result += results(linkCheckJob, queryResult);
+            } else {
+                result += "NO DIFFERENCES<br>\n";
+            }
+
+            List queryResult2 = executeSQL3("select file_id, title, is_download, local_is_download,local_is_download_download from scrap where ((is_download !=  local_is_download) or (is_download !=  local_is_download_download) ) and is_download and title is not null order by title;");
+            result += "<h1> Download Differences - " + queryResult2.size() + " differences (geoportal downloadable)</h2><br>\n";
+            if (!queryResult2.isEmpty()) {
+                result += "<b>Geoportal says these are downloadable, but we do not</b><Br>";
+                result += results(linkCheckJob, queryResult2);
+            } else {
+                result += "NO DIFFERENCES<br>\n";
+            }
+
+//            List queryResult3 = executeSQL3("select file_id, title, is_view, local_is_view from scrap where is_view !=  local_is_view and not(is_view) and title is not null order by title");
+//            result += "<h1> View Differences - " + queryResult3.size() + " differences (geoportal not viewable)</h2><br>\n";
+//            if (!queryResult3.isEmpty()) {
+//                result += "<b>Geoportal says these are NOT Viewable, but we say they are (perhaps just not accessible?)</b><Br>";
+//                result += results(linkCheckJob, queryResult3);
+//            } else {
+//                result += "NO DIFFERENCES<br>\n";
+//            }
+//
+//            List queryResult4 = executeSQL3("select file_id, title, is_download, local_is_download from scrap where is_download !=  local_is_download and not(is_download) and title is not null order by title;");
+//            result += "<h1> Download Differences - " + queryResult4.size() + " differences (geoportal not downloadable)</h2><br>\n";
+//            if (!queryResult4.isEmpty()) {
+//                result += "<b>Geoportal says these are NOT downloadable, but we say they are (perhaps just not accessible?)</b><Br>";
+//                result += results(linkCheckJob, queryResult4);
+//            } else {
+//                result += "NO DIFFERENCES<br>\n";
+//            }
+
+            result += "<br><br><br>\n";
+            return result;
         }
-        else
-        {
-            result +="NO DIFFERENCES<br>\n";
-        }
-
-        List queryResult2 = executeSQL3("select file_id, title, is_download, local_is_download from scrap where is_download !=  local_is_download and is_download and title is not null order by title;");
-        result +="<h1> Download Differences - "+queryResult2.size()+" differences (geoportal downloadable)</h2><br>\n";
-        if (!queryResult2.isEmpty()) {
-            result+="<b>Geoportal says these are downloadable, but we do not</b><Br>";
-            result += results(linkCheckJob,queryResult2);
-        }
-        else {
-            result +="NO DIFFERENCES<br>\n";
-        }
-
-        List queryResult3 = executeSQL3("select file_id, title, is_view, local_is_view from scrap where is_view !=  local_is_view and not(is_view) and title is not null order by title");
-        result +="<h1> View Differences - "+queryResult3.size()+" differences (geoportal not viewable)</h2><br>\n";
-        if (!queryResult3.isEmpty()) {
-            result+="<b>Geoportal says these are NOT Viewable, but we say they are (perhaps just not accessible?)</b><Br>";
-            result += results(linkCheckJob,queryResult3);
-        }
-        else
-        {
-            result +="NO DIFFERENCES<br>\n";
-        }
-
-        List queryResult4 = executeSQL3("select file_id, title, is_download, local_is_download from scrap where is_download !=  local_is_download and not(is_download) and title is not null order by title;");
-        result +="<h1> Download Differences - "+queryResult4.size()+" differences (geoportal not downloadable)</h2><br>\n";
-        if (!queryResult4.isEmpty()) {
-            result+="<b>Geoportal says these are NOT downloadable, but we say they are (perhaps just not accessible?)</b><Br>";
-            result += results(linkCheckJob,queryResult4);
-        }
-        else {
-            result +="NO DIFFERENCES<br>\n";
-        }
-
-        result +="<br><br><br>\n";
-        return result;
     }
 
     private String results(String linkcheckjob,List queryResult) {
         String result ="";
-        result +="<table><tr> <td>File Identifier</td> <td>Title</td> <td>Geoportal - connected</td><td>Local - connected</td></tr>";
+        result +="<table><tr> <td>File Identifier</td> <td>Title</td> <td>Geoportal - connected</td><td>Local - connected</td><td>Local - connected and downloadable</td></tr>";
         for (Object o:queryResult) {
             Object[] cols = (Object[])o;
             String link = "<a href='/api/html/dataset/"+linkcheckjob+"/"+cols[0].toString()+"'>"+cols[0].toString()+"</a>";
-            result +=" <tr> <td>"+link+"</td> <td>"+cols[1].toString()+"</td> <td>"+cols[2].toString()+"</td><td>"+cols[3].toString()+"</td></tr>";
+            result +=" <tr> <td>"+link+"</td> <td>"+cols[1].toString()+"</td> <td>"+cols[2].toString()+"</td><td>"+cols[3].toString()+"</td><td>"+cols[4].toString()+"</td></tr>";
         }
         result += "</table>";
         return result;

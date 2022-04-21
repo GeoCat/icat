@@ -41,9 +41,11 @@ import net.geocat.http.HttpRequestFactory;
 import net.geocat.http.IContinueReadingPredicate;
 import net.geocat.http.IHTTPRetriever;
 import net.geocat.http.SmartHTTPRetriever;
+import net.geocat.service.LoggingSupport;
 import net.geocat.xml.XmlStringTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
@@ -133,7 +135,8 @@ public class RetrievableSimpleLinkDownloader {
 
             return link;
         } catch (Exception e) {
-            logger.error("RetrievableSimpleLinkDownloader - error occurred processing link", e);
+            Marker marker = LoggingSupport.getMarker(link.getLinkCheckJobId());
+            logger.error(marker,"RetrievableSimpleLinkDownloader - error occurred processing link", e);
             return link;
         }
     }

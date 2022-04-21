@@ -44,6 +44,7 @@ import net.geocat.database.linkchecker.entities.helper.SHA2JobIdCompositeKey;
 import net.geocat.database.linkchecker.repos.CapabilitiesDocumentRepo;
 import net.geocat.database.linkchecker.repos.ServiceDocumentLinkRepo;
 import net.geocat.eventprocessor.processors.processlinks.EventProcessor_ProcessServiceDocLinksEvent;
+import net.geocat.service.LoggingSupport;
 import net.geocat.service.RemoteServiceMetadataRecordLinkRetriever;
 import net.geocat.service.RetrieveCapabilitiesDatasetMetadataLink;
 import net.geocat.service.RetrieveServiceDocumentLink;
@@ -56,6 +57,7 @@ import net.geocat.xml.XmlStringTools;
 import net.geocat.xml.helpers.CapabilitiesType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -145,7 +147,8 @@ public class CapabilitiesDownloadingService {
             }
             catch(Exception e){
                 doc.setState(CapabilitiesDocumentState.ERROR);
-                logger.error("something happened processing capabilities document",e);
+                Marker marker = LoggingSupport.getMarker(link.getLinkCheckJobId());
+                logger.error(marker,"something happened processing capabilities document",e);
             }
             CapabilitiesDocument doc2 =  capabilitiesDocumentRepo.save(doc);
         }
@@ -165,7 +168,8 @@ public class CapabilitiesDownloadingService {
 
         }
         catch(Exception e){
-            logger.error("error occurred while processing cap Dataset link, CapabilitiesDatasetMetadataLink="+capabilitiesDatasetMetadataLink+", error="+e.getMessage(),e);
+            Marker marker = LoggingSupport.getMarker(capabilitiesDatasetMetadataLink.getLinkCheckJobId());
+            logger.error(marker,"error occurred while processing cap Dataset link, CapabilitiesDatasetMetadataLink="+capabilitiesDatasetMetadataLink+", error="+e.getMessage(),e);
             capabilitiesDatasetMetadataLink.setLinkState(LinkState.ERROR);
             capabilitiesDatasetMetadataLink.setErrorMessage(  convertToString(e) );
         }
@@ -201,7 +205,9 @@ public class CapabilitiesDownloadingService {
             rsmrl.setLinkState(LinkState.Complete);
         }
         catch(Exception e){
-            logger.error("error occurred while processing , RemoteServiceMetadataRecordLink="+rsmrl+", error="+e.getMessage(),e);
+            Marker marker = LoggingSupport.getMarker(rsmrl.getLinkCheckJobId());
+
+            logger.error(marker,"error occurred while processing , RemoteServiceMetadataRecordLink="+rsmrl+", error="+e.getMessage(),e);
             rsmrl.setLinkState(LinkState.ERROR);
             rsmrl.setErrorMessage(  convertToString(e) );
         }

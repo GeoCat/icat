@@ -41,6 +41,7 @@ import net.geocat.service.capabilities.CapabilitiesDownloadingService;
 import net.geocat.service.helper.SharedForkJoinPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -91,8 +92,9 @@ public class ServiceDocOperatesOnProcessor {
                                     .forEach(x -> {
                                         handleOperatesOnLink(x);
                                         int ndone = counter.incrementAndGet();
+                                        Marker marker = LoggingSupport.getMarker(x.getLinkCheckJobId());
                                         String text = "processed operates on DS link " + ndone + " of " + nTotal;
-                                        logger.debug(text);
+                                        logger.debug(marker,text);
                                     })
             ).get();
 
@@ -110,7 +112,8 @@ public class ServiceDocOperatesOnProcessor {
             link.setLinkState(LinkState.Complete);
         }
         catch(Exception e){
-            logger.error("error occurred while processing ServiceMetadataDocument, OperatesOnLink="+link+", error="+e.getMessage());
+            Marker marker = LoggingSupport.getMarker(link.getLinkCheckJobId());
+            logger.error(marker,"error occurred while processing ServiceMetadataDocument, OperatesOnLink="+link+", error="+e.getMessage());
             link.setLinkState(LinkState.ERROR);
             link.setErrorMessage(  convertToString(e) );
 

@@ -37,6 +37,8 @@ import net.geocat.database.linkchecker.entities.OperatesOnLink;
 import net.geocat.database.linkchecker.entities.ServiceDocumentLink;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -86,6 +88,7 @@ public class ServiceMetadataRecord extends MetadataRecord {
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     // @JoinColumn(name="serviceMetadataRecordId")
     @Fetch(value = FetchMode.SUBSELECT)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<ServiceDocumentLink> serviceDocumentLinks;
 
     //OperatesOn Links (likely to dataset metadata documents) found in this service document.
@@ -93,6 +96,7 @@ public class ServiceMetadataRecord extends MetadataRecord {
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     // @JoinColumn(name="serviceMetadataRecordId")
     @Fetch(value = FetchMode.SUBSELECT)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<OperatesOnLink> operatesOnLinks;
 
 

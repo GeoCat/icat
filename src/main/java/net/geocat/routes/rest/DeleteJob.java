@@ -31,19 +31,54 @@
  *  ==============================================================================
  */
 
-package net.geocat.database.linkchecker.repos;
+package net.geocat.routes.rest;
 
-
-import net.geocat.database.linkchecker.entities.LinkCheckJob;
-import org.springframework.context.annotation.Scope;
-import org.springframework.data.repository.CrudRepository;
+import net.geocat.dblogging.service.GetLogService;
+import net.geocat.service.DeleteJobService;
+import org.apache.camel.BeanScope;
+import org.apache.camel.builder.RouteBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 @Component
-@Scope("prototype")
-public interface LinkCheckJobRepo extends CrudRepository<LinkCheckJob, String> {
+public class DeleteJob extends RouteBuilder {
 
-    List<LinkCheckJob> findByLongTermTag(String longTermTag);
+
+    @Value("${geocat.jettyHost}")
+    public String jettyHost;
+
+    @Value("${geocat.jettyPort}")
+    public Integer jettyPort;
+
+
+    @Override
+    public void configure() throws Exception {
+        restConfiguration().component("jetty").host(jettyHost).port(jettyPort);
+
+        // JacksonDataFormat jsonDefHarvesterConfig = new JacksonDataFormat(HarvesterConfig.class);
+
+        //--- incoming start process request (HTTP)
+        rest("/api/deletejob/")
+                .delete("/{processID}")
+                .route()
+                .routeId("rest.rest.deletejob")
+                .bean(DeleteJobService.class, "deleteById( ${header.processID} )", BeanScope.Request)
+
+                .setHeader("content-type", constant("application/json"))
+                .marshal().json()
+
+        ;
+
+        //--- incoming start process request (HTTP)
+        rest("/api/atMostJobs/")
+                .delete("/{longTermTag}/{maxAllowed}")
+                .route()
+                .routeId("rest.rest.atMostJobs")
+                .bean(DeleteJobService.class, "ensureAtMost( ${header.longTermTag} ,   ${header.maxAllowed})", BeanScope.Request)
+
+                .setHeader("content-type", constant("application/json"))
+                .marshal().json()
+
+        ;
+    }
 }

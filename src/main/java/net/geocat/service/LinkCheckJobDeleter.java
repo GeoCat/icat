@@ -31,19 +31,12 @@
  *  ==============================================================================
  */
 
-package net.geocat.database.linkchecker.repos;
+package net.geocat.service;
 
-
-import net.geocat.database.linkchecker.entities.LinkCheckJob;
 import org.springframework.context.annotation.Scope;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 @Scope("prototype")
-public interface LinkCheckJobRepo extends CrudRepository<LinkCheckJob, String> {
-
-    List<LinkCheckJob> findByLongTermTag(String longTermTag);
+public class LinkCheckJobDeleter {
 }

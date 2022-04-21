@@ -142,6 +142,17 @@ public class WMSLayerDownloader {
         return result;
     }
 
+    //prefer EPSG:4326  (Austria)
+    public WMSLayerBBox findBestBBOX( WMSLayer layer) {
+        for(WMSLayerBBox bbox : layer.getWmsLayerBBoxList()) {
+            if (bbox.getCRS() == null)
+                continue;
+            if (bbox.getCRS().equals("EPSG:4326"))
+                return bbox;
+        }
+        return layer.getWmsLayerBBoxList().get(0);
+    }
+
     public String createURL(XmlCapabilitiesWMS wmsCap, String layerName) throws Exception {
         String url = fixBaseURL(wmsCap.getGetMapEndpoint());
         url = addBasicItemsToUrl(url, wmsCap.getVersionNumber());
@@ -156,8 +167,9 @@ public class WMSLayerDownloader {
         if ( (layer.getWmsLayerBBoxList() == null) || (layer.getWmsLayerBBoxList().isEmpty()))
             throw new Exception("couldnt extra bounds for layer:"+layerName);
 
-        WMSLayerBBox wmsLayerBBox = layer.getWmsLayerBBoxList().get(0);
+        WMSLayerBBox wmsLayerBBox = findBestBBOX(layer);
         wmsLayerBBox = fixbounds(wmsLayerBBox);
+        wmsLayerBBox = wmsLayerBBox.makeSmaller(0.25);
 
         url = setParameter(url, determineSRSParam(wmsCap), wmsLayerBBox.getCRS());
         url = setParameter(url,"BBOX", wmsLayerBBox.asBBOX());

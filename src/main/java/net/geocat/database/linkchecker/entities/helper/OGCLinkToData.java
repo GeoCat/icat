@@ -37,6 +37,8 @@ import net.geocat.database.linkchecker.entities.OGCRequest;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.persistence.CascadeType;
@@ -56,6 +58,7 @@ public class OGCLinkToData extends LinkToData {
     @Fetch(value = FetchMode.JOIN)
     @BatchSize(size=500)
     @JoinColumn(name="ogcrequest_ogcrequestid")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     OGCRequest ogcRequest; // might be null
 
     @Column(columnDefinition = "text")
