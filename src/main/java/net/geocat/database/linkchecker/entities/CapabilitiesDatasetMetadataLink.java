@@ -62,6 +62,11 @@ import java.util.stream.Collectors;
                         name = "CDML_jobid_fileid",
                         columnList = "linkCheckJobId,fileIdentifier",
                         unique = false
+                ),
+                @Index(
+                        name = "CDML_identity_cap_jobid_idx",
+                        columnList = "identity,cap_jobid",
+                        unique = false
                 )
         }
 )

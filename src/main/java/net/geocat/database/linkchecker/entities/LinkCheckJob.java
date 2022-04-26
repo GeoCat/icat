@@ -105,6 +105,8 @@ public class LinkCheckJob extends UpdateCreateDateTimeEntity  {
     //how many of the harvested documents are dataset records?
     Long numberOfNotProcessedDatasetRecords;
 
+    Integer storeAtMostNHistoricalRuns;
+
     //------------------------------------
 
     @PrePersist
@@ -120,8 +122,13 @@ public class LinkCheckJob extends UpdateCreateDateTimeEntity  {
     //------------------------------------
 
 
+    public Integer getStoreAtMostNHistoricalRuns() {
+        return storeAtMostNHistoricalRuns;
+    }
 
-
+    public void setStoreAtMostNHistoricalRuns(Integer storeAtMostNHistoricalRuns) {
+        this.storeAtMostNHistoricalRuns = storeAtMostNHistoricalRuns;
+    }
 
     public int getMaxDataLinksToFollow() {
         return maxDataLinksToFollow;

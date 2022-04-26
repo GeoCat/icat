@@ -40,6 +40,7 @@ import net.geocat.eventprocessor.BaseEventProcessor;
 import net.geocat.events.Event;
 import net.geocat.events.EventFactory;
 import net.geocat.events.LinkCheckRequestedEvent;
+import net.geocat.service.DeleteJobService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -56,6 +57,8 @@ public class EventProcessor_LinkCheckRequestedEvent extends BaseEventProcessor<L
     @Autowired
     EventFactory eventFactory;
 
+    @Autowired
+    DeleteJobService deleteJobService;
 
     LinkCheckJob job;
 
@@ -67,7 +70,10 @@ public class EventProcessor_LinkCheckRequestedEvent extends BaseEventProcessor<L
 
 
     @Override
-    public EventProcessor_LinkCheckRequestedEvent internalProcessing() {
+    public EventProcessor_LinkCheckRequestedEvent internalProcessing() throws Exception {
+        deleteJobService.ensureAtMost( getInitiatingEvent().getLinkCheckRunConfig().getLongTermTag(),
+                getInitiatingEvent().getLinkCheckRunConfig().getStoreAtMostNHistoricalRuns());
+
         linkCheckJobService.createLinkCheckJobInDB(getInitiatingEvent());
         job = linkCheckJobService.updateLinkCheckJobStateInDB(getInitiatingEvent().getLinkCheckJobId(), LinkCheckJobState.FINDING_LINKS);
         return this;

@@ -51,6 +51,7 @@ public class LinkCheckRunConfig {
     public static int maxDataLinksToFollow_default = 100;
     public static int maxAtomEntriesToAttempt_default = 100;
     public static int maxAtomSectionLinksToFollow_default = 10;
+    public static int storeAtMostNHistoricalRuns_default = 1000;
 
     boolean useOtherJobsHTTPCache = useOtherJobsHTTPCache_default;
     boolean deleteHTTPCacheWhenComplete = deleteHTTPCacheWhenComplete_default;
@@ -58,6 +59,9 @@ public class LinkCheckRunConfig {
     int maxDataLinksToFollow = maxDataLinksToFollow_default;
     int maxAtomEntriesToAttempt = maxAtomEntriesToAttempt_default;
     int maxAtomSectionLinksToFollow = maxAtomSectionLinksToFollow_default;
+
+    int storeAtMostNHistoricalRuns =storeAtMostNHistoricalRuns_default ;
+
 
     // GUID for the harvest (used as JMS Correlation ID).  Provided by server (do not specify)
     private String processID;
@@ -95,6 +99,14 @@ public class LinkCheckRunConfig {
 
     //--
 
+
+    public int getStoreAtMostNHistoricalRuns() {
+        return storeAtMostNHistoricalRuns;
+    }
+
+    public void setStoreAtMostNHistoricalRuns(int storeAtMostNHistoricalRuns) {
+        this.storeAtMostNHistoricalRuns = storeAtMostNHistoricalRuns;
+    }
 
     public int getMaxDataLinksToFollow() {
         return maxDataLinksToFollow;

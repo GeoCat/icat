@@ -152,7 +152,7 @@ public class LinkCheckJobService {
         newJob.setMaxDataLinksToFollow(event.getLinkCheckRunConfig().getMaxDataLinksToFollow());
         newJob.setMaxAtomEntriesToAttempt(event.getLinkCheckRunConfig().getMaxAtomEntriesToAttempt());
         newJob.setMaxAtomSectionLinksToFollow(event.getLinkCheckRunConfig().getMaxAtomSectionLinksToFollow());
-
+        newJob.setStoreAtMostNHistoricalRuns(event.getLinkCheckRunConfig().getStoreAtMostNHistoricalRuns());
         return linkCheckJobRepo.save(newJob);
      }
 

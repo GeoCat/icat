@@ -67,6 +67,11 @@ import javax.persistence.Id;
                         name = "dsid_cap",
                         columnList = "capdatasetmetadatalink_capabilitiesdatasetmetadatalinkid",
                         unique = false
+                ),
+                @Index(
+                        name = "dsid_code_idx",
+                        columnList = "code",
+                        unique = false
                 )
         })
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
