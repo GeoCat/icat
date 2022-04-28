@@ -94,7 +94,9 @@ public class HtmlStatsService {
 
         LinkCheckJob job = linkCheckJobRepo.findById(linkCheckJobId).get();
 
-        String result = "<h1>Stats - "  + job.getLongTermTag()+" - " + linkCheckJobId  +"</h1>\n";
+        String result = "<head><meta charset=\"UTF-8\"></head>\n";
+
+          result += "<h1>Stats - "  + job.getLongTermTag()+" - " + linkCheckJobId  +"</h1>\n";
         result += "number of datasets - "+datasets.size()+"<br>\n";
 
         long nViewLinks = datasets.stream()

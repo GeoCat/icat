@@ -148,10 +148,10 @@ public class InspireSpatialDatasetIdentifier {
 
     @Override
     public String toString() {
-        return "InspireSpatialDatasetIdentifier{" +
+        return "InspireSpatialDatasetIdentifier: " +
                 "metadataURL='" + metadataURL + '\'' +
                 ", code='" + code + '\'' +
                 ", namespace='" + namespace + '\'' +
-                '}';
+                ' ';
     }
 }

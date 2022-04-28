@@ -39,7 +39,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import net.geocat.database.linkchecker.entities.HttpResult;
 import net.geocat.database.linkchecker.entities.LinkCheckJob;
 import net.geocat.database.linkchecker.repos.LinkCheckJobRepo;
-import net.geocat.http.BasicHTTPRetriever;
 import net.geocat.http.HTTPRequest;
 import net.geocat.http.HttpRequestFactory;
 import net.geocat.http.SmartHTTPRetriever;
@@ -51,6 +50,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.persistence.EntityManager;
 import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 
 @Component
 public class HtmlScrapeService {
@@ -135,13 +136,14 @@ public class HtmlScrapeService {
 
     public void run_scrape(String countryCode, String jobid) throws  Exception {
         try{
+            countryCode = countryCode.toLowerCase().substring(0,2);
             String sql =  "drop table if exists scrap;";
             executeSQL2(sql);
         }
         catch (Exception e){}
 
         try{
-            String sql =  "CREATE TABLE scrap (title text, is_view boolean, is_download boolean, country_code text,\n" +
+            String sql =  "CREATE TABLE scrap (geoportalid text, title text, is_view boolean, is_download boolean, country_code text,\n" +
                     "                file_id text, local_is_view boolean , local_is_download boolean, local_is_view_download boolean, local_is_download_download boolean);";
             executeSQL2(sql);
         }
@@ -169,11 +171,12 @@ public class HtmlScrapeService {
         // executeSQL2("create table delme(i int)");
         for(JsonNode doc : docs) {
             String title = doc.get("resourceTitle").asText().replace("'","''");
+            String id = doc.get("id").asText();
             boolean isView = (doc.get("isVw") != null);
             boolean isDownload = (doc.get("isDw") != null);
             String country = doc.get("memberStateCountryCode").asText();
-            String sql =  String.format("INSERT INTO scrap  (title,is_view,is_download, country_code) VALUES ('%s',%s,%s,'%s') "
-                    , title, String.valueOf(isView), String.valueOf(isDownload),country);
+            String sql =  String.format("INSERT INTO scrap  (title,is_view,is_download, country_code,geoportalid) VALUES ('%s',%s,%s,'%s','%s') "
+                    , title, String.valueOf(isView), String.valueOf(isDownload),country, id);
             executeSQL2(sql);
             int tt=0;
 
@@ -199,77 +202,83 @@ public class HtmlScrapeService {
 
     static Object lockObject = new Object();
 
-    public String getHtml(String linkcheckjob, String country) throws Exception {
+    public String getHtml(String item) throws Exception {
         synchronized (lockObject) {
-            if ((country == null) || (country.trim().isEmpty()))
-                throw new Exception("country is empty");
-            country = country.trim();
-            if (country.length() != 2)
-                throw new Exception("country must be 2 letters");
+            if ((item == null) || (item.trim().isEmpty()))
+                throw new Exception("item is empty");
+            item = item.trim();
 
-            if (country.contains("\"") || country.contains("'") || country.contains("-"))
-                throw new Exception("security exception");
+            Optional<LinkCheckJob> _job = linkCheckJobRepo.findById(item);
+            if (!_job.isPresent()) {
+                //not a job - must be a country
+                _job =linkCheckJobRepo.findById(lastLinkCheckJob(item));
+            }
+            if (!_job.isPresent())
+                throw new Exception("cannot find - "+item);
 
-            String linkCheckJob = linkcheckjob;
-            if ((linkCheckJob == null) || (linkCheckJob.trim().isEmpty()))
-                linkCheckJob = lastLinkCheckJob(country);
+            LinkCheckJob  job = _job.get();
+
+            String linkCheckJob = job.getJobId();
 
 
-            run_scrape(country, linkCheckJob);
 
-            String result = "<h1>Differences - " + linkCheckJob + "</h1>";
+            run_scrape(job.getLongTermTag(), linkCheckJob);
+            String result = "<head><meta charset=\"UTF-8\"></head>\n";
+
+            result += "<h1>Differences with GeoPortal - " + linkCheckJob + " - "+job.getLongTermTag()+ "</h1><hr>";
 
             //       select file_id, title, is_view, local_is_view from scrap where is_view !=  local_is_view and is_view and title is not null order by title;
             //        select file_id, title, is_download, local_is_download from scrap where is_download !=  local_is_download and is_download and title is not null order by title;
 
-            List queryResult = executeSQL3("select file_id, title, is_view, local_is_view,local_is_view_download from scrap where ((is_view !=  local_is_view) or (is_view !=  local_is_view_download)) and is_view and title is not null order by title");
-            result += "<h1> View Differences - " + queryResult.size() + " differences (geoportal viewable)</h2><br>\n";
+            List queryResult = executeSQL3("select file_id, title, is_view, local_is_view,local_is_view_download,geoportalid from scrap where ((is_view !=  local_is_view) or (is_view !=  local_is_view_download)) and is_view and title is not null order by title");
+            result += "<h1> View Differences - " + queryResult.size() + " differences (geoportal viewable)</h2>\n";
             if (!queryResult.isEmpty()) {
-                result += "<b>Geoportal says these are Viewable, but we do not</b><Br>";
-                result += results(linkCheckJob, queryResult);
+                result += "<b>Geoportal says these are Viewable, but we do not</b><Br><br>";
+                result += results(linkCheckJob, queryResult,"viewable");
             } else {
                 result += "NO DIFFERENCES<br>\n";
             }
 
-            List queryResult2 = executeSQL3("select file_id, title, is_download, local_is_download,local_is_download_download from scrap where ((is_download !=  local_is_download) or (is_download !=  local_is_download_download) ) and is_download and title is not null order by title;");
-            result += "<h1> Download Differences - " + queryResult2.size() + " differences (geoportal downloadable)</h2><br>\n";
+            List queryResult2 = executeSQL3("select file_id, title, is_download, local_is_download,local_is_download_download,geoportalid from scrap where ((is_download !=  local_is_download) or (is_download !=  local_is_download_download) ) and is_download and title is not null order by title;");
+            result += "<h1> Download Differences - " + queryResult2.size() + " differences (geoportal downloadable)</h2>\n";
             if (!queryResult2.isEmpty()) {
-                result += "<b>Geoportal says these are downloadable, but we do not</b><Br>";
-                result += results(linkCheckJob, queryResult2);
+                result += "<b>Geoportal says these are downloadable, but we do not</b><Br><br>";
+                result += results(linkCheckJob, queryResult2,"downloadable");
             } else {
                 result += "NO DIFFERENCES<br>\n";
             }
 
-//            List queryResult3 = executeSQL3("select file_id, title, is_view, local_is_view from scrap where is_view !=  local_is_view and not(is_view) and title is not null order by title");
-//            result += "<h1> View Differences - " + queryResult3.size() + " differences (geoportal not viewable)</h2><br>\n";
-//            if (!queryResult3.isEmpty()) {
-//                result += "<b>Geoportal says these are NOT Viewable, but we say they are (perhaps just not accessible?)</b><Br>";
-//                result += results(linkCheckJob, queryResult3);
-//            } else {
-//                result += "NO DIFFERENCES<br>\n";
-//            }
-//
-//            List queryResult4 = executeSQL3("select file_id, title, is_download, local_is_download from scrap where is_download !=  local_is_download and not(is_download) and title is not null order by title;");
-//            result += "<h1> Download Differences - " + queryResult4.size() + " differences (geoportal not downloadable)</h2><br>\n";
-//            if (!queryResult4.isEmpty()) {
-//                result += "<b>Geoportal says these are NOT downloadable, but we say they are (perhaps just not accessible?)</b><Br>";
-//                result += results(linkCheckJob, queryResult4);
-//            } else {
-//                result += "NO DIFFERENCES<br>\n";
-//            }
+            List queryResult3 = executeSQL3("select file_id, title, is_view, local_is_view,local_is_view_download,geoportalid from scrap where ((is_view !=  local_is_view) or (is_view !=  local_is_view_download)) and not(is_view) and title is not null order by title");
+            result += "<h1> View Differences - " + queryResult3.size() + " differences (geoportal not viewable)</h2>\n";
+            if (!queryResult3.isEmpty()) {
+                result += "<b>Geoportal says these are NOT Viewable, but we say they are (perhaps just not accessible?)</b><Br><br>";
+                result += results(linkCheckJob, queryResult3,"viewable");
+            } else {
+                result += "NO DIFFERENCES<br>\n";
+            }
+
+            List queryResult4 = executeSQL3("select file_id, title, is_download, local_is_download,local_is_download_download,geoportalid from scrap where((is_download !=  local_is_download) or (is_download !=  local_is_download_download) ) and not(is_download) and title is not null order by title;");
+            result += "<h1> Download Differences - " + queryResult4.size() + " differences (geoportal not downloadable)</h2>\n";
+            if (!queryResult4.isEmpty()) {
+                result += "<b>Geoportal says these are NOT downloadable, but we say they are (perhaps just not accessible?)</b><Br><br>";
+                result += results(linkCheckJob, queryResult4,"downloadable");
+            } else {
+                result += "NO DIFFERENCES<br>\n";
+            }
 
             result += "<br><br><br>\n";
             return result;
         }
     }
 
-    private String results(String linkcheckjob,List queryResult) {
+    private String results(String linkcheckjob,List queryResult, String type) {
         String result ="";
-        result +="<table><tr> <td>File Identifier</td> <td>Title</td> <td>Geoportal - connected</td><td>Local - connected</td><td>Local - connected and downloadable</td></tr>";
+        result +="<table border=1><tr> <td>File Identifier</td> <td>Title</td> <td>Geoportal - "+type+" </td><td>Local - "+type+" connected</td><td>Local - connected and "+type+"</td></tr>";
         for (Object o:queryResult) {
             Object[] cols = (Object[])o;
             String link = "<a href='/api/html/dataset/"+linkcheckjob+"/"+cols[0].toString()+"'>"+cols[0].toString()+"</a>";
-            result +=" <tr> <td>"+link+"</td> <td>"+cols[1].toString()+"</td> <td>"+cols[2].toString()+"</td><td>"+cols[3].toString()+"</td><td>"+cols[4].toString()+"</td></tr>";
+            String link2 = "<a href='https://inspire-geoportal.ec.europa.eu/download_details.html?view=downloadDetails&resourceId="+cols[5].toString()+"&expandedSection=metadata'>"+ cols[1].toString()+"</a>";
+            result +=" <tr> <td>"+link+"</td> <td>"+link2+"</td> <td>"+cols[2].toString()+"</td><td>"+cols[3].toString()+"</td><td>"+cols[4].toString()+"</td></tr>";
         }
         result += "</table>";
         return result;

@@ -149,10 +149,10 @@ public class DatasetIdentifier {
 
     @Override
     public String toString() {
-        return "DatasetIdentifier{" +
-                "identifierType=" + identifierNodeType +
-                 ", code='" + code +
+        return " " +
+                "(" + identifierNodeType +
+                 ") code='" + code +
                 "', codeSpace='" + codeSpace +
-                "'}";
+                "'";
     }
 }

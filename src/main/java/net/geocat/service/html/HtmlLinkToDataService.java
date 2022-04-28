@@ -37,6 +37,7 @@ import net.geocat.database.linkchecker.entities.AtomActualDataEntry;
 import net.geocat.database.linkchecker.entities.OGCRequest;
 import net.geocat.database.linkchecker.entities.SimpleAtomLinkToData;
 import net.geocat.database.linkchecker.entities.helper.AtomDataRequest;
+import net.geocat.database.linkchecker.entities.helper.AtomSubFeedRequest;
 import net.geocat.database.linkchecker.entities.helper.LinkToData;
 import net.geocat.database.linkchecker.entities.helper.OGCLinkToData;
 import net.geocat.database.linkchecker.entities.helper.RetrievableSimpleLink;
@@ -46,6 +47,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static net.geocat.service.html.HtmlDatasetService.showDataLink;
+import static net.geocat.service.html.HtmlDatasetService.showDownloadableLink;
 
 @Component
 public class HtmlLinkToDataService {
@@ -57,52 +59,72 @@ public class HtmlLinkToDataService {
         long linkId = Long.parseLong(_linkId);
 
         LinkToData link = linkToDataRepo.findById(linkId).get();
+        String result = "<head><meta charset=\"UTF-8\"></head>\n";
 
-        String result = "<h1>  "+link.getClass().getSimpleName()+" - "+linkId+"</h1>\n";
+          result += "<h1>  "+link.getClass().getSimpleName()+" - "+linkId+"</h1>\n";
 
         result += "<br>";
-        result += showDataLink(link,true,null);
+        result += showDataLink(link,true,null,"");
         result += "<br>";
 
-        if (link instanceof OGCLinkToData) {
-            OGCRequest request = ((OGCLinkToData) link).getOgcRequest();
-            if (request ==null)
-                result += "OGCRequest: null";
-            else
-                result += showRequest(request);
-        }
+//        if (link instanceof OGCLinkToData) {
+//            OGCRequest request = ((OGCLinkToData) link).getOgcRequest();
+//            if (request ==null)
+//                result += "OGCRequest: null";
+//            else
+//                result += showRequest(request);
+//        }
         if (link instanceof SimpleAtomLinkToData) {
             result += handleAtom((SimpleAtomLinkToData) link);
         }
         return result;
     }
 
+    public static String toText(AtomSubFeedRequest request) {
+        String result = "<br><br><b>ATOM SUBFEED REQUEST</b><br><Br>\n <table>";
+       // result += "<tr><td>summary: </td><Td>"+request.getSummary()+"</td></tr>\n";
+     //   result += "<tr><td>successfulOGCRequest: </td><Td>"+request.isSuccessfulOGCRequest()+"</td></tr>\n";
+        if (request.getUnSuccessfulAtomRequestReason() !=null)
+            result += "<tr><td> UnSuccessful   Request Reason: </td><Td>"+request.getUnSuccessfulAtomRequestReason()+"</td></tr>\n";
+
+//        result += "</table>";
+        result += showDownloadableLink(request,false);
+        return result;
+    }
+
     private String handleAtom(SimpleAtomLinkToData link) {
         String result = "";
         if (link.getAtomSubFeedRequest() != null) {
-            result += "<br><h2>Sub Feed Request: <a href='"+link.getAtomSubFeedRequest().getFixedURL()+"'>"+link.getAtomSubFeedRequest().getFixedURL()+ "</a><br></h2>\n";
+            result += "<br><h2>Sub Feed Request: </h3>";//<a href='"+link.getAtomSubFeedRequest().getFixedURL()+"'>"+link.getAtomSubFeedRequest().getFixedURL()+ "</a><br></h2>\n";
             result += "Download Successful:"+link.getAtomSubFeedRequest().getSuccessfulAtomRequest()+"<br>\n";
-            if (!link.getAtomSubFeedRequest().getSuccessfulAtomRequest()) {
-                result += "http code:"+link.getAtomSubFeedRequest().getLinkHTTPStatusCode()+"<br>\n";
-                result += "problem: " + link.getAtomSubFeedRequest().getUnSuccessfulAtomRequestReason() + "<br>\n";
-                result += "downloaded text:<br>";
-                result += "<xmp>"+XmlStringTools.bytea2String(link.getAtomSubFeedRequest().getLinkContentHead())+"</xmp><br>";
-            }
+//            if (!link.getAtomSubFeedRequest().getSuccessfulAtomRequest()) {
+//                result += "http code:"+link.getAtomSubFeedRequest().getLinkHTTPStatusCode()+"<br>\n";
+//                result += "problem: " + link.getAtomSubFeedRequest().getUnSuccessfulAtomRequestReason() + "<br>\n";
+//                result += "downloaded text:<br>";
+//                result += "<xmp>"+XmlStringTools.bytea2String(link.getAtomSubFeedRequest().getLinkContentHead())+"</xmp><br>";
+//            }
+            result += toText(link.getAtomSubFeedRequest());
         }
         if (link.getAtomActualDataEntryList() !=null) {
-            result += "<br><h2>SubFeed Entries</h2>\n";
+            result += "<br><h2>SubFeed Entries - "+link.getAtomActualDataEntryList().size()+" entries</h2>\n";
             for (AtomActualDataEntry entry : link.getAtomActualDataEntryList()) {
-                result += "<h3>entry: "+entry.getIndex()+" - "+entry.getEntryId()+"</h3> \n";
+                result += "<h3>entry: "+entry.getIndex()+" - id="+entry.getEntryId()+"</h3> \n";
                 result += "number of links to data: "+entry.getAtomDataRequestList().size()+"<br>\n";
+                if (entry.getSuccessfullyDownloaded() !=null){
+                    result += "successfully downloaded: "+entry.getAtomDataRequestList().size()+"<br>\n";
+
+                }
                 int indx = 0;
                 for (AtomDataRequest dataRequest : entry.getAtomDataRequestList()) {
-                    result += "<h4> entry:"+entry.getIndex()+", link to data "+indx+"</h4>\n";
+                    result += "<h4> ENTRY: "+entry.getIndex()+", link to data actual data part# : "+indx+"</h4>\n";
+
                     indx++;
-                    result += "url: "+dataRequest.getFixedURL()+"<br>\n";
-                    result += "success:"+dataRequest.getSuccessfullyDownloaded()+"<br>\n";
-                    result += "http code:"+dataRequest.getLinkHTTPStatusCode()+"<br>\n";
-                    result += "downloaded text:<br>";
-                    result += "<xmp>"+XmlStringTools.bytea2String(dataRequest.getLinkContentHead())+"</xmp><br>";
+                    result+= showDownloadableLink(dataRequest,true);
+//                    result += "url: "+dataRequest.getFixedURL()+"<br>\n";
+//                    result += "success:"+dataRequest.getSuccessfullyDownloaded()+"<br>\n";
+//                    result += "http code:"+dataRequest.getLinkHTTPStatusCode()+"<br>\n";
+//                    result += "downloaded text:<br>";
+//                    result += "<xmp>"+XmlStringTools.bytea2String(dataRequest.getLinkContentHead())+"</xmp><br>";
                 }
             }
         }

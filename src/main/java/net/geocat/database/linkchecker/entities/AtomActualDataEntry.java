@@ -66,6 +66,8 @@ public class AtomActualDataEntry {
     @Column(columnDefinition = "text")
     String entryId;
 
+    Boolean successfullyDownloaded;
+
     @OneToMany(
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER, mappedBy = "atomActualDataEntry")
     @Fetch(value = FetchMode.SUBSELECT)
@@ -81,6 +83,14 @@ public class AtomActualDataEntry {
 
     //--
 
+
+    public Boolean getSuccessfullyDownloaded() {
+        return successfullyDownloaded;
+    }
+
+    public void setSuccessfullyDownloaded(Boolean successfullyDownloaded) {
+        this.successfullyDownloaded = successfullyDownloaded;
+    }
 
     public int getIndex() {
         return (index == null)? 0 : index;

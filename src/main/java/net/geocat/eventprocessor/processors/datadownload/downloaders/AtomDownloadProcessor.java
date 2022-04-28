@@ -158,6 +158,7 @@ public class AtomDownloadProcessor {
             return false;
         for (AtomActualDataEntry entry: simpleAtomLinkToData.getAtomActualDataEntryList()){
             boolean entryDownloads = doDownload(entry);
+            entry.setSuccessfullyDownloaded(entryDownloads);
             if (entryDownloads)
                 return true;
         }

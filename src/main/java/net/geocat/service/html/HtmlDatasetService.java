@@ -36,6 +36,7 @@ package net.geocat.service.html;
 import net.geocat.database.linkchecker.entities.DatasetDocumentLink;
 import net.geocat.database.linkchecker.entities.LinkCheckJob;
 import net.geocat.database.linkchecker.entities.LocalDatasetMetadataRecord;
+import net.geocat.database.linkchecker.entities.OGCRequest;
 import net.geocat.database.linkchecker.entities.ServiceDocumentLink;
 import net.geocat.database.linkchecker.entities.SimpleAtomLinkToData;
 import net.geocat.database.linkchecker.entities.SimpleLayerDatasetIdDataLink;
@@ -44,6 +45,8 @@ import net.geocat.database.linkchecker.entities.SimpleSpatialDSIDDataLink;
 import net.geocat.database.linkchecker.entities.SimpleStoredQueryDataLink;
 import net.geocat.database.linkchecker.entities.helper.DatasetIdentifier;
 import net.geocat.database.linkchecker.entities.helper.LinkToData;
+import net.geocat.database.linkchecker.entities.helper.OGCLinkToData;
+import net.geocat.database.linkchecker.entities.helper.RetrievableSimpleLink;
 import net.geocat.database.linkchecker.repos.LinkCheckJobRepo;
 import net.geocat.database.linkchecker.repos.LinkToDataRepo;
 import net.geocat.database.linkchecker.repos.LocalDatasetMetadataRecordRepo;
@@ -54,6 +57,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.criteria.CriteriaBuilder;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -105,27 +109,39 @@ public class HtmlDatasetService {
         LocalDatasetMetadataRecord record = localDatasetMetadataRecordRepo.findFirstByFileIdentifierAndLinkCheckJobId(fileId, processID);
         if (record == null)
             return "<h1> Couldnt find Dataset record </h1>";
+        String result = "<head><meta charset=\"UTF-8\"></head>\n";
 
-        String result = "<h1> Dataset Record</h1> \n";
-        result += "<xmp>" + record.toString() + "</xmp><br>\n<br>\n";
+        result += "Quick link: <a href='/api/html/discoverInput'>find by fileIdentifier</a><br> <br> \n";
+
+        result += "<h1> Dataset Record</h1> \n";
+
+          result += "title: "+record.getTitle()+"<br>\n";
+        result += "Metadata Record Type: "+record.getMetadataRecordType()+"<br>\n";
+
+        //  result += "file identifier: "+record.getFileIdentifier()+"<br>\n";
+
+        // result += "<xmp>" + record.toString() + "</xmp><br>\n<br>\n";
 
 
-        result += "<h1> Dataset Identifiers</h1> \n";
+        result += "<h2> Dataset Identifiers</h1> \n";
         result += "<b>FileIdentifier: "+ record.getFileIdentifier() +"</b><br><br>\n";
         for(DatasetIdentifier identifier:record.getDatasetIdentifiers()) {
-            result += identifier.toString() +"<br>\n";
+            result += "<a href='/api/html/identifier?code=" + URLEncoder.encode(identifier.getCode())+"&linkcheckjobid="+processID+"'>"+identifier.toString() +"</a><br>\n";
         }
 
-        result +="<h2>Capabilities Links</h2><Br>\n";
+        result +="<h2>Successful links to Capabilities Documents</h2> \n";
         int idx = 0;
+
         for(DatasetDocumentLink link: record.getDocumentLinks()) {
             if ( (link.getUrlFullyRead() != null) && (link.getUrlFullyRead())) {
-                result += "<h3>Link #" + idx + " - <a href='" +"/api/html/capabilities/"+ link.getLinkCheckJobId()+"/"+link.getSha2()   + "'>"+link.getXmlDocInfo() + "</a>" + "</h3>\n";
+                result += " <a href='" +"/api/html/capabilities/"+ link.getLinkCheckJobId()+"/"+link.getSha2()   + "'>"+link.getXmlDocInfo() + "</a>" + " <br>\n";
                 idx++;
             }
         }
+        if (idx ==0)
+            result += "NO SUCCESSFUL LINKS TO CAPABILITIES DOCUMENTS<br>\n";
 
-        result += "<h2>Links to Data</h2>\n";
+        result += "<h2>Found Links to Data - "+record.getDataLinks().size()+" links</h2>\n";
 
 
         if (record.getDataLinks().size() == 0) {
@@ -134,92 +150,146 @@ public class HtmlDatasetService {
         else {
             result += showDataLinks(record);
         }
-        result +="<h2>Document Links</h2>\n";
+        result +="<h2>All Document Links - "+record.getDocumentLinks().size()+" links</h2>\n";
         idx = 0;
         for(DatasetDocumentLink link: record.getDocumentLinks()) {
-            result += "<br> <h3>Document Link #"+idx+" - <a href='"+ link.getFixedURL() +"'>"+link.getFixedURL()+"</a>" +"</h3>\n";
-            result += "fully downloaed: "+link.getUrlFullyRead()+"<br>\n";
-            result += "<xmp>"+link.toString()  + "</xmp><br>\n<br>\n";
-            result +="Initial Data:<br>\n";
-            if (link.getLinkContentHead() !=null)
-                result += "<xmp>"+new String(link.getLinkContentHead())+"</xmp>";
+            result += "<br> <h3>Document Link #"+idx+"</h3>";// - <a href='"+ link.getFixedURL() +"'>"+link.getFixedURL()+"</a>" +"</h3>\n";
+//            result += "fully downloaed: "+link.getUrlFullyRead()+"<br>\n";
+//            result += "<xmp>"+link.toString()  + "</xmp><br>\n<br>\n";
+//            result +="Initial Data:<br>\n";
+//            if (link.getLinkContentHead() !=null)
+//                result += "<xmp>"+new String(link.getLinkContentHead())+"</xmp>";
+            result +=showDownloadableLink(link,true);
             idx++;
         }
 
-        result += "<br><br><br><hr><br><br><xmp>"+text(record)+"</xmp><br><br>";
+        result += "<br><br><br><hr><br><br><h1>Actual Dataset Text</h1><br><hr><xmp>"+text(record)+"</xmp><br><br>";
         return result;
     }
+
+    public static String showDownloadableLink(RetrievableSimpleLink link, boolean startTable) {
+        String result ="";
+        if (startTable)
+            result += "<table>";
+        result += "<tr><td>link type: </td><Td>"+link.getClass().getSimpleName()+"</td></tr>";
+        result += "<tr><td>raw URL: </td><Td>"+link.getRawURL()+"</td></tr>";
+        String urlText = link.getFixedURL();
+        if ((urlText !=null) && (!urlText.isEmpty())){
+            urlText += "&nbsp;<a href='"+urlText+"'>live</a>";
+        }
+        result += "<tr><td>fixed URL: </td><Td>"+urlText+"</td></tr>";
+        result += "<tr><td>fully downloaded: </td><Td>"+link.getUrlFullyRead()+"</td></tr>";
+        if (link.getLinkHTTPStatusCode() !=null)
+            result += "<tr><td>HTTP Status Code: </td><Td>"+link.getLinkHTTPStatusCode()+"</td></tr>";
+
+        if (link.getLinkHTTPException() !=null)
+            result += "<tr><td> Link HTTP Exception: </td><Td>"+link.getLinkHTTPException()+"</td></tr>";
+
+        if (link instanceof DatasetDocumentLink) {
+            result += "<tr><td>Is Inspire SimplifiedLink: </td><Td>"+((DatasetDocumentLink)link).isInspireSimplifiedLink()+"</td></tr>";
+        }
+        if (link.getXmlDocInfo() !=null)
+            result += "<tr><td> Xml Doc Info: </td><Td>"+link.getXmlDocInfo()+"</td></tr>";
+
+        result += "</table>";
+
+        if (link.getLinkContentHead() !=null) {
+            result +="<Br>Initial Data:<br>\n";
+            result += "<xmp>" + new String(link.getLinkContentHead()) + "</xmp>";
+        }
+        return result ;
+    }
+
+
     private String showDataLinks(LocalDatasetMetadataRecord record) {
         return showDataLinks(new ArrayList(record.getDataLinks()), false);
     }
 
-    public static String showDataLink(LinkToData link, boolean showDSLink, Integer _lndx) {
-        String result = "";
+    public static String toText(OGCRequest request) {
+        String result = "<br><br><b>OGC REQUEST</b><br><Br>\n <table>";
+        result += "<tr><td>summary: </td><Td>"+request.getSummary()+"</td></tr>\n";
+        result += "<tr><td>successfulOGCRequest: </td><Td>"+request.isSuccessfulOGCRequest()+"</td></tr>\n";
+        if (request.getUnSuccessfulOGCRequestReason() !=null)
+            result += "<tr><td> UnSuccessful OGC Request Reason: </td><Td>"+request.getUnSuccessfulOGCRequestReason()+"</td></tr>\n";
+
+//        result += "</table>";
+        result += showDownloadableLink(request,false);
+        return result;
+    }
+
+    public static String showDataLink(LinkToData link, boolean showDSLink, Integer _lndx, String type) {
+        String result = " ";
         String indx = _lndx == null ? "" : _lndx.toString();
 
-        result += "<h3>link "+indx+" - <a href='/api/html/linktodata/"+link.getLinkToDataId() +"'>"+ link.getClass().getSimpleName() + "</a></h3>";
-        if (showDSLink)
-            result += "dataset: <a href='" +"/api/html/dataset/"+ link.getLinkCheckJobId()+"/"+link.getDatasetMetadataFileIdentifier()+ "'>"+link.getDatasetMetadataFileIdentifier()  + "  </a>" + "</h3><br>\n";
+        result += "<h3>"+type+" link "+indx+" - <a href='/api/html/linktodata/"+link.getLinkToDataId() +"'>"+ link.getClass().getSimpleName() + "</a></h3>";
 
-        result += "capabilities: <a href='" +"/api/html/capabilities/"+ link.getLinkCheckJobId()+"/"+link.getCapabilitiesSha2() + "'>"+link.getCapabilitiesDocumentType()  + " Capabilities</a>" + "</h3>\n";
+        result += "\n<table>";
+
+        if (showDSLink) {
+            String txt=  " <a href='" + "/api/html/dataset/" + link.getLinkCheckJobId() + "/" + link.getDatasetMetadataFileIdentifier() + "'>" + link.getDatasetMetadataFileIdentifier() + "  </a>"   ;
+            result += "<tr><td>dataset: </td><Td>"+txt+"</td></tr>\n";
+        }
+        String txt =  " <a href='" +"/api/html/capabilities/"+ link.getLinkCheckJobId()+"/"+link.getCapabilitiesSha2() + "'>"+link.getCapabilitiesDocumentType()  + " Capabilities</a>"  ;
+
+        result += "<tr><td>capabilities: </td><Td>"+txt+"</td></tr>\n";
 
 
-
-        if (link instanceof SimpleLayerMetadataUrlDataLink) {
-            SimpleLayerMetadataUrlDataLink _link = (SimpleLayerMetadataUrlDataLink) link;
-            result += "<br>ogcLayer: "+_link.getOgcLayerName()+"<br>\n";
-            if (_link.getSuccessfullyDownloaded() != null) {
-                result += "Download: success->" +_link.getSuccessfullyDownloaded()+"<br>\n";
+        if (link instanceof OGCLinkToData) {
+            OGCLinkToData _link = (OGCLinkToData) link;
+            result += "<tr><td>ogcLayer: </td><Td>"+_link.getOgcLayerName()+"</td></tr>\n";
+            if (link instanceof SimpleLayerDatasetIdDataLink) {
+                SimpleLayerDatasetIdDataLink __link = (SimpleLayerDatasetIdDataLink) link;
+                String codeLink = "<a href='/api/html/identifier?code="+URLEncoder.encode(__link.getCode())+"&linkcheckjobid="+__link.getLinkCheckJobId()+"'>"+__link.getCode()+"</a>";
+                result += "<tr><td>code: </td><Td>"+codeLink+"</td></tr>\n";
+                result += "<tr><td>codespace: </td><Td>"+__link.getCodeSpace()+"</td></tr>\n";
             }
-            if (_link.getOgcRequest() != null) {
-                result += "OGCRequest: " +_link.getOgcRequest().getFixedURL()+"<br>\n";
+            if (link instanceof SimpleSpatialDSIDDataLink) {
+                SimpleSpatialDSIDDataLink __link = (SimpleSpatialDSIDDataLink) link;
+                String codeLink = "<a href='/api/html/identifier?code="+URLEncoder.encode(__link.getCode())+"&linkcheckjobid="+__link.getLinkCheckJobId()+"'>"+__link.getCode()+"</a>";
+
+                result += "<tr><td>code: </td><Td>"+codeLink+"</td></tr>\n";
+                result += "<tr><td>codespace: </td><Td>"+__link.getCodeSpace()+"</td></tr>\n";
             }
+             if (_link.getSuccessfullyDownloaded() != null) {
+                result += "<tr><td>Downloaded&nbsp;success:&nbsp;</td><Td>"+_link.getSuccessfullyDownloaded()+"</td></tr>\n";
+             }
+             if (_link.getOgcRequest() != null) {
+                 result += "</table>";
+                 result+=toText(_link.getOgcRequest());
+             }
         }
         if (link instanceof SimpleStoredQueryDataLink) {
-            SimpleStoredQueryDataLink _link = (SimpleStoredQueryDataLink) link;
-            result += "<br>storedProcName: "+_link.getStoredProcName()+"<br>\n";
-            result += "code: "+_link.getCode()+"<br>\n";
-            result += "codespace: "+_link.getCodeSpace()+"<br>\n";
-            if (_link.getSuccessfullyDownloaded() != null) {
-                result += "Download: success->" +_link.getSuccessfullyDownloaded()+"<br>\n";
+            SimpleStoredQueryDataLink __link = (SimpleStoredQueryDataLink) link;
+            result += "<tr><td>storedProcName: </td><Td>"+__link.getStoredProcName()+"</td></tr>\n";
+            String codeLink = "<a href='/api/html/identifier?code="+URLEncoder.encode(__link.getCode())+"&linkcheckjobid="+__link.getLinkCheckJobId()+"'>"+__link.getCode()+"</a>";
+
+            result += "<tr><td>code: </td><Td>"+codeLink+"</td></tr>\n";
+            result += "<tr><td>codespace: </td><Td>"+__link.getCodeSpace()+"</td></tr>\n";
+            if (__link.getSuccessfullyDownloaded() != null) {
+                result += "<tr><td>Downloaded&nbsp;success:&nbsp;</td><Td>"+__link.getSuccessfullyDownloaded()+"</td></tr>\n";
             }
-            if (_link.getOgcRequest() != null) {
-                result += "OGCRequest: " +_link.getOgcRequest().getFixedURL()+"<br>\n";
-            }
-        }
-        if (link instanceof SimpleLayerDatasetIdDataLink) {
-            SimpleLayerDatasetIdDataLink _link = (SimpleLayerDatasetIdDataLink) link;
-            result += "<br>code: "+_link.getCode()+"<br>\n";
-            result += "codespace: "+_link.getCodeSpace()+"<br>\n";
-            result += "ogcLayer: "+_link.getOgcLayerName()+"<br>\n";
-            if (_link.getSuccessfullyDownloaded() != null) {
-                result += "Download: success->" +_link.getSuccessfullyDownloaded()+"<br>\n";
-            }
-            if (_link.getOgcRequest() != null) {
-                result += "OGCRequest: " +_link.getOgcRequest().getFixedURL()+"<br>\n";
+            if (__link.getOgcRequest() != null) {
+                if (__link.getOgcRequest() != null) {
+                    result += "</table>";
+                    result+=toText(__link.getOgcRequest());
+                }
             }
         }
-        if (link instanceof SimpleSpatialDSIDDataLink) {
-            SimpleSpatialDSIDDataLink _link = (SimpleSpatialDSIDDataLink) link;
-            result += "<br>code: "+_link.getCode()+"<br>\n";
-            result += "codespace: "+_link.getCodeSpace()+"<br>\n";
-            if (_link.getSuccessfullyDownloaded() != null) {
-                result += "Download: success->" +_link.getSuccessfullyDownloaded()+"<br>\n";
-            }
-            if (_link.getOgcRequest() != null) {
-                result += "OGCRequest: " +_link.getOgcRequest().getFixedURL()+"<br>\n";
-            }
-        }
+
+
         if (link instanceof SimpleAtomLinkToData) {
             SimpleAtomLinkToData _link = (SimpleAtomLinkToData) link;
-            result += "<br>context: "+_link.getContext()+"<br>\n";
+            result += "<tr><td>context: </td><Td>"+_link.getContext()+"</td></tr>\n";
+
+          //  result += "<br>context: "+_link.getContext()+"<br>\n";
 
             if (_link.getLayerId() != null) {
-                result += "Layer ID: " +_link.getLayerId()+"<br>\n";
+                result += "<tr><td>Layer ID: </td><Td>"+_link.getLayerId()+"</td></tr>\n";
             }
             if (_link.getSuccessfullyDownloaded() != null) {
-                result += "Download: success->" +_link.getSuccessfullyDownloaded()+"<br>\n";
+                result += "<tr><td>Downloaded&nbsp;success:&nbsp;</td><Td>"+_link.getSuccessfullyDownloaded()+"</td></tr>\n";
             }
+            result += "</table>";
         }
         if (link.getErrorInfo() !=null)
             result += "error info: "+link.getErrorInfo()+"<br>\n";
@@ -228,6 +298,7 @@ public class HtmlDatasetService {
 
     public static String showDataLinks(List<LinkToData> links, boolean showDSLink) {
         String result = "";
+
         int indx =0;
         List<LinkToData> links_down = links.stream()
                 .filter(x->x.getCapabilitiesDocumentType() == CapabilitiesType.Atom || x.getCapabilitiesDocumentType() == CapabilitiesType.WFS)
@@ -240,7 +311,7 @@ public class HtmlDatasetService {
             result += "NO LINKS <BR>\n";
 
         for (LinkToData link:links_view) {
-            result += showDataLink(link,showDSLink,new Integer(indx));
+            result += showDataLink(link,showDSLink,new Integer(indx),"view");
             indx++;
         }
 
@@ -250,7 +321,7 @@ public class HtmlDatasetService {
             result += "NO LINKS <BR>\n";
 
         for (LinkToData link:links_down) {
-            result += showDataLink(link,showDSLink,new Integer(indx));
+            result += showDataLink(link,showDSLink,new Integer(indx),"download");
             indx++;
         }
         return result;

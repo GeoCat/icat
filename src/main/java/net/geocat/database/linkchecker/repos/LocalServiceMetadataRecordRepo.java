@@ -69,6 +69,8 @@ public interface LocalServiceMetadataRecordRepo extends CrudRepository<LocalServ
 
     LocalServiceMetadataRecord findFirstByFileIdentifierAndLinkCheckJobId(String fileID,String linkCheckJobId);
 
+    List<LocalServiceMetadataRecord> findByFileIdentifierAndLinkCheckJobId(String fileID,String linkCheckJobId);
+
     LocalServiceMetadataRecord findFirstByFileIdentifier(String fileID);
 
     List<LocalServiceMetadataRecord> findByFileIdentifier(String fileID);

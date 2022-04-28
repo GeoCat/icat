@@ -46,6 +46,7 @@ import java.util.List;
 @Scope("prototype")
 public interface InspireSpatialDatasetIdentifierRepo  extends CrudRepository<InspireSpatialDatasetIdentifier, String> {
 
+
     public List<InspireSpatialDatasetIdentifier> findByCode(String code);
 
     @Query(value = "SELECT cap_sha2 as sha2," +

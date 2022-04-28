@@ -35,6 +35,7 @@ package net.geocat.service.html;
 
 import net.geocat.database.linkchecker.entities.LocalDatasetMetadataRecord;
 import net.geocat.database.linkchecker.entities.LocalServiceMetadataRecord;
+import net.geocat.database.linkchecker.entities.helper.MetadataRecord;
 import net.geocat.database.linkchecker.repos.LinkCheckJobRepo;
 import net.geocat.database.linkchecker.repos.LocalDatasetMetadataRecordRepo;
 import net.geocat.database.linkchecker.repos.LocalServiceMetadataRecordRepo;
@@ -42,6 +43,7 @@ import net.geocat.service.BlobStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -61,32 +63,86 @@ public class HtmlDiscoverService {
     @Autowired
     LocalServiceMetadataRecordRepo localServiceMetadataRecordRepo;
 
-    public String getHtml(String fileId) throws Exception {
+    public String getHtmlInput() {
+        String result = "";
+
+        result += "<h1>Search for a Service or Dataset Document by File Identifier</h1><br>";
+
+        result += "<script type='text/javascript'>";
+        result += "function goToDiscover() {\n";
+        result += "     var fileid = document.getElementById('fileid').value;\n";
+        result += "     var linkcheckjobid = document.getElementById('linkcheckjobid').value;\n";
+
+        result +=  "    var url = window.location.protocol + '//' +window.location.host+'/api/html/discover/' + fileid;\n";
+        result +=  "    if (linkcheckjobid != '') {url += '/'+ linkcheckjobid;}";
+        result +=  "    window.location = url;}\n";
+        result += "</script>\n";
+
+        result += "<table>";
+        result += "<tr><td>link Check Job id:</td><td><input type='text' id='linkcheckjobid' /></td><td>blank=search all jobs</td></tr>";
+
+        result += "<tr><td>file id:</td><td><input type='text' id='fileid' /></td></tr>";
+        result += "<tr><td></td><td><input type='submit' value='submit'  onclick='goToDiscover();'  /></td></tr>";
+        result += "</table>";
+
+        return result;
+    }
+
+    public String getHtml(String fileId, String linkcheckJobId) throws Exception {
         if ( (fileId == null) || (fileId.trim().isEmpty()))
             throw new Exception("empty fileid");
         fileId = fileId.trim();
 
-        List<LocalDatasetMetadataRecord> datasets = localDatasetMetadataRecordRepo.findByFileIdentifier(fileId);
+        List<LocalDatasetMetadataRecord> datasets;
+        if (linkcheckJobId ==null)
+            datasets= localDatasetMetadataRecordRepo.findByFileIdentifier(fileId);
+        else
+            datasets= localDatasetMetadataRecordRepo.findByFileIdentifierAndLinkCheckJobId(fileId,linkcheckJobId);
+
         Collections.sort(datasets, Comparator.comparing(m->m.getLastUpdateUTC()));
         Collections.reverse(datasets);
 
-        List<LocalServiceMetadataRecord>  services= localServiceMetadataRecordRepo.findByFileIdentifier(fileId);
-        Collections.sort(services, Comparator.comparing(m->m.getLastUpdateUTC()));
+        List<LocalServiceMetadataRecord>  services;
+        if (linkcheckJobId ==null)
+            services= localServiceMetadataRecordRepo.findByFileIdentifier(fileId);
+        else
+            services= localServiceMetadataRecordRepo.findByFileIdentifierAndLinkCheckJobId(fileId,linkcheckJobId);
+
+         Collections.sort(services, Comparator.comparing(m->m.getLastUpdateUTC()));
         Collections.reverse(services);
 
-        String result = "";
+        String result = "<head><meta charset=\"UTF-8\"></head>\n";
+
+        result += "<h1>Search for Documents with fileId="+fileId+"</h1>\n<br>\n";
         if (!datasets.isEmpty()) {
-            result +="<h1>"+datasets.size()+" Dataset Metadata Documents with fileId="+fileId+"</h1>\n<br>\n";
+            result +="<h1>"+datasets.size()+" Dataset Metadata Documents </h1>\n<br>\n";
+            result += "<table border=1><tr><td style='text-align: center;'><b>Run Date</b></td><td style='text-align: center;'><b>Link Check JobId</b></td><td style='text-align: center;'><b>Title</b></td></tr>\n";
             for(LocalDatasetMetadataRecord record:datasets) {
-                result += "<a href='/api/html/dataset/"+record.getLinkCheckJobId()+"/"+fileId+"'>"+record.getLastUpdateUTC().toLocalDateTime().toString() +" - " + record.getLinkCheckJobId()+" - "+record.getTitle()+"</a><br>\n";
+                result += result(record.getLinkCheckJobId(),fileId,record.getLastUpdateUTC(),record.getTitle(),"dataset");
+              //  result += "<a href='/api/html/dataset/"+record.getLinkCheckJobId()+"/"+fileId+"'>"+record.getLastUpdateUTC().toLocalDateTime().toString() +" - " + record.getLinkCheckJobId()+" - "+record.getTitle()+"</a><br>\n";
             }
         }
         if (!services.isEmpty()) {
-            result +="<h1>"+services.size()+" Service Metadata Documents with fileId="+fileId+"</h1>\n";
+            result +="<h1>"+services.size()+" Service Metadata Documents  </h1>\n";
+            result += "<table border=1><tr><td style='text-align: center;'><b>Run Date</b></td><td style='text-align: center;'><b>Link Check JobId</b></td><td style='text-align: center;'><b>Title</b></td></tr>\n";
+
             for(LocalServiceMetadataRecord record:services) {
-                result += "<a href='/api/html/service/"+record.getLinkCheckJobId()+"/"+fileId+"'>"+record.getLastUpdateUTC().toLocalDateTime().toString() +" - " + record.getLinkCheckJobId()+" - "+record.getTitle()+"</a><br>\n";
+                result += result(record.getLinkCheckJobId(),fileId,record.getLastUpdateUTC(),record.getTitle(),"service");
+
+               // result += "<a href='/api/html/service/"+record.getLinkCheckJobId()+"/"+fileId+"'>"+record.getLastUpdateUTC().toLocalDateTime().toString() +" - " + record.getLinkCheckJobId()+" - "+record.getTitle()+"</a><br>\n";
             }
         }
+
+        if (datasets.isEmpty() && services.isEmpty())
+            result += "NO RESULTS FOR '"+fileId+"'";
+        return result;
+    }
+
+    public String result(String linkCheckJobid, String fileId, ZonedDateTime date, String title, String type) {
+        String url =   "<a href='/api/html/"+type+"/"+linkCheckJobid+"/"+fileId+"'>"+ title +"</a><br>\n";
+        String result = "<tr>";
+        result += "<td>"+date.toLocalDateTime().toString()+"</td><td>"+linkCheckJobid+"</td><td>"+url+"</td>";
+        result += "</tr>";
         return result;
     }
 }
