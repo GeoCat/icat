@@ -111,12 +111,22 @@ public class HtmlDatasetService {
             return "<h1> Couldnt find Dataset record </h1>";
         String result = "<head><meta charset=\"UTF-8\"></head>\n";
 
-        result += "Quick link: <a href='/api/html/discoverInput'>find by fileIdentifier</a><br> <br> \n";
+        result += "Quick link: <a href='/api/html/discoverInput/"+processID+"'>find by fileIdentifier</a><br> <br> \n";
 
         result += "<h1> Dataset Record</h1> \n";
 
-          result += "title: "+record.getTitle()+"<br>\n";
-        result += "Metadata Record Type: "+record.getMetadataRecordType()+"<br>\n";
+        result += "<table>";
+
+        result += "<tr><td>Title: </td><td> "+record.getTitle()+"</td></tr>\n";
+        result += "<tr><td>Metadata Record Type: </td><td> "+record.getMetadataRecordType()+"</td></tr>\n";
+        result += "<tr><td>Viewable: </td><td> "+(record.getNumberOfViewLinksSuccessful()>0)+"&nbsp;&nbsp;&nbsp;("+record.getNumberOfViewLinksSuccessful()+")</td></tr>\n";
+        result += "<tr><td>Downloadable: </td><td> "+(record.getNumberOfDownloadLinksSuccessful()>0)+"&nbsp;&nbsp;&nbsp;("+record.getNumberOfDownloadLinksSuccessful()+")</td></tr>\n";
+
+        result += "<tr><td>Connected to # View: </td><td> "+record.getNumberOfViewDataLinks()+" </td></tr>\n";
+        result += "<tr><td>Connected to # Download: </td><td> "+record.getNumberOfDownloadDataLinks()+" </td></tr>\n";
+
+
+        result += "</table>\n";
 
         //  result += "file identifier: "+record.getFileIdentifier()+"<br>\n";
 

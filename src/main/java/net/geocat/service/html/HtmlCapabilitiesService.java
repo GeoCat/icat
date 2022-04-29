@@ -191,6 +191,7 @@ public class HtmlCapabilitiesService {
                 result += "&nbsp;&nbsp;&nbsp;+ " +codeLink +"<br>\n";
             }
             result += "<bR>\n";
+            result += "OGC Layer Name: "+layer.getOgcLayerName()+"<br>\n";
             result += showDownloadableLink(layer,true);
            // result += "<xmp>"+ layer.toString() + "</xmp><br>\n";
 

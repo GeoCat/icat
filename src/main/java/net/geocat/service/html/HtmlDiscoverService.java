@@ -63,7 +63,10 @@ public class HtmlDiscoverService {
     @Autowired
     LocalServiceMetadataRecordRepo localServiceMetadataRecordRepo;
 
-    public String getHtmlInput() {
+    public String getHtmlInput(String  linkCheckJobId ) {
+        if (linkCheckJobId == null)
+            linkCheckJobId = "";
+
         String result = "";
 
         result += "<h1>Search for a Service or Dataset Document by File Identifier</h1><br>";
@@ -79,9 +82,9 @@ public class HtmlDiscoverService {
         result += "</script>\n";
 
         result += "<table>";
-        result += "<tr><td>link Check Job id:</td><td><input type='text' id='linkcheckjobid' /></td><td>blank=search all jobs</td></tr>";
+        result += "<tr><td>link Check Job id:</td><td><input size='50' type='text' id='linkcheckjobid' value='"+linkCheckJobId+"' /></td><td>blank=search all jobs</td></tr>";
 
-        result += "<tr><td>file id:</td><td><input type='text' id='fileid' /></td></tr>";
+        result += "<tr><td>file id:</td><td><input  size='50' type='text' id='fileid' /></td></tr>";
         result += "<tr><td></td><td><input type='submit' value='submit'  onclick='goToDiscover();'  /></td></tr>";
         result += "</table>";
 

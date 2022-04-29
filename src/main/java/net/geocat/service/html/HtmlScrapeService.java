@@ -77,24 +77,32 @@ public class HtmlScrapeService {
     //@Qualifier("transactionManager")
     PlatformTransactionManager transactionManager;
 
-    EntityManager entityManager;
 
 
     public void executeSQL2(String sql) {
-        if (entityManager == null)
-            entityManager =  localContainerEntityManagerFactoryBean.createNativeEntityManager(null);
-        entityManager.getTransaction().begin();
-        int n = entityManager.createNativeQuery(sql).executeUpdate();
-        entityManager.getTransaction().commit();
+        EntityManager entityManager  =  localContainerEntityManagerFactoryBean.createNativeEntityManager(null);
+        try {
+            entityManager.getTransaction().begin();
+            int n = entityManager.createNativeQuery(sql).executeUpdate();
+            entityManager.getTransaction().commit();
+        }
+        finally {
+            entityManager.close();
+        }
     }
 
     public List executeSQL3(String sql) {
-        if (entityManager == null)
-            entityManager =  localContainerEntityManagerFactoryBean.createNativeEntityManager(null);
-        entityManager.getTransaction().begin();
-        List result =  entityManager.createNativeQuery(sql).getResultList();
-        entityManager.getTransaction().commit();
-        return result;
+        EntityManager entityManager  =  localContainerEntityManagerFactoryBean.createNativeEntityManager(null);
+
+       try {
+           entityManager.getTransaction().begin();
+           List result = entityManager.createNativeQuery(sql).getResultList();
+           entityManager.getTransaction().commit();
+           return result;
+       }
+       finally {
+           entityManager.close();
+       }
     }
 
 

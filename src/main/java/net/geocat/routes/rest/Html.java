@@ -110,7 +110,16 @@ public class Html extends RouteBuilder {
                 .get("")
                 .route()
                 .routeId("rest.rest.html.discoverInput")
-                .bean(HtmlDiscoverService.class, "getHtmlInput(  )", BeanScope.Request)
+                .bean(HtmlDiscoverService.class, "getHtmlInput( null )", BeanScope.Request)
+
+                .setHeader("content-type", constant("text/html"))
+        ;
+
+        rest("/api/html/discoverInput/")
+                .get("/{linkCheckJobId}")
+                .route()
+                .routeId("rest.rest.html.discoverInput2")
+                .bean(HtmlDiscoverService.class, "getHtmlInput(${header.linkCheckJobId}  )", BeanScope.Request)
 
                 .setHeader("content-type", constant("text/html"))
         ;
