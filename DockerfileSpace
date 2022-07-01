@@ -26,7 +26,13 @@ LABEL org.opencontainers.image.source https://github.com/GeoCat/icat
 # The property names can be translated to environment varibles passing them to upper case and replacing the dots
 # with underscores. For example harvester.jdbc.url -> HARVESTER_JDBC_URL
 
-RUN mkdir -p /opt/icat
+COPY extra/certs/ /certs
+COPY extra/bin /usr/local/bin
+
+RUN chmod -R +x /usr/local/bin && \
+	import_certs.sh && \
+	mkdir -p  mkdir -p /opt/icat
+    
 WORKDIR /opt/icat
 COPY --from=builder /application/dependencies/ ./
 COPY --from=builder /application/spring-boot-loader ./

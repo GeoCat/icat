@@ -33,6 +33,7 @@
 
 package net.geocat.eventprocessor.processors.main;
 
+import net.geocat.database.linkchecker.entities.LinkCheckJob;
 import net.geocat.database.linkchecker.entities.LinkCheckJobState;
 import net.geocat.database.linkchecker.service.LinkCheckJobService;
 import net.geocat.eventprocessor.BaseEventProcessor;
@@ -66,10 +67,18 @@ public class EventProcessor_LinkCheckAbortEvent extends BaseEventProcessor<LinkC
     public EventProcessor_LinkCheckAbortEvent internalProcessing() {
         String processID = getInitiatingEvent().getProcessID();
         logger.warn("attempting to user abort for " + processID);
-        linkCheckJobService.updateLinkCheckJobStateInDB(processID, LinkCheckJobState.USERABORT);
-        logger.warn("user abort processed for " + processID);
-        linkCheckJobService.finalize(getInitiatingEvent().getProcessID());
 
+        LinkCheckJob job = linkCheckJobService.find(processID);
+        if ( (job.getState() != LinkCheckJobState.COMPLETE)
+                && (job.getState() != LinkCheckJobState.ERROR)
+                && (job.getState() != LinkCheckJobState.USERABORT)) {
+            linkCheckJobService.updateLinkCheckJobStateInDB(processID, LinkCheckJobState.USERABORT);
+            linkCheckJobService.finalize(getInitiatingEvent().getProcessID());
+            logger.warn("user abort processed for " + processID);
+        }
+        else {
+            logger.warn("user abort - process is already in state: " + job.getState() );
+        }
         return this;
     }
 
