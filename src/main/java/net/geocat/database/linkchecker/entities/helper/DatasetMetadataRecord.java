@@ -62,6 +62,12 @@ import java.util.stream.Collectors;
                         columnList = "sha2,linkCheckJobId",
                         unique = false
                 )
+                ,
+                @Index(
+                        name = "DatasetMetadataRecord_job_type_state_idx",
+                        columnList = "linkcheckjobid,dataset_record_type,state",
+                        unique = false
+                )
         }
 )
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)

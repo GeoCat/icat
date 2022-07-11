@@ -72,6 +72,11 @@ import javax.persistence.Id;
                         name = "dsid_code_idx",
                         columnList = "code",
                         unique = false
+                ),
+                @Index(
+                        name = "ops_on_idx",
+                        columnList = "operatesOnLink_operatesOnLinkId",
+                        unique = false
                 )
         })
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)

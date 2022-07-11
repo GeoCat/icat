@@ -61,6 +61,17 @@ import java.util.Set;
                         name = "ServiceMetadataRecord_sha2_linkcheckjobid",
                         columnList = "sha2,linkCheckJobId",
                         unique = false
+                ),
+                @Index(
+                        name = "ServiceMetadataRecord_fileIdentifier_linkcheckjobid",
+                        columnList = "fileidentifier,linkcheckjobid",
+                        unique = false
+                )
+                ,
+                @Index(
+                        name = "ServiceMetadataRecord_job_type_state_idx",
+                        columnList = "linkcheckjobid,service_record_type,state",
+                        unique = false
                 )
         }
 )

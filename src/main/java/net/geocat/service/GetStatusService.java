@@ -55,6 +55,8 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 public class GetStatusService {
 
+    public static Boolean DEFAULT_QUICK = Boolean.FALSE;
+
     @Autowired
     LocalServiceMetadataRecordRepo localServiceMetadataRecordRepo;
 
@@ -73,13 +75,17 @@ public class GetStatusService {
     @Autowired
     LogbackLoggingEventExceptionRepo logbackLoggingEventExceptionRepo;
 
-    public LinkCheckStatus getStatus(String processID, Boolean showErrors) {
+    public LinkCheckStatus getStatus(String processID, Boolean showErrors,Boolean quick) {
+        if (quick == null)
+            quick = DEFAULT_QUICK;
         showErrors = showErrors == null? false : showErrors;
         LinkCheckJob job = linkCheckJobRepo.findById(processID).get();
 
         LinkCheckStatus result = new LinkCheckStatus(processID, job.getState());
-        result.setServiceRecordStatus( computeServiceRecords(processID));
-        result.setDatasetRecordStatus( computeDatasetRecords(processID));
+        if (!quick) {
+            result.setServiceRecordStatus(computeServiceRecords(processID));
+            result.setDatasetRecordStatus(computeDatasetRecords(processID));
+        }
 
         if (showErrors)
                 setupErrorMessages(result);
@@ -127,12 +133,14 @@ public class GetStatusService {
     }
 
     public DocumentTypeStatus computeServiceRecords(String processID){
-        long nrecords = localServiceMetadataRecordRepo.countByLinkCheckJobId(processID);
+     //   long nrecords = localServiceMetadataRecordRepo.countByLinkCheckJobId(processID);
         List<StatusQueryItem> statusList = localServiceMetadataRecordRepo.getStatus(processID);
         List<StatusType> statusTypeList = new ArrayList<>();
+        long nrecords = 0;
         for(StatusQueryItem item: statusList){
             StatusType statusType = new StatusType(item.getState().toString(),item.getNumberOfRecords());
             statusTypeList.add(statusType);
+            nrecords += item.getNumberOfRecords();
         }
 
         DocumentTypeStatus result = new DocumentTypeStatus("ServiceRecord",nrecords,statusTypeList);
@@ -140,12 +148,16 @@ public class GetStatusService {
     }
 
     public DocumentTypeStatus computeDatasetRecords(String processID){
-        long nrecords = localDatasetMetadataRecordRepo.countByLinkCheckJobId(processID);
+      //  long nrecords = localDatasetMetadataRecordRepo.countByLinkCheckJobId(processID);
         List<StatusQueryItem> statusList = localDatasetMetadataRecordRepo.getStatus(processID);
         List<StatusType> statusTypeList = new ArrayList<>();
+        long nrecords = 0;
+
         for(StatusQueryItem item: statusList){
             StatusType statusType = new StatusType(item.getState().toString(),item.getNumberOfRecords());
             statusTypeList.add(statusType);
+            nrecords += item.getNumberOfRecords();
+
         }
 
         DocumentTypeStatus result = new DocumentTypeStatus("DatasetRecord",nrecords,statusTypeList);
