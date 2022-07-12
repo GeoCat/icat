@@ -85,6 +85,11 @@ import java.util.Objects;
                         name = "link2data_linkcheckjobid_idx",
                         columnList = "linkcheckjobid",
                         unique = false
+                ),
+                @Index(
+                        name = "link2data_linktodata_id_idx",
+                        columnList = "linktodata_id",
+                        unique = false
                 )
         })
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)

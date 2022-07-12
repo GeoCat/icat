@@ -75,21 +75,26 @@ public class GetStatusService {
     @Autowired
     LogbackLoggingEventExceptionRepo logbackLoggingEventExceptionRepo;
 
-    public LinkCheckStatus getStatus(String processID, Boolean showErrors,Boolean quick) {
-        if (quick == null)
-            quick = DEFAULT_QUICK;
-        showErrors = showErrors == null? false : showErrors;
-        LinkCheckJob job = linkCheckJobRepo.findById(processID).get();
+    public LinkCheckStatus getStatus(String processID, Boolean showErrors,Boolean quick) throws Exception {
+        try {
+            if (quick == null)
+                quick = DEFAULT_QUICK;
+            showErrors = showErrors == null ? false : showErrors;
+            LinkCheckJob job = linkCheckJobRepo.findById(processID).get();
 
-        LinkCheckStatus result = new LinkCheckStatus(processID, job.getState());
-        if (!quick) {
-            result.setServiceRecordStatus(computeServiceRecords(processID));
-            result.setDatasetRecordStatus(computeDatasetRecords(processID));
-        }
+            LinkCheckStatus result = new LinkCheckStatus(processID, job.getState());
+            if (!quick) {
+                result.setServiceRecordStatus(computeServiceRecords(processID));
+                result.setDatasetRecordStatus(computeDatasetRecords(processID));
+            }
 
-        if (showErrors)
+            if (showErrors)
                 setupErrorMessages(result);
-        return result;
+            return result;
+        }
+        catch (Exception e){
+            throw new Exception("Linkchecker - GetStatusService#getStatus threw error for processID="+processID+", showErrors="+showErrors+", quick="+quick);
+        }
     }
 
     private void setupErrorMessages(LinkCheckStatus result) {
