@@ -34,8 +34,11 @@
 package net.geocat.service;
 
 import net.geocat.database.linkchecker.entities.LinkCheckJob;
+import net.geocat.database.linkchecker.entities.LinkCheckJobState;
 import net.geocat.database.linkchecker.entities.helper.UpdateCreateDateTimeEntity;
 import net.geocat.database.linkchecker.repos.LinkCheckJobRepo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -49,9 +52,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class DeleteJobService {
+    Logger logger = LoggerFactory.getLogger(DeleteJobService.class);
 
     @Autowired
     LinkCheckJobRepo linkCheckJobRepo;
@@ -133,12 +138,17 @@ public class DeleteJobService {
         return "DELETED";
     }
 
-    public String ensureAtMost(String longTermTag, int maxAllowed) throws Exception {
+    public String ensureAtMost(String longTermTag, int maxAllowed, String linkCheckJobIdDoNotDelete) throws Exception {
         if (longTermTag == null)
             throw new Exception("delete - countryCode is null");
         longTermTag = longTermTag.trim();
 
         List<LinkCheckJob> jobs = linkCheckJobRepo.findByLongTermTag(longTermTag);
+        // don't delete the one being created...
+        jobs = jobs.stream()
+                .filter(x->!x.getJobId().equals(linkCheckJobIdDoNotDelete))
+                .collect(Collectors.toList());
+
         if (jobs.size() <= maxAllowed)
             return "Nothing to do - job count="+jobs.size();
 
@@ -146,10 +156,20 @@ public class DeleteJobService {
                 Comparator.comparing(UpdateCreateDateTimeEntity::getCreateTimeUTC));
         Collections.reverse(jobs);
 
-        List<LinkCheckJob> jobsToDelete = jobs.subList(maxAllowed, jobs.size());
+        //preferentially remove ERROR and USERABORT jobs (they aren't worth keeping)
+        List<LinkCheckJob> jobsToDelete = jobs.stream()
+                .filter(x->x.getState() == LinkCheckJobState.USERABORT || x.getState() == LinkCheckJobState.ERROR)
+                .collect(Collectors.toList());
+
+        jobs.removeAll(jobsToDelete);
+
+        if (jobs.size() > maxAllowed)
+            jobsToDelete.addAll(jobs.subList(maxAllowed, jobs.size()));
+
 
         String  result  = jobsToDelete.size() +" jobs were deleted.";
         for (LinkCheckJob job : jobsToDelete) {
+            logger.debug("ensureAtMost: deleting jobid="+job.getJobId());
             deleteById(job.getJobId());
             result+= job.getJobId()+",";
         }

@@ -142,6 +142,8 @@ public class LinkCheckJobService {
             return linkCheckJobRepo.save(job.get());
         }
         LinkCheckJob newJob = new LinkCheckJob();
+        newJob.setState(LinkCheckJobState.CREATING);
+
         newJob.setLongTermTag(event.getLongTermTag());
         newJob.setJobId(event.getLinkCheckJobId());
         newJob.setHarvestJobId(event.getHarvestJobId());

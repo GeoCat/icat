@@ -71,11 +71,14 @@ public class EventProcessor_LinkCheckRequestedEvent extends BaseEventProcessor<L
 
     @Override
     public EventProcessor_LinkCheckRequestedEvent internalProcessing() throws Exception {
-        deleteJobService.ensureAtMost( getInitiatingEvent().getLinkCheckRunConfig().getLongTermTag(),
-                getInitiatingEvent().getLinkCheckRunConfig().getStoreAtMostNHistoricalRuns());
-
+        //first so getStatus will work while deleting...
         linkCheckJobService.createLinkCheckJobInDB(getInitiatingEvent());
-        job = linkCheckJobService.updateLinkCheckJobStateInDB(getInitiatingEvent().getLinkCheckJobId(), LinkCheckJobState.FINDING_LINKS);
+
+        deleteJobService.ensureAtMost( getInitiatingEvent().getLinkCheckRunConfig().getLongTermTag(),
+                getInitiatingEvent().getLinkCheckRunConfig().getStoreAtMostNHistoricalRuns(),
+                getInitiatingEvent().getLinkCheckJobId());
+
+         job = linkCheckJobService.updateLinkCheckJobStateInDB(getInitiatingEvent().getLinkCheckJobId(), LinkCheckJobState.FINDING_LINKS);
         return this;
     }
 
