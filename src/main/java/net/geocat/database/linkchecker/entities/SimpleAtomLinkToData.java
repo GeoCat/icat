@@ -63,13 +63,13 @@ public class SimpleAtomLinkToData extends LinkToData {
     String context;
 
     @OneToOne(cascade = CascadeType.ALL)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+   // @OnDelete(action = OnDeleteAction.CASCADE)
     AtomSubFeedRequest atomSubFeedRequest;
 
     @OneToMany(
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER, mappedBy = "simpleAtomLinkToData")
     @Fetch(value = FetchMode.SUBSELECT)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+  //  @OnDelete(action = OnDeleteAction.CASCADE)
     List<AtomActualDataEntry> atomActualDataEntryList;
 
     public SimpleAtomLinkToData() {

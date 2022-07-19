@@ -97,7 +97,7 @@ public class CapabilitiesDatasetMetadataLink extends RetrievableSimpleLink {
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SELECT)
             @BatchSize(size=500)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+   // @OnDelete(action = OnDeleteAction.CASCADE)
     List<CapabilitiesDatasetMetadataLinkDatasetIdentifier> datasetIdentifiers;
 
     @Column(columnDefinition = "text")

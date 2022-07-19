@@ -125,6 +125,7 @@ public class AtomDownloadProcessor {
 
         for (AtomEntry entry : secondaryEntries) {
             AtomActualDataEntry atomActualDataEntry = new AtomActualDataEntry();
+            atomActualDataEntry.setLinkCheckJobId(simpleAtomLinkToData.getLinkCheckJobId());
             atomActualDataEntry.setEntryId(entry.getId());
             atomActualDataEntry.setSimpleAtomLinkToData(simpleAtomLinkToData);
             atomActualDataEntry.setIndex(index);

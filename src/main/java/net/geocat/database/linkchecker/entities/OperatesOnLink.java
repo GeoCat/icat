@@ -78,7 +78,7 @@ public class OperatesOnLink extends RetrievableSimpleLink {
     @OneToMany(mappedBy = "operatesOnLink",
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.JOIN)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    //@OnDelete(action = OnDeleteAction.CASCADE)
     List<OperatesOnLinkDatasetIdentifier> datasetIdentifiers;
 
 

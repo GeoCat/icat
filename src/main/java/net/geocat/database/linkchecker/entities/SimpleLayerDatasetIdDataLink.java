@@ -35,7 +35,6 @@ package net.geocat.database.linkchecker.entities;
 
 
 import net.geocat.database.linkchecker.entities.helper.DatasetMetadataRecord;
-import net.geocat.database.linkchecker.entities.helper.LinkToData;
 import net.geocat.database.linkchecker.entities.helper.OGCLinkToData;
 
 import javax.persistence.Column;

@@ -46,17 +46,37 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 import java.util.List;
 
+@Table(
+        indexes = {
+                @Index(
+                        name = "AtomActualDataEntry_link2data_idx",
+                        columnList = "simpleatomlinktodata_linktodataid",
+                        unique = false
+                ),
+                @Index(
+                        name = "AtomActualDataEntry_linkcheckjobid_idx",
+                        columnList = "linkcheckjobid",
+                        unique = false
+                ),
+        })
 @Entity
 public class AtomActualDataEntry {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long atomActualDataEntryId;
+
+
+    @Column(columnDefinition = "varchar(40)")
+    private String linkCheckJobId;
+
 
     Integer index;
 
@@ -71,7 +91,7 @@ public class AtomActualDataEntry {
     @OneToMany(
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER, mappedBy = "atomActualDataEntry")
     @Fetch(value = FetchMode.SUBSELECT)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+   // @OnDelete(action = OnDeleteAction.CASCADE)
   //  @JoinColumn(name = "atomDataRequestId")
     List<AtomDataRequest> atomDataRequestList;
 
@@ -83,6 +103,18 @@ public class AtomActualDataEntry {
 
     //--
 
+
+    public String getLinkCheckJobId() {
+        return linkCheckJobId;
+    }
+
+    public void setLinkCheckJobId(String linkCheckJobId) {
+        this.linkCheckJobId = linkCheckJobId;
+    }
+
+    public void setIndex(Integer index) {
+        this.index = index;
+    }
 
     public Boolean getSuccessfullyDownloaded() {
         return successfullyDownloaded;

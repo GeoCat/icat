@@ -99,7 +99,7 @@ public class ServiceMetadataRecord extends MetadataRecord {
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     // @JoinColumn(name="serviceMetadataRecordId")
     @Fetch(value = FetchMode.SUBSELECT)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+   // @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<ServiceDocumentLink> serviceDocumentLinks;
 
     //OperatesOn Links (likely to dataset metadata documents) found in this service document.
@@ -107,7 +107,7 @@ public class ServiceMetadataRecord extends MetadataRecord {
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     // @JoinColumn(name="serviceMetadataRecordId")
     @Fetch(value = FetchMode.SUBSELECT)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+   // @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<OperatesOnLink> operatesOnLinks;
 
 

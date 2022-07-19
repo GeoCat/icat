@@ -52,7 +52,13 @@ import javax.persistence.Table;
 import static net.geocat.database.linkchecker.entities.helper.PartialDownloadHint.ALWAYS_PARTIAL;
 
 @Entity
-
+@Table(
+        indexes = {
+                @Index(
+                        name = "OGCRequest_linkcheckjobid_idx",
+                        columnList = "linkcheckjobid",
+                        unique = false
+                )})
 public class OGCRequest extends RetrievableSimpleLink  {
 
     @Id

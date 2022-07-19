@@ -40,12 +40,22 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
 import static net.geocat.database.linkchecker.entities.helper.PartialDownloadHint.ALWAYS_PARTIAL;
 import static net.geocat.database.linkchecker.entities.helper.PartialDownloadHint.CAPABILITIES_ONLY;
 
 @Entity
+@Table(
+        indexes = {
+                @Index(
+                        name = "AtomSubFeedRequest_linkcheckid_idx",
+                        columnList = "linkcheckjobid",
+                        unique = false
+                )
+        })
 public class AtomSubFeedRequest extends RetrievableSimpleLink  {
 
     @Id

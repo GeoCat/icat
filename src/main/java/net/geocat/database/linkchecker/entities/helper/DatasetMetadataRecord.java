@@ -82,7 +82,7 @@ public class DatasetMetadataRecord extends MetadataRecord {
     @OneToMany(mappedBy = "datasetMetadataRecord",
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.JOIN)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+  //  @OnDelete(action = OnDeleteAction.CASCADE)
     Set<DatasetMetadataRecordDatasetIdentifier> datasetIdentifiers;
 
     // number of links found in the document
@@ -108,7 +108,7 @@ public class DatasetMetadataRecord extends MetadataRecord {
     @OneToMany(mappedBy = "datasetMetadataRecord",
             cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.JOIN)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    //@OnDelete(action = OnDeleteAction.CASCADE)
     private List<DatasetDocumentLink> documentLinks;
 
     //PASS if ANY of the capabilities documents has a layer link (dataset) that matches this document (file id and dataset id).

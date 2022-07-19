@@ -58,7 +58,7 @@ public class OGCLinkToData extends LinkToData {
     @Fetch(value = FetchMode.JOIN)
     @BatchSize(size=500)
     @JoinColumn(name="ogcrequest_ogcrequestid")
-    @OnDelete(action = OnDeleteAction.CASCADE)
+   // @OnDelete(action = OnDeleteAction.CASCADE)
     OGCRequest ogcRequest; // might be null
 
     @Column(columnDefinition = "text")

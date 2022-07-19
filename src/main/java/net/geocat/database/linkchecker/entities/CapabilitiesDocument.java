@@ -81,7 +81,7 @@ public class CapabilitiesDocument extends UpdateCreateDateTimeEntity {
     //link to the service metadata referenced in the XML's ExtendedCapabilities
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER )
     @JoinColumn(name = "remoteServiceMetadataRecordLinkId")
-    @OnDelete(action = OnDeleteAction.CASCADE)
+   // @OnDelete(action = OnDeleteAction.CASCADE)
     private RemoteServiceMetadataRecordLink remoteServiceMetadataRecordLink;
 
 

@@ -78,7 +78,7 @@ public class LocalDatasetMetadataRecord extends DatasetMetadataRecord {
     @JoinColumn(name="linktodata_id")
     @Fetch(value = FetchMode.SUBSELECT)
    // @BatchSize(size=500)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    //@OnDelete(action = OnDeleteAction.CASCADE)
     private Set<LinkToData> dataLinks;
 
     private Integer numberOfViewDataLinks;//dataLinks where WFS or Atom
