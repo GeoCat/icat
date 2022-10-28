@@ -45,13 +45,12 @@ import static net.geocat.xml.XmlStringTools.getNS;
 import static net.geocat.xml.XmlStringTools.getPrefix;
 import static net.geocat.xml.XmlStringTools.getRootTag;
 import static net.geocat.xml.XmlStringTools.getTagName;
+import static net.geocat.xml.XmlStringTools.removeDocType;
 import static net.geocat.xml.XmlStringTools.replaceXMLDecl;
 import static net.geocat.xml.XmlStringTools.removeComment;
 
 @Component
 public class CapabilitiesContinueReadingPredicate implements IContinueReadingPredicate {
-
-
 
 
     CapabilityDeterminer capabilityDeterminer;
@@ -79,19 +78,71 @@ public class CapabilitiesContinueReadingPredicate implements IContinueReadingPre
 //        }
 //    }
 
+    public static String prep(String doc) {
+        doc = removeComment(doc);
 
 
-    @Override
-    public boolean continueReading(byte[] head) {
+        doc = replaceXMLDecl(doc);
+        doc = removeComment(doc);
+        doc = removeDocType(doc);
+        doc = getRootTag(doc).trim();
+
+        String prefix = getPrefix(doc);
+        String tag = getTagName(doc);
+        String ns = getNS(prefix, doc);
+
+        return tag;
+    }
+
+    public String getTag(byte[] head){
+        String original = null; // for debug
+
         try {
             String doc = XmlStringTools.bytea2String(head) ;
+            original = doc;
             doc = removeComment(doc);
+            doc = removeDocType(doc);
             if (!XmlStringTools.isXML(doc))
-                return false; //not XML
+                return ""; //not XML
 
             doc = replaceXMLDecl(doc);
             doc = removeComment(doc);
             doc = removeDocType(doc);
+            if (doc.startsWith("<!DOCTYPE"))
+                return "";
+
+            doc = getRootTag(doc).trim();
+
+            String prefix = getPrefix(doc);
+            String tag = getTagName(doc);
+            String ns = getNS(prefix, doc);
+
+
+            return tag;
+        } catch (Exception e) {
+            int t = 0;
+        }
+        return "";
+    }
+
+    @Override
+    public ContinueReading continueReading(byte[] head) {
+        String original = null; // for debug
+
+        try {
+            String doc = XmlStringTools.bytea2String(head) ;
+            original = doc;
+            doc = removeComment(doc);
+            doc = removeDocType(doc);
+            if (!XmlStringTools.isXML(doc))
+                return ContinueReading.STOP_READING; //not XML
+
+            doc = replaceXMLDecl(doc);
+            doc = removeComment(doc);
+            doc = removeDocType(doc);
+            if (doc.startsWith("<!DOCTYPE"))
+               return ContinueReading.DOWNLOAD_MORE;
+
             doc = getRootTag(doc).trim();
 
             String prefix = getPrefix(doc);
@@ -99,15 +150,11 @@ public class CapabilitiesContinueReadingPredicate implements IContinueReadingPre
             String ns = getNS(prefix, doc);
 
             CapabilitiesType type = capabilityDeterminer.determineType(ns, tag);
-            return true;
+            return ContinueReading.CONTINUE_READING;
         } catch (Exception e) {
             int t = 0;
         }
-        return false;
-    }
-
-    private String removeDocType(String doc) {
-        return doc.replaceAll("<!DOCTYPE[\\s\\S]*?>]>","").trim();
+        return ContinueReading.STOP_READING;
     }
 
 

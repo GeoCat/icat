@@ -40,14 +40,14 @@ import net.geocat.xml.XmlStringTools;
 public class XmlContinueReadingPredicate implements IContinueReadingPredicate {
 
     @Override
-    public boolean continueReading(byte[] head) {
+    public ContinueReading continueReading(byte[] head) {
         try {
             String doc = XmlStringTools.bytea2String(head);
             if (!XmlStringTools.isXML(doc))
-                return false; //not XML
-            return true;
+                return ContinueReading.STOP_READING; //not XML
+            return  ContinueReading.CONTINUE_READING;
         } catch (Exception e) {
-            return false;
+            return  ContinueReading.STOP_READING;
         }
     }
 }

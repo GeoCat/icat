@@ -35,7 +35,10 @@ package net.geocat.database.linkchecker.repos;
 
 import net.geocat.database.linkchecker.entities.HttpResult;
 import net.geocat.database.linkchecker.entities.LinkCheckBlobStorage;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+
+import java.util.List;
 
 public interface HttpResultRepo extends CrudRepository<HttpResult, Long>  {
 
@@ -49,4 +52,8 @@ public interface HttpResultRepo extends CrudRepository<HttpResult, Long>  {
 
     Long deleteByLinkCheckJobId(String linkCheckJobId);
 
+    @Query(value = "Select * from HttpResultCache order by httpresultid limit ?1 offset ?2",
+            nativeQuery = true
+    )
+    List<HttpResult> getSome(int limit, int offset);
 }

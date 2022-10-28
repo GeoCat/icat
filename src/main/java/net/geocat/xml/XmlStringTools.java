@@ -49,9 +49,10 @@ public class XmlStringTools {
     public final static String UTF8_BOM = "\uFEFF";
     private final static Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
-    static Pattern tagWithNS = Pattern.compile("^<([^ :<>]+):([^ >]+)[^>]+>");
-    static Pattern tagWithoutNS = Pattern.compile("^<([^ >]+)[^>]+>");
-
+//    static Pattern tagWithNS = Pattern.compile("^<([^ :<>]+):([^ >]+)[^>]+>");
+//    static Pattern tagWithoutNS = Pattern.compile("^<([^ >]+)[^>]+>");
+    static Pattern tagWithNS = Pattern.compile("^<([^ :<>]+):([^ >]+)[^>]*>");
+    static Pattern tagWithoutNS = Pattern.compile("^<([^ >]+)[^>]*>");
 
     public static String getNodeTextValue(org.w3c.dom.Node n) {
         if ( (n == null) || (n.getTextContent() == null) || (n.getTextContent().trim().isEmpty()) )
@@ -112,6 +113,13 @@ public class XmlStringTools {
         if (find)
             return matcher.group(1).trim();
         return null;
+    }
+
+    public static String removeDocType(String doc) {
+        doc = doc.replaceAll("<!ELEMENT [^>]+>","").trim();
+        doc = doc.replaceAll("<!ATTLIST [^>]+>","").trim();
+
+        return doc.replaceAll("<!DOCTYPE[^>]+>","").trim();
     }
 
     public static String getNS(String prefix, String tag) {

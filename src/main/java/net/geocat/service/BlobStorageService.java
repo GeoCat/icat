@@ -48,7 +48,7 @@ import java.util.Optional;
 public class BlobStorageService {
 
     @Autowired
-    BlobStorageRepo blogStorageRepo;
+    public BlobStorageRepo blogStorageRepo;
 
     public String findXML(String sha2) {
         return blogStorageRepo.findById(sha2).get().getTextValue();

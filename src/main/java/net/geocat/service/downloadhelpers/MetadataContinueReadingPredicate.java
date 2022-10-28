@@ -41,28 +41,32 @@ import static net.geocat.xml.XmlStringTools.getNS;
 import static net.geocat.xml.XmlStringTools.getPrefix;
 import static net.geocat.xml.XmlStringTools.getRootTag;
 import static net.geocat.xml.XmlStringTools.getTagName;
+import static net.geocat.xml.XmlStringTools.removeDocType;
 import static net.geocat.xml.XmlStringTools.replaceXMLDecl;
 
 public class MetadataContinueReadingPredicate implements IContinueReadingPredicate {
     @Override
-    public boolean continueReading(byte[] head) {
+    public ContinueReading continueReading(byte[] head) {
         try {
             String doc = XmlStringTools.bytea2String(head);
             if (!XmlStringTools.isXML(doc))
-                return false; //not XML
+                return ContinueReading.STOP_READING; //not XML
 
             doc = replaceXMLDecl(doc).trim();
+            doc = removeDocType(doc);
             doc = getRootTag(doc).trim();
 
             String prefix = getPrefix(doc);
             String tag = getTagName(doc);
             String ns = getNS(prefix, doc);
 
-            return (tag.equals("MD_Metadata") || tag.equals("GetRecordsResponse") || tag.equals("GetRecordByIdResponse"));
-
+            if (tag.equals("MD_Metadata") || tag.equals("GetRecordsResponse") || tag.equals("GetRecordByIdResponse")) {
+                return ContinueReading.CONTINUE_READING;
+            }
+            return ContinueReading.STOP_READING;
 
         } catch (Exception e) {
-            return false;
+            return ContinueReading.STOP_READING;
         }
     }
 }

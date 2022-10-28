@@ -97,8 +97,14 @@ public class HtmlDiscoverService {
         fileId = fileId.trim();
 
         List<LocalDatasetMetadataRecord> datasets;
-        if (linkcheckJobId ==null)
-            datasets= localDatasetMetadataRecordRepo.findByFileIdentifier(fileId);
+        if (linkcheckJobId ==null) {
+            datasets = localDatasetMetadataRecordRepo.findByFileIdentifier(fileId);
+            try {
+                LocalDatasetMetadataRecord r = localDatasetMetadataRecordRepo.findById(Long.parseLong(fileId)).get();
+                datasets.add(r);
+            }
+            catch(Exception e) {}
+        }
         else
             datasets= localDatasetMetadataRecordRepo.findByFileIdentifierAndLinkCheckJobId(fileId,linkcheckJobId);
 
@@ -106,8 +112,14 @@ public class HtmlDiscoverService {
         Collections.reverse(datasets);
 
         List<LocalServiceMetadataRecord>  services;
-        if (linkcheckJobId ==null)
-            services= localServiceMetadataRecordRepo.findByFileIdentifier(fileId);
+        if (linkcheckJobId ==null) {
+            services = localServiceMetadataRecordRepo.findByFileIdentifier(fileId);
+            try {
+                LocalServiceMetadataRecord r = localServiceMetadataRecordRepo.findById(Long.parseLong(fileId)).get();
+                services.add(r);
+            }
+            catch(Exception e) {}
+        }
         else
             services= localServiceMetadataRecordRepo.findByFileIdentifierAndLinkCheckJobId(fileId,linkcheckJobId);
 
@@ -121,7 +133,7 @@ public class HtmlDiscoverService {
             result +="<h1>"+datasets.size()+" Dataset Metadata Documents </h1>\n<br>\n";
             result += "<table border=1><tr><td style='text-align: center;'><b>Run Date</b></td><td style='text-align: center;'><b>Link Check JobId</b></td><td style='text-align: center;'><b>Title</b></td></tr>\n";
             for(LocalDatasetMetadataRecord record:datasets) {
-                result += result(record.getLinkCheckJobId(),fileId,record.getLastUpdateUTC(),record.getTitle(),"dataset");
+                result += result(record.getLinkCheckJobId(),record.getFileIdentifier(),record.getLastUpdateUTC(),record.getTitle(),"dataset");
               //  result += "<a href='/api/html/dataset/"+record.getLinkCheckJobId()+"/"+fileId+"'>"+record.getLastUpdateUTC().toLocalDateTime().toString() +" - " + record.getLinkCheckJobId()+" - "+record.getTitle()+"</a><br>\n";
             }
         }
@@ -130,7 +142,7 @@ public class HtmlDiscoverService {
             result += "<table border=1><tr><td style='text-align: center;'><b>Run Date</b></td><td style='text-align: center;'><b>Link Check JobId</b></td><td style='text-align: center;'><b>Title</b></td></tr>\n";
 
             for(LocalServiceMetadataRecord record:services) {
-                result += result(record.getLinkCheckJobId(),fileId,record.getLastUpdateUTC(),record.getTitle(),"service");
+                result += result(record.getLinkCheckJobId(),record.getFileIdentifier(),record.getLastUpdateUTC(),record.getTitle(),"service");
 
                // result += "<a href='/api/html/service/"+record.getLinkCheckJobId()+"/"+fileId+"'>"+record.getLastUpdateUTC().toLocalDateTime().toString() +" - " + record.getLinkCheckJobId()+" - "+record.getTitle()+"</a><br>\n";
             }

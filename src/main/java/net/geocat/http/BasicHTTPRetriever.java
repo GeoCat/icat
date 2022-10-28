@@ -70,11 +70,11 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
   //  int TIMEOUT_MS = 1 * 2 * 1000;
     int initialReadSize = 4096;
 
-    public boolean shouldReadMore(byte[] tinyBuffer, IContinueReadingPredicate predicate) {
+    public IContinueReadingPredicate.ContinueReading shouldReadMore(byte[] tinyBuffer, IContinueReadingPredicate predicate) {
         if (predicate == null)
-            return true;
+            return IContinueReadingPredicate.ContinueReading.CONTINUE_READING;
 
-        return predicate.continueReading(tinyBuffer);
+        return predicate.continueReading(tinyBuffer)  ;
     }
 
 //    public HttpResult retrieveJSON(String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,int timeoutSeconds)
@@ -109,6 +109,7 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
      */
   //  public HttpResult retrieve (String verb, String location, String body, String cookie, IContinueReadingPredicate predicate,String contentType,String[] accept,int timeoutSeconds) throws IOException, SecurityException, ExceptionWithCookies, RedirectException {
     public HttpResult retrieve(HTTPRequest request) throws Exception {
+        IContinueReadingPredicate.ContinueReading continueReading = IContinueReadingPredicate.ContinueReading.CONTINUE_READING;
         if (request.getBody() == null)
             request.setBody("");
         URL url = new URL(request.getLocation());
@@ -188,7 +189,8 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
                 byte[] tinyBuffer = new byte[initialReadSize];
                 int ntinyRead = IOUtils.read(is, tinyBuffer);
                 byte[] bigBuffer = new byte[0];
-                if (shouldReadMore(tinyBuffer, request.getPredicate())) {
+                continueReading = shouldReadMore(tinyBuffer, request.getPredicate());
+                if (continueReading != IContinueReadingPredicate.ContinueReading.STOP_READING) {
                     fullyRead = true;
                     bigBuffer = IOUtils.toByteArray(is);
                 }
@@ -276,7 +278,16 @@ public class BasicHTTPRetriever implements IHTTPRetriever {
             result.setReceivedCookie(String.join("\n",cookies));
         result.setSentCookie(request.getCookie());
         result.setFinalURL(url.toString());
+
+
+        // we re-check the dataset...
+        if ((continueReading == IContinueReadingPredicate.ContinueReading.DOWNLOAD_MORE) && ( request.getPredicate() != null)) {
+            IContinueReadingPredicate.ContinueReading r =  request.getPredicate().continueReading(result.getData());
+
+            fullyRead = r == IContinueReadingPredicate.ContinueReading.CONTINUE_READING;
+        }
         result.setFullyRead(fullyRead);
+
         result.setHttpCode(responseCode);
         result.setContentType(responseMIME);
         return result;

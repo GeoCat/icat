@@ -35,6 +35,8 @@ package net.geocat.http;
 
 public interface IContinueReadingPredicate {
 
-    boolean continueReading(byte[] head);
+    enum ContinueReading {CONTINUE_READING, STOP_READING, DOWNLOAD_MORE}
+
+    ContinueReading continueReading(byte[] head);
 
 }

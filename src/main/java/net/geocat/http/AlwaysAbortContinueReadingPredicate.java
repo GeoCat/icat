@@ -39,7 +39,7 @@ import org.springframework.stereotype.Component;
 public class AlwaysAbortContinueReadingPredicate implements IContinueReadingPredicate {
 
     @Override
-    public boolean continueReading(byte[] head) {
-        return false;
+    public ContinueReading continueReading(byte[] head) {
+        return ContinueReading.STOP_READING;
     }
 }
