@@ -20,8 +20,7 @@ RUN --mount=type=cache,target=/root/.m2/repository \
 
 FROM eclipse-temurin:8-jre as finalImage
 
-LABEL vendor="GeoCat B.V."
-LABEL org.opencontainers.image.source https://github.com/GeoCat/icat
+LABEL maintainer="GeoCat B.V."
 
 
 # Check the file application.properties for a description of the environment variables that can be customized.

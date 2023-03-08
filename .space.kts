@@ -62,7 +62,6 @@ job("Build, test and install ICAT project artifacts") {
             	BRANCH=${'$'}(echo ${'$'}JB_SPACE_GIT_BRANCH | cut -d'/' -f 3)
                 crane auth login geocat.registry.jetbrains.space -u ${'$'}JB_SPACE_CLIENT_ID -p ${'$'}JB_SPACE_CLIENT_SECRET
                 crane auth login ${'$'}GEOCAT_DOCKER_REGISTRY_URL -u ${'$'}GEOCAT_DOCKER_REGISTRY_USER -p ${'$'}GEOCAT_DOCKER_REGISTRY_PASSWORD
-                crane auth login ghcr.io -u ${'$'}GITHUB_REGISTRY_USERNAME -p ${'$'}GITHUB_REGISTRY_PAT
 
                 crane copy geocat.registry.jetbrains.space/p/jrc-inspire-portal/docker/icat:${'$'}BRANCH-${'$'}JB_SPACE_EXECUTION_NUMBER ${'$'}GEOCAT_DOCKER_REGISTRY_URL/jrc-inspire-portal/icat:${'$'}BRANCH-${'$'}JB_SPACE_EXECUTION_NUMBER
                 crane copy geocat.registry.jetbrains.space/p/jrc-inspire-portal/docker/icat:${'$'}BRANCH-${'$'}JB_SPACE_EXECUTION_NUMBER ${'$'}GEOCAT_DOCKER_REGISTRY_URL/jrc-inspire-portal/icat:${'$'}BRANCH
